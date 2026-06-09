@@ -148,6 +148,43 @@
   ::-webkit-scrollbar-track{background:var(--bg);}
   ::-webkit-scrollbar-thumb{background:var(--border2);border-radius:3px;}
   ::-webkit-scrollbar-thumb:hover{background:var(--red);}
+
+  /* DIAGNOSE */
+  .diag-section{margin-bottom:16px;}
+  .diag-section-title{font-family:var(--font-head);font-size:12px;font-weight:700;
+    letter-spacing:.1em;text-transform:uppercase;color:var(--red);
+    padding-bottom:6px;border-bottom:1px solid var(--border);margin-bottom:8px;}
+  .diag-grid{display:grid;grid-template-columns:1fr 1fr;gap:4px 12px;}
+  .diag-row{display:flex;align-items:center;justify-content:space-between;
+    padding:5px 8px;background:var(--bg3);border-radius:4px;gap:8px;}
+  .diag-row-label{font-size:13px;color:var(--text);flex:1;}
+  .diag-row-label.bold{font-weight:700;}
+  .diag-btns{display:flex;gap:4px;flex-shrink:0;}
+  .diag-btn{border:none;border-radius:3px;padding:3px 10px;cursor:pointer;
+    font-size:11px;font-weight:700;transition:all .15s;font-family:var(--font-body);}
+  .diag-btn-ok{background:var(--bg4);color:var(--text-dim);}
+  .diag-btn-ok.active{background:#14532d;color:#4ade80;}
+  .diag-btn-nok{background:var(--bg4);color:var(--text-dim);}
+  .diag-btn-nok.active{background:#7f1d1d;color:#fca5a5;}
+  .diag-input-row{display:flex;flex-direction:column;gap:4px;margin-bottom:8px;}
+  .diag-input-row label{font-size:11px;color:var(--text-dim);font-weight:700;letter-spacing:.08em;text-transform:uppercase;}
+  .diag-input-row input,.diag-input-row textarea{
+    background:var(--bg3);border:1px solid var(--border2);border-radius:4px;
+    color:var(--text);padding:8px 10px;font-size:13px;outline:none;font-family:var(--font-body);}
+  .diag-input-row input:focus,.diag-input-row textarea:focus{border-color:var(--red);}
+  .diag-input-row textarea{resize:vertical;}
+  .diag-subrow{display:grid;grid-template-columns:1fr auto auto;align-items:center;gap:6px;
+    padding:4px 8px;background:var(--bg3);border-radius:4px;margin-bottom:3px;}
+  .diag-subrow-label{font-size:12px;color:var(--text);}
+  .diag-subrow input{background:var(--bg4);border:1px solid var(--border2);border-radius:3px;
+    color:var(--text);padding:3px 6px;font-size:12px;outline:none;width:80px;font-family:var(--font-body);}
+
+  /* PDF PRINT */
+  @media print {
+    body * { visibility: hidden; }
+    #printArea, #printArea * { visibility: visible; }
+    #printArea { position: absolute; left: 0; top: 0; width: 100%; }
+  }
 </style>
 </head>
 <body>
@@ -274,6 +311,7 @@ function autoToDb(a) {
     prioritaet:  a.prioritaet,
     status:      a.status,
     hinweise:    a.hinweise,
+    diagnose:    a.diagnose||null,
     eingang:     a.eingang,
     datum:       a.datum,
     status_seit: a.statusSeit,
@@ -491,9 +529,252 @@ function makeCard(a,s,autoCollapse,collapsed){
     const actions=document.createElement('div');actions.className='card-actions';
     const btnEdit=document.createElement('button');btnEdit.textContent='✎ Bearbeiten';
     btnEdit.addEventListener('click',e=>{e.stopPropagation();openEdit(a.id);});
-    actions.appendChild(btnEdit);wrap.appendChild(actions);
+    const btnDiag=document.createElement('button');btnDiag.textContent='📋 Diagnose';
+    btnDiag.style.color='#fbbf24';
+    btnDiag.addEventListener('click',e=>{e.stopPropagation();openDiagnose(a.id);});
+    actions.appendChild(btnEdit);actions.appendChild(btnDiag);wrap.appendChild(actions);
   }
   return wrap;
+}
+
+// ── DIAGNOSE ──
+const DIAG_ITEMS_LEFT = [
+  'Ölwechsel fällig?','Motoröl-Stand','Bremsflüssigkeit','Scheibenwaschwasser',
+  'Kühlflüssigkeit','Luftfilter','Pollenfilter','Öl-/Wasserverlust',
+  'Kraftstofffilter','Klimaanlage (Zustand)','Zünd-/Glühkerzen','Batteriezustand',
+  'Keilrippenriemen','Wischerblätter','Steinschlag','Lenkung dicht/Servoöl'
+];
+const DIAG_ITEMS_RIGHT = [
+  'Bremsleitungen','Aufhängung/Spur','Dämpfer/Federung','Gummis/Lager',
+  'Antriebswellen','Differenzial/Getriebe','Hardyscheibe','Kardanwelle',
+  'Auspuff','Schläuche porös','Schläuche gelöst','Verbindungen lose',
+  'Undichtigkeiten','Beleuchtung','Fehlerspeicher/Fehler?'
+];
+
+function emptyDiagnose() {
+  const d = { km:'', tuev:'', fehlerspeicher:'', was_machen:'', hinweise:'' };
+  [...DIAG_ITEMS_LEFT,...DIAG_ITEMS_RIGHT].forEach(k => d[k] = '');
+  ['VR','VL','HR','HL'].forEach(k => d['reifen_'+k] = '');
+  ['vorne_re','vorne_li','hinten_re','hinten_li'].forEach(k => {
+    d['bremsscheibe_'+k]=''; d['bremsbelag_'+k]='';
+  });
+  return d;
+}
+
+function openDiagnose(autoId) {
+  const a = autos.find(x=>x.id===autoId);
+  if(!a) return;
+  if(!a.diagnose) a.diagnose = emptyDiagnose();
+  const d = a.diagnose;
+
+  function statusBtns(key) {
+    const val = d[key]||'';
+    return `
+      <div class="diag-btns">
+        <button class="diag-btn diag-btn-ok ${val==='ok'?'active':''}"
+          onclick="setDiag('${autoId}','${key}','ok',this)">OK</button>
+        <button class="diag-btn diag-btn-nok ${val==='nok'?'active':''}"
+          onclick="setDiag('${autoId}','${key}','nok',this)">!</button>
+      </div>`;
+  }
+
+  function diagRow(label, key, bold=false) {
+    return `<div class="diag-row">
+      <span class="diag-row-label ${bold?'bold':''}">${label}</span>
+      ${statusBtns(key)}
+    </div>`;
+  }
+
+  openModal(`
+    <div class="modal-header">
+      <span class="modal-title">📋 Diagnose — ${a.kennzeichen}</span>
+      <button class="modal-close" onclick="closeModal()">✕</button>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:0 12px;margin-bottom:12px">
+      <div class="diag-input-row"><label>KM-Stand</label>
+        <input value="${d.km||''}" oninput="saveDiagField('${autoId}','km',this.value)" placeholder="z.B. 125000"/></div>
+      <div class="diag-input-row"><label>TÜV</label>
+        <input value="${d.tuev||''}" oninput="saveDiagField('${autoId}','tuev',this.value)" placeholder="z.B. 05/2026"/></div>
+    </div>
+
+    <div class="diag-section">
+      <div class="diag-section-title">Allgemein</div>
+      <div class="diag-grid">
+        ${DIAG_ITEMS_LEFT.map(k=>diagRow(k,k)).join('')}
+        ${DIAG_ITEMS_RIGHT.map(k=>diagRow(k,k)).join('')}
+      </div>
+    </div>
+
+    <div class="diag-section">
+      <div class="diag-section-title">Reifenzustand</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px">
+        ${['VR','VL','HR','HL'].map(pos=>`
+          <div class="diag-subrow">
+            <span class="diag-subrow-label">${pos}</span>
+            <input value="${d['reifen_'+pos]||''}" placeholder="Profil mm"
+              oninput="saveDiagField('${autoId}','reifen_${pos}',this.value)"/>
+          </div>`).join('')}
+      </div>
+    </div>
+
+    <div class="diag-section">
+      <div class="diag-section-title">Bremsscheiben & Beläge</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px">
+        ${['vorne_re','vorne_li','hinten_re','hinten_li'].map(pos=>`
+          <div style="background:var(--bg3);border-radius:4px;padding:6px 8px">
+            <div style="font-size:11px;color:var(--text-dim);margin-bottom:4px;text-transform:uppercase;letter-spacing:.06em">${pos.replace('_',' ')}</div>
+            <div style="display:flex;gap:6px">
+              <input style="flex:1;background:var(--bg4);border:1px solid var(--border2);border-radius:3px;color:var(--text);padding:3px 6px;font-size:12px;outline:none"
+                placeholder="Scheibe mm" value="${d['bremsscheibe_'+pos]||''}"
+                oninput="saveDiagField('${autoId}','bremsscheibe_${pos}',this.value)"/>
+              <input style="flex:1;background:var(--bg4);border:1px solid var(--border2);border-radius:3px;color:var(--text);padding:3px 6px;font-size:12px;outline:none"
+                placeholder="Belag mm" value="${d['bremsbelag_'+pos]||''}"
+                oninput="saveDiagField('${autoId}','bremsbelag_${pos}',this.value)"/>
+            </div>
+          </div>`).join('')}
+      </div>
+    </div>
+
+    <div class="diag-section">
+      <div class="diag-section-title">Fehlerspeicher</div>
+      <div class="diag-input-row">
+        <textarea rows="2" oninput="saveDiagField('${autoId}','fehlerspeicher',this.value)"
+          placeholder="Fehlercodes und Beschreibung …">${d.fehlerspeicher||''}</textarea>
+      </div>
+    </div>
+
+    <div class="diag-section">
+      <div class="diag-section-title">Was muss gemacht werden?</div>
+      <div class="diag-input-row">
+        <textarea rows="3" oninput="saveDiagField('${autoId}','was_machen',this.value)"
+          placeholder="Erforderliche Arbeiten …">${d.was_machen||''}</textarea>
+      </div>
+    </div>
+
+    <div class="diag-section">
+      <div class="diag-section-title">Hinweise</div>
+      <div class="diag-input-row">
+        <textarea rows="2" oninput="saveDiagField('${autoId}','hinweise',this.value)"
+          placeholder="Weitere Hinweise …">${d.hinweise||''}</textarea>
+      </div>
+    </div>
+
+    <div class="form-footer">
+      <button class="btn-secondary" onclick="closeModal()">Schließen</button>
+      <button class="btn-primary" onclick="exportDiagnosePDF('${autoId}')">⬇ PDF exportieren</button>
+    </div>
+  `);
+}
+
+function setDiag(autoId, key, val, btn) {
+  const a = autos.find(x=>x.id===autoId);
+  if(!a) return;
+  if(!a.diagnose) a.diagnose = emptyDiagnose();
+  // Toggle: nochmal klicken → zurücksetzen
+  a.diagnose[key] = a.diagnose[key]===val ? '' : val;
+  saveAuto(a);
+  // UI aktualisieren ohne Modal zu schließen
+  const row = btn.closest('.diag-btns');
+  row.querySelectorAll('.diag-btn-ok').forEach(b=>b.classList.toggle('active', a.diagnose[key]==='ok'));
+  row.querySelectorAll('.diag-btn-nok').forEach(b=>b.classList.toggle('active', a.diagnose[key]==='nok'));
+}
+
+function saveDiagField(autoId, key, val) {
+  const a = autos.find(x=>x.id===autoId);
+  if(!a) return;
+  if(!a.diagnose) a.diagnose = emptyDiagnose();
+  a.diagnose[key] = val;
+  saveAuto(a);
+}
+
+function exportDiagnosePDF(autoId) {
+  const a = autos.find(x=>x.id===autoId);
+  if(!a) return;
+  const d = a.diagnose || emptyDiagnose();
+
+  function statusBadge(key) {
+    const v = d[key]||'';
+    if(v==='ok')  return '<span style="background:#14532d;color:#4ade80;padding:2px 8px;border-radius:3px;font-weight:700;font-size:11px">OK</span>';
+    if(v==='nok') return '<span style="background:#7f1d1d;color:#fca5a5;padding:2px 8px;border-radius:3px;font-weight:700;font-size:11px">!</span>';
+    return '<span style="color:#aaa;font-size:11px">—</span>';
+  }
+
+  function diagTableRows(items) {
+    return items.map(k=>`<tr>
+      <td style="padding:5px 8px;border-bottom:1px solid #eee;font-size:12px">${k}</td>
+      <td style="padding:5px 8px;border-bottom:1px solid #eee;text-align:center">${statusBadge(k)}</td>
+    </tr>`).join('');
+  }
+
+  const html = `<!DOCTYPE html><html><head><meta charset="UTF-8"/>
+  <style>
+    body{font-family:Arial,sans-serif;margin:0;padding:20px;color:#000;}
+    h1{font-size:20px;margin:0;} h2{font-size:14px;margin:0;color:#C0141C;}
+    table{width:100%;border-collapse:collapse;}
+    th{background:#C0141C;color:#fff;padding:5px 8px;font-size:12px;text-align:left;}
+    td{font-size:12px;vertical-align:top;}
+    .box{border:1px solid #ddd;border-radius:4px;padding:8px 10px;margin-bottom:8px;}
+    .label{font-size:10px;color:#888;text-transform:uppercase;letter-spacing:.06em;margin-bottom:2px;}
+    .two-col{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+    @media print{@page{margin:15mm;}}
+  </style></head><body>
+  <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:16px;border-bottom:3px solid #C0141C;padding-bottom:12px">
+    <div><h1>KFZ-Meisterbetrieb</h1><div style="color:#C0141C;font-weight:700;font-size:14px">AUTOPARTNER AMERICANCARS</div>
+      <div style="font-size:11px;color:#666;margin-top:4px">Auf dem Lölfert 37 · 58119 Hagen · 02334/808140 · info@autopartner-hagen.de</div></div>
+    <h1 style="color:#C0141C">Diagnose</h1>
+  </div>
+
+  <div class="two-col" style="margin-bottom:12px">
+    <div class="box"><div class="label">Name / Firma</div><div style="font-weight:700">${a.kunde||'—'}</div></div>
+    <div class="box"><div class="label">Fahrzeug</div><div style="font-weight:700">${a.fahrzeug||'—'}</div></div>
+    <div class="box"><div class="label">Kennzeichen</div><div style="font-weight:700">${a.kennzeichen||'—'}</div></div>
+    <div class="box">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+        <div><div class="label">KM-Stand</div><div style="font-weight:700">${d.km||'—'}</div></div>
+        <div><div class="label">TÜV</div><div style="font-weight:700">${d.tuev||'—'}</div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="two-col" style="margin-bottom:12px">
+    <table><thead><tr><th colspan="2">Allgemein (1)</th></tr></thead><tbody>
+      ${diagTableRows(DIAG_ITEMS_LEFT)}
+    </tbody></table>
+    <table><thead><tr><th colspan="2">Allgemein (2)</th></tr></thead><tbody>
+      ${diagTableRows(DIAG_ITEMS_RIGHT)}
+    </tbody></table>
+  </div>
+
+  <div class="two-col" style="margin-bottom:12px">
+    <table><thead><tr><th colspan="3">Reifenzustand</th></tr></thead><tbody>
+      ${['VR','VL','HR','HL'].map(pos=>`<tr>
+        <td style="padding:5px 8px;border-bottom:1px solid #eee;font-size:12px;font-weight:700">${pos}</td>
+        <td style="padding:5px 8px;border-bottom:1px solid #eee;font-size:12px">${d['reifen_'+pos]||'—'} mm</td>
+      </tr>`).join('')}
+    </tbody></table>
+    <table><thead><tr><th colspan="3">Bremsen (Scheibe / Belag mm)</th></tr></thead><tbody>
+      ${['vorne_re','vorne_li','hinten_re','hinten_li'].map(pos=>`<tr>
+        <td style="padding:5px 8px;border-bottom:1px solid #eee;font-size:12px;font-weight:700">${pos.replace('_',' ')}</td>
+        <td style="padding:5px 8px;border-bottom:1px solid #eee;font-size:12px">${d['bremsscheibe_'+pos]||'—'}</td>
+        <td style="padding:5px 8px;border-bottom:1px solid #eee;font-size:12px">${d['bremsbelag_'+pos]||'—'}</td>
+      </tr>`).join('')}
+    </tbody></table>
+  </div>
+
+  ${d.fehlerspeicher?`<div class="box" style="margin-bottom:8px"><div class="label">Fehlerspeicher</div>${d.fehlerspeicher}</div>`:''}
+  ${d.was_machen?`<div class="box" style="margin-bottom:8px"><div class="label">Was muss gemacht werden?</div>${d.was_machen}</div>`:''}
+  ${d.hinweise?`<div class="box"><div class="label">Hinweise</div>${d.hinweise}</div>`:''}
+
+  <div style="margin-top:24px;display:grid;grid-template-columns:1fr 1fr;gap:40px">
+    <div style="border-top:1px solid #000;padding-top:4px;font-size:11px;color:#666">Datum / Unterschrift Mechaniker</div>
+    <div style="border-top:1px solid #000;padding-top:4px;font-size:11px;color:#666">Datum / Unterschrift Kunde</div>
+  </div>
+  <script>window.onload=()=>window.print();<\/script>
+  </body></html>`;
+
+  const win = window.open('','_blank');
+  if(win){ win.document.write(html); win.document.close(); }
 }
 
 // ── SUCHE ──
