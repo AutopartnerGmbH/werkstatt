@@ -705,9 +705,10 @@ function makeCard(a,s,autoCollapse,collapsed){
   const prio=document.createElement('div');prio.className='card-top-prio';
   prio.style.cssText=`background:${PRIO_DOT[a.prioritaet]};${a.prioritaet!=='Normal'?`box-shadow:0 0 5px ${PRIO_DOT[a.prioritaet]}`:''}`;
   const kz=document.createElement('span');kz.className='card-top-kz';kz.style.color=s.accent;kz.textContent=a.kennzeichen||'—';
-  const kunde=document.createElement('span');kunde.className='card-top-kunde';kunde.textContent=a.kunde||a.fahrzeug||'';
+  const fzSpan=document.createElement('span');fzSpan.style.cssText='font-size:13px;color:var(--text-dim);white-space:nowrap;flex-shrink:0;margin-right:8px';fzSpan.textContent=a.fahrzeug||'';
+  const kunde=document.createElement('span');kunde.className='card-top-kunde';kunde.textContent=a.kunde||'';
   const chev=document.createElement('span');chev.className='card-top-chevron'+(collapsed?'':' open');chev.textContent='▾';
-  top.appendChild(prio);top.appendChild(kz);top.appendChild(kunde);top.appendChild(chev);
+  top.appendChild(prio);top.appendChild(kz);if(a.fahrzeug)top.appendChild(fzSpan);top.appendChild(kunde);top.appendChild(chev);
   wrap.appendChild(top);
 
   if(!collapsed){
