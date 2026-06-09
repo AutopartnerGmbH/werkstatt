@@ -108,7 +108,20 @@
   .btn-secondary{background:var(--bg3);border:1px solid var(--border2);border-radius:4px;color:var(--text-dim);padding:7px 12px;cursor:pointer;font-size:12px;font-weight:600;transition:background .15s;}
   .btn-secondary:hover{background:var(--bg4);color:var(--text);}
 
-  /* PIN SCREEN */
+  /* ADMIN */
+  .admin-section { background:var(--bg3); border-radius:8px; padding:16px; margin-bottom:14px; }
+  .admin-section-title { font-family:var(--font-head); font-size:13px; font-weight:600;
+    color:var(--red); letter-spacing:.1em; text-transform:uppercase; margin-bottom:12px;
+    padding-bottom:8px; border-bottom:1px solid var(--border); }
+  .admin-row { display:flex; align-items:center; justify-content:space-between;
+    padding:8px 0; border-bottom:1px solid var(--border); gap:12px; }
+  .admin-row:last-child { border-bottom:none; }
+  .admin-row-label { font-size:13px; color:var(--text); flex:1; }
+  .admin-row-sub { font-size:11px; color:var(--text-dim); margin-top:2px; }
+  .stat-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; }
+  .stat-box { background:var(--bg4); border-radius:6px; padding:12px; text-align:center; }
+  .stat-box-val { font-family:var(--font-head); font-size:28px; font-weight:700; color:var(--red); }
+  .stat-box-lbl { font-size:11px; color:var(--text-dim); margin-top:2px; letter-spacing:.06em; text-transform:uppercase; }
   #pinScreen { position:fixed; inset:0; background:#030712; z-index:999;
     display:flex; flex-direction:column; align-items:center; justify-content:center; gap:20px; }
   .pin-logo { font-family:var(--font-head); font-size:22px; color:var(--text);
@@ -304,6 +317,7 @@
       <button class="search-clear" id="searchClear" onclick="clearSearch()">✕</button>
     </div>
     <button class="btn-secondary" onclick="openSFKImport()">↑ SFK</button>
+    <button class="btn-secondary" onclick="openAdmin()" title="Adminbereich" style="padding:7px 10px">⚙️</button>
     <button class="btn-secondary" onclick="openPinAendern()" title="Code ändern" style="padding:7px 10px">🔒</button>
     <button class="btn-secondary" onclick="openBarcodeScanner()" title="SFK Auftrag scannen">⬛ Scan</button>
     <button class="btn-primary" onclick="openNeu()">+ Fahrzeug</button>
@@ -322,9 +336,18 @@
     <div class="pin-dot" id="pd5"></div>
   </div>
   <div class="pin-pad">
-    ${[1,2,3,4,5,6,7,8,9,'',0,'⌫'].map(k=>`
-      <button class="pin-key" ${k===''?'style="visibility:hidden"':''} onclick="pinPress('${k}')">${k}</button>
-    `).join('')}
+    <button class="pin-key" onclick="pinPress('1')">1</button>
+    <button class="pin-key" onclick="pinPress('2')">2</button>
+    <button class="pin-key" onclick="pinPress('3')">3</button>
+    <button class="pin-key" onclick="pinPress('4')">4</button>
+    <button class="pin-key" onclick="pinPress('5')">5</button>
+    <button class="pin-key" onclick="pinPress('6')">6</button>
+    <button class="pin-key" onclick="pinPress('7')">7</button>
+    <button class="pin-key" onclick="pinPress('8')">8</button>
+    <button class="pin-key" onclick="pinPress('9')">9</button>
+    <button class="pin-key" style="visibility:hidden"></button>
+    <button class="pin-key" onclick="pinPress('0')">0</button>
+    <button class="pin-key" onclick="pinPress('⌫')">⌫</button>
   </div>
   <div class="pin-hint" id="pinHint">Code eingeben</div>
 </div>
@@ -363,6 +386,268 @@ let realtimeChannel = null;
 function genId()    {return Date.now().toString(36)+Math.random().toString(36).slice(2,5);}
 function uhrzeit()  {return new Date().toLocaleTimeString('de-DE',{hour:'2-digit',minute:'2-digit'});}
 function datumKurz(){return new Date().toLocaleDateString('de-DE',{day:'2-digit',month:'2-digit'});}
+
+// ── ADMIN ──
+const ADMIN_PIN = 'admin';
+let adminUnlocked = false;
+
+function openAdmin() {
+  if (!adminUnlocked) {
+    // Admin-Login abfragen
+    const o = document.createElement('div');
+    o.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.9);z-index:300;display:flex;align-items:center;justify-content:center;padding:24px';
+    o.innerHTML = `
+      <div style="background:var(--bg2);border:1px solid var(--border2);border-top:3px solid var(--red);
+        border-radius:6px;padding:28px;max-width:340px;width:100%;box-shadow:0 40px 80px rgba(0,0,0,.8)">
+        <div style="font-family:var(--font-head);font-size:15px;color:var(--text);margin-bottom:6px;letter-spacing:.08em;text-transform:uppercase">⚙️ Adminbereich</div>
+        <div style="font-size:13px;color:var(--text-dim);margin-bottom:18px">Admin-Passwort eingeben</div>
+        <div class="field">
+          <input id="adminPwInput" type="password" placeholder="Passwort"
+            style="width:100%;background:var(--bg3);border:1px solid var(--border2);border-radius:4px;
+            color:var(--text);padding:11px 14px;font-size:15px;outline:none"
+            onkeydown="if(event.key==='Enter')document.getElementById('adminLoginBtn').click()"/>
+        </div>
+        <div id="adminLoginErr" style="color:var(--red);font-size:13px;margin-bottom:10px;display:none">❌ Falsches Passwort</div>
+        <div style="display:flex;gap:10px;justify-content:flex-end">
+          <button class="btn-secondary" onclick="this.closest('div[style]').remove()">Abbrechen</button>
+          <button class="btn-primary" id="adminLoginBtn">Einloggen</button>
+        </div>
+      </div>`;
+    document.body.appendChild(o);
+    setTimeout(() => o.querySelector('#adminPwInput').focus(), 100);
+    o.querySelector('#adminLoginBtn').addEventListener('click', () => {
+      const pw = o.querySelector('#adminPwInput').value;
+      if (pw === ADMIN_PIN) {
+        adminUnlocked = true;
+        o.remove();
+        showAdminPanel();
+      } else {
+        o.querySelector('#adminLoginErr').style.display = 'block';
+        o.querySelector('#adminPwInput').value = '';
+        o.querySelector('#adminPwInput').focus();
+      }
+    });
+  } else {
+    showAdminPanel();
+  }
+}
+
+function showAdminPanel() {
+  // Statistiken berechnen
+  const heute = datumKurz();
+  const heuteCount = autos.filter(a => a.datum === heute).length;
+  const gesamtArb = autos.reduce((s,a) => s + (a.arbeiten||[]).reduce((ss,ar) => ss+(parseFloat(ar.stunden)||0),0), 0);
+
+  // Spalten-Config laden
+  const spaltenlabels = JSON.parse(localStorage.getItem('werkstatt-spalten') || 'null') || {};
+
+  openModal(`
+    <div class="modal-header">
+      <span class="modal-title">⚙️ Adminbereich</span>
+      <button class="modal-close" onclick="closeModal();adminUnlocked=false;">✕</button>
+    </div>
+
+    <div class="admin-section">
+      <div class="admin-section-title">📊 Statistiken</div>
+      <div class="stat-grid">
+        <div class="stat-box"><div class="stat-box-val">${autos.length}</div><div class="stat-box-lbl">Aufträge gesamt</div></div>
+        <div class="stat-box"><div class="stat-box-val">${heuteCount}</div><div class="stat-box-lbl">Heute angelegt</div></div>
+        <div class="stat-box"><div class="stat-box-val">${gesamtArb.toFixed(1)}</div><div class="stat-box-lbl">Stunden erfasst</div></div>
+      </div>
+    </div>
+
+    <div class="admin-section">
+      <div class="admin-section-title">🔒 Sicherheit</div>
+      <div class="admin-row">
+        <div><div class="admin-row-label">Login-Code ändern</div>
+          <div class="admin-row-sub">Aktueller Code für alle Mitarbeiter</div></div>
+        <button class="btn-secondary" onclick="closeModal();openPinAendern()">Ändern</button>
+      </div>
+    </div>
+
+    <div class="admin-section">
+      <div class="admin-section-title">📋 Spalten umbenennen</div>
+      ${STATI.map(s => `
+        <div class="admin-row">
+          <div><div class="admin-row-label">${s.icon} Aktuell: <strong>${spaltenlabels[s.id]||s.label}</strong></div></div>
+          <input id="spalte_${s.id}" value="${spaltenlabels[s.id]||s.label}"
+            style="background:var(--bg4);border:1px solid var(--border2);border-radius:4px;
+            color:var(--text);padding:6px 10px;font-size:13px;outline:none;width:180px"/>
+        </div>`).join('')}
+      <button class="btn-primary" style="width:100%;margin-top:10px" onclick="saveSpaltenNamen()">✓ Spalten speichern</button>
+    </div>
+
+    <div class="admin-section">
+      <div class="admin-section-title">✅ Diagnose-Checkliste anpassen</div>
+      <div class="admin-row">
+        <div><div class="admin-row-label">Checklisten-Punkte bearbeiten</div>
+          <div class="admin-row-sub">${DIAG_ITEMS_LEFT.length + DIAG_ITEMS_RIGHT.length} Punkte aktuell</div></div>
+        <button class="btn-secondary" onclick="openDiagAdmin()">Bearbeiten</button>
+      </div>
+    </div>
+
+    <div class="admin-section">
+      <div class="admin-section-title">💾 Daten & Backup</div>
+      <div class="admin-row">
+        <div><div class="admin-row-label">Alle Aufträge exportieren</div>
+          <div class="admin-row-sub">Vollständiges Backup aller Daten</div></div>
+        <button class="btn-secondary" onclick="exportBackup()">Export</button>
+      </div>
+      <div class="admin-row">
+        <div><div class="admin-row-label">Backup importieren</div>
+          <div class="admin-row-sub">Backup wiederherstellen</div></div>
+        <button class="btn-secondary" onclick="importBackup()">Import</button>
+      </div>
+    </div>
+
+    <div style="text-align:right;margin-top:8px">
+      <button class="btn-secondary" style="font-size:11px;color:var(--text-muted)"
+        onclick="adminUnlocked=false;closeModal()">🔒 Admin abmelden</button>
+    </div>
+  `);
+}
+
+function saveSpaltenNamen() {
+  const config = {};
+  STATI.forEach(s => {
+    const el = document.getElementById('spalte_'+s.id);
+    if (el && el.value.trim()) config[s.id] = el.value.trim();
+  });
+  localStorage.setItem('werkstatt-spalten', JSON.stringify(config));
+  // Labels live aktualisieren
+  STATI.forEach(s => { if(config[s.id]) s.label = config[s.id]; });
+  closeModal();
+  render();
+  renderMobileTabs();
+}
+
+function openDiagAdmin() {
+  openModal(`
+    <div class="modal-header">
+      <span class="modal-title">✅ Checkliste anpassen</span>
+      <button class="modal-close" onclick="closeModal()">✕</button>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:0 16px">
+      <div>
+        <div class="section-label">Spalte Links</div>
+        <div id="diagAdminLeft">
+          ${DIAG_ITEMS_LEFT.map((item,i) => `
+            <div style="display:flex;gap:6px;margin-bottom:6px">
+              <input value="${item}" style="flex:1;background:var(--bg3);border:1px solid var(--border2);border-radius:4px;color:var(--text);padding:6px 8px;font-size:12px;outline:none"
+                onchange="updateDiagItem('left',${i},this.value)"/>
+              <button onclick="removeDiagItem('left',${i})" style="background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:14px">✕</button>
+            </div>`).join('')}
+        </div>
+        <button class="btn-secondary" style="width:100%;font-size:12px" onclick="addDiagItem('left')">+ Hinzufügen</button>
+      </div>
+      <div>
+        <div class="section-label">Spalte Rechts</div>
+        <div id="diagAdminRight">
+          ${DIAG_ITEMS_RIGHT.map((item,i) => `
+            <div style="display:flex;gap:6px;margin-bottom:6px">
+              <input value="${item}" style="flex:1;background:var(--bg3);border:1px solid var(--border2);border-radius:4px;color:var(--text);padding:6px 8px;font-size:12px;outline:none"
+                onchange="updateDiagItem('right',${i},this.value)"/>
+              <button onclick="removeDiagItem('right',${i})" style="background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:14px">✕</button>
+            </div>`).join('')}
+        </div>
+        <button class="btn-secondary" style="width:100%;font-size:12px" onclick="addDiagItem('right')">+ Hinzufügen</button>
+      </div>
+    </div>
+    <div class="form-footer">
+      <button class="btn-secondary" onclick="openAdmin()">Zurück</button>
+      <button class="btn-primary" onclick="saveDiagItems()">✓ Speichern</button>
+    </div>
+  `);
+}
+
+function updateDiagItem(seite, i, val) {
+  if (seite==='left') DIAG_ITEMS_LEFT[i]=val;
+  else DIAG_ITEMS_RIGHT[i]=val;
+}
+function removeDiagItem(seite, i) {
+  if (seite==='left') DIAG_ITEMS_LEFT.splice(i,1);
+  else DIAG_ITEMS_RIGHT.splice(i,1);
+  openDiagAdmin();
+}
+function addDiagItem(seite) {
+  if (seite==='left') DIAG_ITEMS_LEFT.push('Neuer Punkt');
+  else DIAG_ITEMS_RIGHT.push('Neuer Punkt');
+  openDiagAdmin();
+}
+function saveDiagItems() {
+  localStorage.setItem('werkstatt-diag-left', JSON.stringify(DIAG_ITEMS_LEFT));
+  localStorage.setItem('werkstatt-diag-right', JSON.stringify(DIAG_ITEMS_RIGHT));
+  closeModal();
+}
+
+function exportBackup() {
+  const json = JSON.stringify({version:1, datum:new Date().toISOString(), auftraege:autos}, null, 2);
+  const o = document.createElement('div');
+  o.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.9);z-index:300;display:flex;align-items:center;justify-content:center;padding:24px';
+  o.innerHTML = `
+    <div style="background:var(--bg2);border:1px solid var(--border2);border-top:3px solid var(--red);
+      border-radius:6px;padding:24px;max-width:560px;width:100%">
+      <div style="font-family:var(--font-head);font-size:14px;color:var(--text);margin-bottom:10px;text-transform:uppercase;letter-spacing:.08em">💾 Backup exportieren</div>
+      <p style="color:var(--text-dim);font-size:13px;margin-bottom:12px">Kopiere den Text und speichere ihn als .json Datei.</p>
+      <textarea readonly onclick="this.select()" style="width:100%;height:160px;background:var(--bg4);border:1px solid var(--border2);
+        border-radius:4px;color:#4ade80;font-size:11px;padding:10px;outline:none;resize:none;font-family:monospace">${json}</textarea>
+      <div style="display:flex;justify-content:flex-end;gap:10px;margin-top:12px">
+        <button class="btn-secondary" onclick="this.closest('div[style]').remove()">Schließen</button>
+        <button class="btn-primary" onclick="navigator.clipboard.writeText(${JSON.stringify(json)}).then(()=>{this.textContent='✓ Kopiert!'})">📋 Kopieren</button>
+      </div>
+    </div>`;
+  document.body.appendChild(o);
+}
+
+function importBackup() {
+  const o = document.createElement('div');
+  o.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.9);z-index:300;display:flex;align-items:center;justify-content:center;padding:24px';
+  o.innerHTML = `
+    <div style="background:var(--bg2);border:1px solid var(--border2);border-top:3px solid var(--red);
+      border-radius:6px;padding:24px;max-width:560px;width:100%">
+      <div style="font-family:var(--font-head);font-size:14px;color:var(--text);margin-bottom:10px;text-transform:uppercase;letter-spacing:.08em">💾 Backup importieren</div>
+      <textarea id="backupTxt" placeholder="Backup-JSON hier einfügen …" style="width:100%;height:160px;background:var(--bg4);border:1px solid var(--border2);
+        border-radius:4px;color:var(--text);font-size:11px;padding:10px;outline:none;resize:none;font-family:monospace;margin-bottom:10px"></textarea>
+      <div id="backupErr" style="color:var(--red);font-size:13px;margin-bottom:8px;display:none"></div>
+      <div style="display:flex;justify-content:flex-end;gap:10px">
+        <button class="btn-secondary" onclick="this.closest('div[style]').remove()">Abbrechen</button>
+        <button class="btn-primary" onclick="doImportBackup(this)">Wiederherstellen</button>
+      </div>
+    </div>`;
+  document.body.appendChild(o);
+}
+
+async function doImportBackup(btn) {
+  const txt = btn.closest('div').querySelector('#backupTxt').value.trim();
+  const err = btn.closest('div').querySelector('#backupErr');
+  try {
+    const data = JSON.parse(txt);
+    const list = data.auftraege || data;
+    if (!Array.isArray(list)) throw new Error('Ungültiges Format');
+    if (!confirm(`${list.length} Aufträge wiederherstellen? Alle aktuellen Daten werden überschrieben.`)) return;
+    autos = list.map(a => ({
+      ...a, hinweise:(a.hinweise||[]).map(h=>typeof h==='string'?{text:h,done:false}:h)
+    }));
+    for (const a of autos) await saveAuto(a);
+    btn.closest('div[style]').remove();
+    closeModal();
+    render();
+  } catch(e) {
+    err.textContent = '⚠ Fehler: ' + e.message;
+    err.style.display = 'block';
+  }
+}
+
+// Checkliste beim Start aus localStorage laden falls vorhanden
+(function loadDiagConfig() {
+  const l = localStorage.getItem('werkstatt-diag-left');
+  const r = localStorage.getItem('werkstatt-diag-right');
+  if(l) { try { const p=JSON.parse(l); DIAG_ITEMS_LEFT.length=0; p.forEach(x=>DIAG_ITEMS_LEFT.push(x)); } catch(e){} }
+  if(r) { try { const p=JSON.parse(r); DIAG_ITEMS_RIGHT.length=0; p.forEach(x=>DIAG_ITEMS_RIGHT.push(x)); } catch(e){} }
+  // Spaltenbezeichnungen laden
+  const s = localStorage.getItem('werkstatt-spalten');
+  if(s) { try { const c=JSON.parse(s); STATI.forEach(st=>{ if(c[st.id]) st.label=c[st.id]; }); } catch(e){} }
+})();
 
 // ── PIN SCHUTZ ──
 const DEFAULT_PIN = '808140';
