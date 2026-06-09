@@ -368,7 +368,7 @@ input,select,textarea,button{font-family:var(--font-body);}
 // ── KONFIGURATION ──
 const SUPABASE_URL = 'https://ttzaocdqkiylkweklrsv.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InR0emFvY2Rxa2l5bGt3ZWtscnN2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODEwMjU4NjIsImV4cCI6MjA5NjYwMTg2Mn0.MGOpJU30yZinZ2rXUG6V08m1mVqGrR17FB4Ew-wh5PY';
-const ANTHROPIC_KEY = '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';
+function getAnthropicKey(){return localStorage.getItem('werkstatt-anthropic-key')||'';}
 const COLLAPSE_AT  = 3;
 const DEFAULT_PIN  = '808140';
 const ADMIN_PW     = 'admin';
@@ -1444,6 +1444,11 @@ async function analyzeSFKPDF(f){
   const analyzeBtn=document.getElementById('sfk_analyze_btn');
   const importBtn=document.getElementById('sfk_import_btn');
 
+  if(!getAnthropicKey()){
+    errEl.textContent='⚠ Kein API-Key gesetzt. Bitte zuerst im ⚙️ Adminbereich unter "KI-Analyse" den Anthropic API-Key eintragen.';
+    errEl.style.display='block';return;
+  }
+
   errEl.style.display='none';
   importBtn.style.display='none';
   analyzeBtn.style.display='none';
@@ -1463,7 +1468,7 @@ async function analyzeSFKPDF(f){
       headers:{
         'Content-Type':'application/json',
         'anthropic-version':'2023-06-01',
-        'x-api-key':'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',
+        'x-api-key':getAnthropicKey(),
         'anthropic-dangerous-direct-browser-access':'true'
       },
       body:JSON.stringify({
@@ -1652,6 +1657,17 @@ function showAdminPanel(){
       </div>
     </div>
     <div class="admin-section">
+      <div class="admin-section-title">🤖 KI-Analyse (SFK-Import)</div>
+      <div class="admin-row">
+        <div>
+          <div class="admin-row-label">Anthropic API-Key</div>
+          <div class="admin-row-sub">Wird nur lokal auf diesem Gerät gespeichert</div>
+        </div>
+        <button class="btn-secondary" id="btnApiKey">Eintragen</button>
+      </div>
+      <div id="apiKeyStatus" style="font-size:12px;margin-top:6px"></div>
+    </div>
+    <div class="admin-section">
       <div class="admin-section-title">🔒 Login-Code ändern</div>
       <div class="admin-row">
         <div><div class="admin-row-label">Zugangscode für Mitarbeiter</div></div>
@@ -1683,6 +1699,39 @@ function showAdminPanel(){
     </div>
   `);
   document.getElementById('btnAdminPin').addEventListener('click',()=>{closeModal();openPinAendern();});
+  // API Key status anzeigen
+  const keyStatus=document.getElementById('apiKeyStatus');
+  if(getAnthropicKey()){keyStatus.innerHTML='<span style="color:#4ade80">✓ API-Key ist gesetzt</span>';}
+  else{keyStatus.innerHTML='<span style="color:var(--red)">✕ Kein API-Key gesetzt — SFK-Import funktioniert nicht</span>';}
+  document.getElementById('btnApiKey').addEventListener('click',()=>{
+    const o=document.createElement('div');
+    o.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.9);z-index:300;display:flex;align-items:center;justify-content:center;padding:24px';
+    o.innerHTML=`<div style="background:var(--bg2);border:1px solid var(--border2);border-top:3px solid var(--red);border-radius:6px;padding:28px;max-width:480px;width:100%">
+      <div style="font-family:var(--font-head);font-size:15px;color:var(--text);margin-bottom:6px;text-transform:uppercase;letter-spacing:.06em">🤖 Anthropic API-Key</div>
+      <div style="font-size:12px;color:var(--text-dim);margin-bottom:16px;line-height:1.6">Den Key findest du unter <span style="color:var(--red)">console.anthropic.com</span> → API Keys.<br>Er wird nur auf diesem Gerät gespeichert — nicht in der Datei.</div>
+      <input id="apiKeyInput" type="password" placeholder="sk-ant-api03-..."
+        style="width:100%;background:var(--bg3);border:1px solid var(--border2);border-radius:4px;color:var(--text);padding:11px 14px;font-size:13px;outline:none;margin-bottom:12px;font-family:monospace"/>
+      <div id="apiKeyErr" style="color:var(--red);font-size:12px;margin-bottom:8px;display:none"></div>
+      <div style="display:flex;gap:10px;justify-content:flex-end">
+        <button class="btn-secondary" id="apiKeyCancel">Abbrechen</button>
+        <button class="btn-primary" id="apiKeySave">Speichern</button>
+      </div></div>`;
+    document.body.appendChild(o);
+    const inp=o.querySelector('#apiKeyInput');
+    inp.value=getAnthropicKey();
+    setTimeout(()=>inp.focus(),100);
+    o.querySelector('#apiKeyCancel').addEventListener('click',()=>document.body.removeChild(o));
+    o.querySelector('#apiKeySave').addEventListener('click',()=>{
+      const v=inp.value.trim();
+      if(!v.startsWith('sk-ant-')){
+        o.querySelector('#apiKeyErr').textContent='⚠ Ungültiger Key — muss mit sk-ant- beginnen';
+        o.querySelector('#apiKeyErr').style.display='block';return;
+      }
+      localStorage.setItem('werkstatt-anthropic-key',v);
+      document.body.removeChild(o);
+      showAdminPanel();
+    });
+  });
   document.getElementById('btnSaveSpalten').addEventListener('click',()=>{
     const c={};STATI.forEach(s=>{const el=document.getElementById('spalte_'+s.id);if(el&&el.value.trim()){c[s.id]=el.value.trim();s.label=el.value.trim();}});
     localStorage.setItem('werkstatt-spalten',JSON.stringify(c));closeModal();render();renderMobileTabs();
