@@ -1,0 +1,632 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+<title>Autopartner GmbH – Werkstatt</title>
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=Open+Sans:wght@400;600;700&display=swap" rel="stylesheet"/>
+<style>
+  :root {
+    --red:#C0141C; --red-dark:#8B0E13; --red-glow:rgba(192,20,28,0.22);
+    --silver:#C8C8C8; --silver-dim:#6b7280;
+    --bg:#0a0a0a; --bg2:#111111; --bg3:#1a1a1a; --bg4:#222222;
+    --border:#2a2a2a; --border2:#333333;
+    --text:#f0f0f0; --text-dim:#888888; --text-muted:#444444;
+    --font-head:'Oswald',sans-serif; --font-body:'Open Sans',sans-serif;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  html,body{height:100%;}
+  body{background:var(--bg);color:var(--text);font-family:var(--font-body);display:flex;flex-direction:column;overflow:hidden;}
+  input,select,textarea,button{font-family:var(--font-body);}
+
+  /* HEADER */
+  #header{background:var(--bg2);border-bottom:2px solid var(--red);padding:0 16px;
+    display:flex;align-items:stretch;height:72px;gap:0;overflow-x:auto;flex-shrink:0;}
+  .hlogo{display:flex;align-items:center;gap:12px;padding-right:20px;border-right:1px solid var(--border);flex-shrink:0;}
+  .hlogo-title{font-family:var(--font-head);font-weight:700;font-size:17px;color:var(--text);letter-spacing:.08em;text-transform:uppercase;line-height:1;}
+  .hlogo-sub{font-family:var(--font-head);font-weight:400;font-size:11px;color:var(--red);letter-spacing:.12em;text-transform:uppercase;margin-top:2px;}
+  .hlogo-date{color:var(--text-dim);font-size:11px;margin-top:3px;}
+  .hstat{display:flex;align-items:center;gap:8px;padding:0 16px;border-right:1px solid var(--border);flex-shrink:0;}
+  .hstat-val{font-family:var(--font-head);font-weight:700;font-size:30px;}
+  .hstat-lbl{color:var(--text-dim);font-size:10px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;line-height:1.3;}
+  .hspace{flex:1;}
+  .hactions{display:flex;align-items:center;gap:8px;padding-left:12px;flex-shrink:0;}
+
+  /* SYNC STATUS */
+  #syncStatus{font-size:11px;padding:4px 10px;border-radius:4px;font-weight:600;letter-spacing:.04em;}
+  #syncStatus.ok{color:#4ade80;background:rgba(74,222,128,0.1);}
+  #syncStatus.syncing{color:#fbbf24;background:rgba(251,191,36,0.1);}
+  #syncStatus.error{color:var(--red);background:rgba(192,20,28,0.1);}
+
+  /* BOARD */
+  #board{flex:1;overflow:hidden;padding:12px;display:flex;flex-direction:column;}
+  .board-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;min-width:760px;height:100%;}
+
+  /* LANE */
+  .lane{display:flex;flex-direction:column;min-height:0;}
+  .lane-header{border-radius:6px 6px 0 0;padding:10px 14px;display:flex;align-items:center;gap:8px;flex-shrink:0;}
+  .lane-title{font-family:var(--font-head);font-size:17px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;}
+  .lane-count{border-radius:4px;min-width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-family:var(--font-head);font-weight:700;font-size:14px;}
+  .lane-toggle-btn{background:rgba(0,0,0,0.3);border-radius:4px;padding:3px 7px;cursor:pointer;font-size:10px;font-weight:700;font-family:var(--font-head);letter-spacing:.06em;flex-shrink:0;}
+  .lane-body{border-radius:0 0 6px 6px;padding:6px;flex:1;overflow-y:auto;transition:background .15s,border-color .15s;border:2px solid var(--border);background:var(--bg2);}
+  .lane-empty{color:var(--text-muted);text-align:center;padding:24px 8px;font-size:12px;font-family:var(--font-head);letter-spacing:.08em;text-transform:uppercase;}
+
+  /* CARD */
+  .card-wrap{margin-bottom:6px;border-radius:6px;overflow:hidden;}
+  .card-top{display:flex;align-items:center;padding:10px 12px;cursor:pointer;user-select:none;transition:background .15s;}
+  .card-top:hover{background:rgba(255,255,255,0.04);}
+  .card-top-prio{width:8px;height:8px;border-radius:50%;flex-shrink:0;margin-right:8px;}
+  .card-top-kz{font-family:var(--font-head);font-weight:700;font-size:18px;letter-spacing:.1em;white-space:nowrap;flex-shrink:0;margin-right:12px;}
+  .card-top-kunde{font-family:var(--font-body);font-size:14px;font-weight:600;color:var(--silver);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .card-top-chevron{font-size:18px;color:var(--text-muted);flex-shrink:0;margin-left:6px;transition:transform .2s;line-height:1;}
+  .card-top-chevron.open{transform:rotate(180deg);}
+  .card-body{padding:4px 12px 8px;}
+  .card-fz{font-size:12px;color:var(--text-dim);margin-bottom:6px;}
+  .card-hints{background:rgba(0,0,0,0.3);border-radius:4px;padding:6px 10px;margin-bottom:4px;}
+  .hint-done-label{color:#4ade80;font-size:11px;font-weight:700;margin-bottom:4px;letter-spacing:.04em;}
+  .card-hint{display:flex;align-items:center;gap:8px;padding:4px 0;}
+  .card-hint+.card-hint{border-top:1px solid var(--border);}
+  .hint-input{color:#ccc;font-size:13px;flex:1;background:transparent;border:none;outline:none;font-family:var(--font-body);padding:2px 4px;border-radius:3px;cursor:text;transition:background .15s;}
+  .hint-input:focus{background:var(--bg4);color:var(--text);}
+  .hint-input.done{color:var(--text-muted);text-decoration:line-through;}
+  .btn-erledigt{background:var(--bg4);border:1px solid var(--border2);border-radius:4px;color:var(--text-dim);padding:2px 8px;cursor:pointer;font-size:11px;font-weight:700;white-space:nowrap;flex-shrink:0;transition:all .15s;}
+  .btn-erledigt:hover{background:#14532d;border-color:#16a34a;color:#4ade80;}
+  .btn-erledigt.done{background:#14532d44;border-color:#16a34a88;color:#4ade80;}
+  .btn-erledigt.done:hover{background:#1a0a0a;border-color:var(--red);color:var(--red);}
+  .hint-add-inline{display:flex;gap:6px;margin-top:6px;}
+  .hint-add-inline input{flex:1;background:var(--bg4);border:1px dashed var(--border2);border-radius:4px;color:var(--text-dim);padding:4px 8px;font-size:12px;outline:none;font-family:var(--font-body);transition:border-color .15s;}
+  .hint-add-inline input:focus{border-color:var(--red);color:var(--text);}
+  .hint-add-inline button{background:var(--red);border:none;border-radius:4px;color:#fff;padding:0 10px;cursor:pointer;font-size:16px;font-weight:700;}
+  .abholbereit-banner{padding:6px 12px;color:#4ade80;font-size:11px;font-weight:700;font-family:var(--font-head);letter-spacing:.1em;text-transform:uppercase;border-bottom:1px solid rgba(74,222,128,0.25);}
+  .card-time{color:var(--text-muted);font-size:11px;padding:0 12px 6px;}
+  .card-actions{display:flex;border-top:1px solid var(--border);}
+  .card-actions button{flex:1;background:transparent;border:none;border-right:1px solid var(--border);color:var(--text-dim);padding:9px 6px;cursor:pointer;font-size:12px;font-weight:600;transition:background .15s,color .15s;}
+  .card-actions button:last-child{border-right:none;}
+  .card-actions button:hover{background:rgba(255,255,255,0.05);color:var(--text);}
+
+  /* SUCHE */
+  .search-wrap{display:flex;align-items:center;background:var(--bg3);border:1px solid var(--border2);border-radius:4px;overflow:hidden;margin-right:4px;flex-shrink:0;}
+  .search-wrap input{background:transparent;border:none;outline:none;color:var(--text);padding:6px 10px;font-size:12px;width:160px;font-family:var(--font-body);}
+  .search-wrap input::placeholder{color:var(--text-muted);}
+  .search-clear{background:none;border:none;color:var(--text-muted);cursor:pointer;padding:0 8px;font-size:14px;line-height:1;display:none;}
+  .search-clear.visible{display:block;}
+
+  @keyframes flashCard{
+    0%{box-shadow:0 0 0 0 transparent;}
+    25%{box-shadow:0 0 0 8px var(--flash-color);}
+    50%{box-shadow:0 0 0 0 transparent;}
+    75%{box-shadow:0 0 0 8px var(--flash-color);}
+    100%{box-shadow:0 0 0 0 transparent;}
+  }
+  .card-flash{animation:flashCard 2s ease-in-out forwards;}
+
+  /* BUTTONS */
+  .btn-primary{background:var(--red);border:none;border-radius:4px;color:#fff;padding:7px 14px;cursor:pointer;font-size:12px;font-weight:700;font-family:var(--font-head);letter-spacing:.08em;text-transform:uppercase;transition:background .15s;}
+  .btn-primary:hover{background:var(--red-dark);}
+  .btn-secondary{background:var(--bg3);border:1px solid var(--border2);border-radius:4px;color:var(--text-dim);padding:7px 12px;cursor:pointer;font-size:12px;font-weight:600;transition:background .15s;}
+  .btn-secondary:hover{background:var(--bg4);color:var(--text);}
+
+  /* MÜLLEIMER */
+  #trash{position:fixed;bottom:16px;left:50%;transform:translateX(-50%);width:64px;height:64px;border-radius:50%;background:#1a0000;border:2px dashed #7f1d1d;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:22px;color:#7f1d1d;transition:all .2s;z-index:100;opacity:0;pointer-events:none;}
+  #trash.drag-active{opacity:1;pointer-events:all;}
+  #trash.over{background:#450a0a;border-color:var(--red);border-style:solid;color:var(--red);transform:translateX(-50%) scale(1.15);box-shadow:0 0 30px var(--red-glow);}
+  #trash-label{font-size:8px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;margin-top:2px;}
+
+  /* MODAL */
+  .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.9);z-index:200;display:flex;align-items:center;justify-content:center;padding:16px;}
+  .modal-box{background:var(--bg2);border:1px solid var(--border2);border-top:3px solid var(--red);border-radius:6px;width:100%;max-width:680px;padding:24px;box-shadow:0 40px 80px rgba(0,0,0,.8);max-height:92vh;overflow-y:auto;}
+  .modal-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;}
+  .modal-title{font-family:var(--font-head);font-weight:600;font-size:15px;color:var(--text);letter-spacing:.1em;text-transform:uppercase;}
+  .modal-close{background:none;border:none;color:var(--text-dim);cursor:pointer;font-size:20px;padding:0 4px;}
+  .form-grid2{display:grid;grid-template-columns:1fr 1fr;gap:0 14px;}
+  .form-grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:0 14px;}
+  .field{margin-bottom:14px;}
+  .field label{display:block;color:var(--text-dim);font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;margin-bottom:5px;}
+  .field input,.field select,.field textarea{width:100%;background:var(--bg3);border:1px solid var(--border2);border-radius:4px;color:var(--text);padding:10px 12px;font-size:14px;outline:none;transition:border-color .15s;}
+  .field input:focus,.field select:focus,.field textarea:focus{border-color:var(--red);}
+  .field textarea{resize:vertical;}
+  .form-footer{display:flex;justify-content:flex-end;gap:10px;margin-top:4px;}
+  .section-label{color:var(--red);font-size:11px;font-weight:700;letter-spacing:.12em;font-family:var(--font-head);text-transform:uppercase;margin-bottom:10px;padding-bottom:6px;border-bottom:1px solid var(--border);}
+  .hints-list{background:var(--bg3);border:1px solid var(--border2);border-radius:4px;padding:6px 10px;margin-bottom:8px;}
+  .hint-row{display:flex;align-items:center;gap:8px;padding:5px 0;}
+  .hint-row+.hint-row{border-top:1px solid var(--border);}
+  .hint-row input[type="text"]{flex:1;background:transparent;border:none;outline:none;font-size:14px;padding:2px 0;}
+  .hint-row input[type="text"].done{color:var(--text-muted);text-decoration:line-through;}
+  .hint-row input[type="text"]:not(.done){color:var(--text);}
+  .hint-check{width:20px;height:20px;border-radius:4px;border:2px solid var(--border2);background:none;cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:12px;transition:all .15s;padding:0;color:transparent;}
+  .hint-check.checked{background:#14532d;border-color:#16a34a;color:#4ade80;}
+  .hint-remove{background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:16px;padding:0 4px;}
+  .hint-remove:hover{color:var(--red);}
+  .hint-add{display:flex;gap:8px;}
+  .hint-add input{flex:1;background:var(--bg3);border:1px solid var(--border2);border-radius:4px;color:var(--text);padding:10px 12px;font-size:13px;outline:none;}
+  .hint-add input:focus{border-color:var(--red);}
+  .hint-add-btn{background:var(--red);border:none;border-radius:4px;color:#fff;padding:0 16px;cursor:pointer;font-size:20px;font-weight:700;}
+
+  ::-webkit-scrollbar{width:5px;}
+  ::-webkit-scrollbar-track{background:var(--bg);}
+  ::-webkit-scrollbar-thumb{background:var(--border2);border-radius:3px;}
+  ::-webkit-scrollbar-thumb:hover{background:var(--red);}
+</style>
+</head>
+<body>
+
+<div id="header">
+  <div class="hlogo">
+    <div>
+      <div class="hlogo-title">Werkstatt</div>
+      <div class="hlogo-sub">Autopartner GmbH</div>
+      <div class="hlogo-date" id="clockEl"></div>
+    </div>
+  </div>
+  <div class="hstat"><div class="hstat-val" id="statTotal" style="color:var(--silver)">0</div><div class="hstat-lbl">Gesamt</div></div>
+  <div class="hstat"><div class="hstat-val" id="statAktiv" style="color:var(--red)">0</div><div class="hstat-lbl">In Arbeit</div></div>
+  <div class="hstat"><div class="hstat-val" id="statTeile" style="color:#fbbf24">0</div><div class="hstat-lbl">Teile</div></div>
+  <div class="hstat"><div class="hstat-val" id="statFertig" style="color:#4ade80">0</div><div class="hstat-lbl">Abholbereit</div></div>
+  <div class="hstat"><div class="hstat-val" id="statWarten" style="color:var(--silver-dim)">0</div><div class="hstat-lbl">Offen</div></div>
+  <div class="hspace"></div>
+  <span id="syncStatus" class="ok">● Live</span>
+  <div class="hactions">
+    <div class="search-wrap">
+      <input type="text" id="searchInput" placeholder="🔍 Suche …" oninput="handleSearch(this.value)" onkeydown="if(event.key==='Escape')clearSearch()"/>
+      <button class="search-clear" id="searchClear" onclick="clearSearch()">✕</button>
+    </div>
+    <button class="btn-primary" onclick="openNeu()">+ Fahrzeug</button>
+  </div>
+</div>
+
+<div id="board"><div class="board-grid" id="boardGrid"></div></div>
+
+<div id="trash">
+  <span id="trashIcon">🗑️</span>
+  <span id="trash-label">Löschen</span>
+</div>
+
+<div class="modal-overlay" id="modalOverlay" style="display:none">
+  <div class="modal-box" id="modalBox"></div>
+</div>
+
+<script>
+// ── SUPABASE CONFIG ──
+const SUPABASE_URL = 'https://ttzaocdqkiylkweklrsv.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InR0emFvY2Rxa2l5bGt3ZWtscnN2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODEwMjU4NjIsImV4cCI6MjA5NjYwMTg2Mn0.MGOpJU30yZinZ2rXUG6V08m1mVqGrR17FB4Ew-wh5PY';
+
+const COLLAPSE_AT = 3;
+const STATI = [
+  {id:'in_arbeit',label:'In Arbeit',          icon:'🔧',color:'#8B0E13',accent:'#E8454D',glow:'rgba(192,20,28,0.22)'},
+  {id:'teile',    label:'Teile fehlen',        icon:'📦',color:'#92400e',accent:'#fbbf24',glow:'rgba(251,191,36,0.18)'},
+  {id:'fertig',   label:'Abholbereit / Fertig',icon:'🏁',color:'#14532d',accent:'#4ade80',glow:'rgba(74,222,128,0.18)'},
+  {id:'wartend',  label:'Noch nicht begonnen', icon:'⏱', color:'#2a2a2a',accent:'#888888',glow:'rgba(136,136,136,0.12)'},
+];
+const PRIORITAET = ['Normal','Dringend','Express'];
+const PRIO_DOT   = {Normal:'#555',Dringend:'#ea580c',Express:'#C0141C'};
+
+let autos = [], dragId = null, dragFrom = null;
+let collapsedCards = new Set(), expandedCards = new Set();
+let currentSearch = '';
+let realtimeChannel = null;
+
+function genId()    {return Date.now().toString(36)+Math.random().toString(36).slice(2,5);}
+function uhrzeit()  {return new Date().toLocaleTimeString('de-DE',{hour:'2-digit',minute:'2-digit'});}
+function datumKurz(){return new Date().toLocaleDateString('de-DE',{day:'2-digit',month:'2-digit'});}
+
+// ── SUPABASE API ──
+async function sbFetch(path, options={}) {
+  const res = await fetch(SUPABASE_URL + path, {
+    ...options,
+    headers: {
+      'apikey': SUPABASE_KEY,
+      'Authorization': 'Bearer ' + SUPABASE_KEY,
+      'Content-Type': 'application/json',
+      'Prefer': 'return=representation',
+      ...options.headers
+    }
+  });
+  if (!res.ok) throw new Error(await res.text());
+  const text = await res.text();
+  return text ? JSON.parse(text) : [];
+}
+
+function setSync(state, msg) {
+  const el = document.getElementById('syncStatus');
+  el.className = state;
+  el.textContent = msg;
+}
+
+// ── DATEN LADEN ──
+async function loadAutos() {
+  try {
+    setSync('syncing', '↻ Laden …');
+    const data = await sbFetch('/rest/v1/auftraege?order=erstellt_am.asc');
+    autos = data.map(dbToAuto);
+    setSync('ok', '● Live');
+    render();
+  } catch(e) {
+    setSync('error', '✕ Fehler');
+    console.error(e);
+  }
+}
+
+function dbToAuto(row) {
+  return {
+    id:         row.id,
+    kennzeichen:row.kennzeichen||'',
+    fahrzeug:   row.fahrzeug||'',
+    kunde:      row.kunde||'',
+    platz:      row.platz||'',
+    prioritaet: row.prioritaet||'Normal',
+    status:     row.status||'wartend',
+    hinweise:   (row.hinweise||[]).map(h=>typeof h==='string'?{text:h,done:false}:h),
+    eingang:    row.eingang||uhrzeit(),
+    datum:      row.datum||datumKurz(),
+    statusSeit: row.status_seit||uhrzeit(),
+  };
+}
+
+function autoToDb(a) {
+  return {
+    id:          a.id,
+    kennzeichen: a.kennzeichen,
+    fahrzeug:    a.fahrzeug,
+    kunde:       a.kunde,
+    platz:       a.platz,
+    prioritaet:  a.prioritaet,
+    status:      a.status,
+    hinweise:    a.hinweise,
+    eingang:     a.eingang,
+    datum:       a.datum,
+    status_seit: a.statusSeit,
+    geaendert_am: new Date().toISOString(),
+  };
+}
+
+async function saveAuto(a) {
+  try {
+    setSync('syncing','↻ Speichern …');
+    await sbFetch('/rest/v1/auftraege', {
+      method: 'POST',
+      headers: {'Prefer':'resolution=merge-duplicates,return=representation'},
+      body: JSON.stringify(autoToDb(a))
+    });
+    setSync('ok','● Live');
+  } catch(e) { setSync('error','✕ Sync-Fehler'); console.error(e); }
+}
+
+async function deleteAuto(id) {
+  try {
+    setSync('syncing','↻ Löschen …');
+    await sbFetch(`/rest/v1/auftraege?id=eq.${id}`, {method:'DELETE'});
+    setSync('ok','● Live');
+  } catch(e) { setSync('error','✕ Sync-Fehler'); console.error(e); }
+}
+
+// ── REALTIME — einfaches Polling alle 5 Sekunden ──
+let lastPoll = Date.now();
+let pollTimer = null;
+
+function startRealtime() {
+  pollTimer = setInterval(async () => {
+    try {
+      const data = await sbFetch('/rest/v1/auftraege?order=erstellt_am.asc&select=id,geaendert_am');
+      // Nur neu laden wenn sich etwas geändert hat
+      const hasChanges = data.some(row => {
+        const local = autos.find(a => a.id === row.id);
+        return !local || new Date(row.geaendert_am) > new Date(lastPoll - 1000);
+      }) || data.length !== autos.length;
+      if (hasChanges) {
+        lastPoll = Date.now();
+        await loadAutos();
+      }
+    } catch(e) {
+      setSync('error', '✕ Verbindungsfehler');
+    }
+  }, 5000);
+}
+
+// ── CLOCK ──
+function updateClock() {
+  const n=new Date();
+  document.getElementById('clockEl').textContent=
+    n.toLocaleDateString('de-DE',{weekday:'short',day:'2-digit',month:'2-digit'})+' · '+
+    n.toLocaleTimeString('de-DE',{hour:'2-digit',minute:'2-digit'});
+}
+setInterval(updateClock,30000); updateClock();
+
+// ── MÜLLEIMER ──
+const trash=document.getElementById('trash');
+document.addEventListener('dragstart',()=>trash.classList.add('drag-active'));
+document.addEventListener('dragend',  ()=>{trash.classList.remove('drag-active','over');document.getElementById('trashIcon').textContent='🗑️';});
+trash.addEventListener('dragover', e=>{e.preventDefault();trash.classList.add('over');document.getElementById('trashIcon').textContent='🔥';});
+trash.addEventListener('dragleave',  ()=>{trash.classList.remove('over');document.getElementById('trashIcon').textContent='🗑️';});
+trash.addEventListener('drop',e=>{
+  e.preventDefault();trash.classList.remove('over');document.getElementById('trashIcon').textContent='🗑️';
+  if(dragId){
+    autos=autos.filter(a=>a.id!==dragId);
+    deleteAuto(dragId);
+    dragId=null;dragFrom=null;render();
+  }
+});
+
+// ── COLLAPSE ──
+function isCardCollapsed(id,autoCollapse){
+  return autoCollapse ? !expandedCards.has(id) : collapsedCards.has(id);
+}
+function toggleCard(id,autoCollapse){
+  if(autoCollapse){if(expandedCards.has(id))expandedCards.delete(id);else expandedCards.add(id);}
+  else{if(collapsedCards.has(id))collapsedCards.delete(id);else collapsedCards.add(id);}
+  render();
+}
+
+// ── RENDER ──
+function render() {
+  document.getElementById('statTotal').textContent =autos.length;
+  document.getElementById('statAktiv').textContent =autos.filter(a=>a.status==='in_arbeit').length;
+  document.getElementById('statTeile').textContent =autos.filter(a=>a.status==='teile').length;
+  document.getElementById('statFertig').textContent=autos.filter(a=>a.status==='fertig').length;
+  document.getElementById('statWarten').textContent=autos.filter(a=>a.status==='wartend').length;
+
+  const grid=document.getElementById('boardGrid');
+  grid.innerHTML='';
+  STATI.forEach(s=>{
+    const cards=autos.filter(a=>a.status===s.id)
+      .sort((a,b)=>({'Express':0,'Dringend':1,'Normal':2}[a.prioritaet])-({'Express':0,'Dringend':1,'Normal':2}[b.prioritaet]));
+    const autoCollapse=cards.length>=COLLAPSE_AT;
+
+    const lane=document.createElement('div');
+    lane.className='lane';
+
+    const hdr=document.createElement('div');
+    hdr.className='lane-header';
+    hdr.style.cssText=`background:${s.color};border:1px solid ${s.accent}44;box-shadow:0 0 14px ${s.glow}`;
+    hdr.innerHTML=`<span style="font-size:18px">${s.icon}</span>
+      <span class="lane-title" style="color:${s.accent}">${s.label}</span>
+      ${cards.length>0?`<span class="lane-count" style="background:rgba(0,0,0,0.4);color:${s.accent}">${cards.length}</span>`:''}`;
+
+    if(cards.length>0 && autoCollapse){
+      const btn=document.createElement('button');
+      btn.className='lane-toggle-btn';
+      btn.style.cssText=`border:1px solid ${s.accent}66;color:${s.accent}`;
+      const allOpen=cards.every(c=>expandedCards.has(c.id));
+      btn.textContent=allOpen?'▲ Alle zu':'▼ Alle auf';
+      btn.addEventListener('click',e=>{
+        e.stopPropagation();
+        if(allOpen)cards.forEach(c=>expandedCards.delete(c.id));
+        else cards.forEach(c=>expandedCards.add(c.id));
+        render();
+      });
+      hdr.appendChild(btn);
+    }
+    lane.appendChild(hdr);
+
+    const body=document.createElement('div');
+    body.className='lane-body';
+    body.addEventListener('dragover',e=>{
+      e.preventDefault();
+      if(dragFrom!==s.id){body.style.background='#1a0a0a';body.style.borderColor=s.accent;body.style.boxShadow=`inset 0 0 20px ${s.glow}`;}
+    });
+    body.addEventListener('dragleave',()=>{body.style.background='';body.style.borderColor='';body.style.boxShadow='';});
+    body.addEventListener('drop',e=>{
+      e.preventDefault();body.style.background='';body.style.borderColor='';body.style.boxShadow='';
+      if(dragId&&dragFrom!==s.id){
+        const a=autos.find(x=>x.id===dragId);
+        if(a){a.status=s.id;a.statusSeit=uhrzeit();saveAuto(a);}
+        render();
+      }
+    });
+
+    if(cards.length===0){body.innerHTML='<div class="lane-empty">Leer</div>';}
+    else cards.forEach(a=>body.appendChild(makeCard(a,s,autoCollapse,isCardCollapsed(a.id,autoCollapse))));
+
+    lane.appendChild(body);
+    grid.appendChild(lane);
+  });
+}
+
+function makeCard(a,s,autoCollapse,collapsed){
+  const wrap=document.createElement('div');
+  wrap.className='card-wrap';
+  wrap.style.cssText=`background:var(--bg3);border:1px solid ${s.accent}33;box-shadow:0 2px 12px ${s.glow}`;
+
+  if(a.status==='fertig'){
+    const b=document.createElement('div');b.className='abholbereit-banner';b.textContent='🏁 Fahrzeug abholbereit';wrap.appendChild(b);
+  }
+
+  const top=document.createElement('div');
+  top.className='card-top';
+  top.draggable=true;
+  top.addEventListener('dragstart',e=>{dragId=a.id;dragFrom=a.status;e.dataTransfer.effectAllowed='move';setTimeout(()=>wrap.style.opacity='0.4',0);});
+  top.addEventListener('dragend',()=>{wrap.style.opacity='1';dragId=null;dragFrom=null;});
+  top.addEventListener('click',()=>toggleCard(a.id,autoCollapse));
+
+  const prio=document.createElement('div');
+  prio.className='card-top-prio';
+  prio.style.cssText=`background:${PRIO_DOT[a.prioritaet]};${a.prioritaet!=='Normal'?`box-shadow:0 0 5px ${PRIO_DOT[a.prioritaet]}`:''}`;
+
+  const kz=document.createElement('span');kz.className='card-top-kz';kz.style.color=s.accent;kz.textContent=a.kennzeichen||'—';
+  const kunde=document.createElement('span');kunde.className='card-top-kunde';kunde.textContent=a.kunde||a.fahrzeug||'';
+  const chev=document.createElement('span');chev.className='card-top-chevron'+(collapsed?'':' open');chev.textContent='▾';
+
+  top.appendChild(prio);top.appendChild(kz);top.appendChild(kunde);top.appendChild(chev);
+  wrap.appendChild(top);
+
+  if(!collapsed){
+    const body=document.createElement('div');
+    body.className='card-body';
+
+    const fz=document.createElement('div');fz.className='card-fz';
+    fz.innerHTML=`${a.fahrzeug||'Fahrzeug unbekannt'}${a.platz?` · <span style="color:var(--text-muted)">${a.platz}</span>`:''}`;
+    body.appendChild(fz);
+
+    const hintsDiv=document.createElement('div');hintsDiv.className='card-hints';
+
+    const doneCount=(a.hinweise||[]).filter(h=>h.done).length;
+    if(doneCount>0){const l=document.createElement('div');l.className='hint-done-label';l.textContent=`✓ ${doneCount} von ${a.hinweise.length} erledigt`;hintsDiv.appendChild(l);}
+
+    (a.hinweise||[]).forEach((h,i)=>{
+      const row=document.createElement('div');row.className='card-hint';
+      const inp=document.createElement('input');inp.className='hint-input'+(h.done?' done':'');inp.type='text';inp.value=h.text;
+      if(h.done)inp.disabled=true;
+      inp.addEventListener('click',e=>e.stopPropagation());
+      inp.addEventListener('blur',()=>{const v=inp.value.trim();if(v&&v!==h.text){h.text=v;saveAuto(a);}});
+      inp.addEventListener('keydown',e=>{if(e.key==='Enter')inp.blur();});
+      const btn=document.createElement('button');btn.className='btn-erledigt'+(h.done?' done':'');btn.textContent=h.done?'↩':'✓';
+      btn.addEventListener('click',e=>{e.stopPropagation();h.done=!h.done;saveAuto(a);render();});
+      row.appendChild(inp);row.appendChild(btn);hintsDiv.appendChild(row);
+    });
+
+    const addRow=document.createElement('div');addRow.className='hint-add-inline';
+    const addInp=document.createElement('input');addInp.placeholder='+ Stichpunkt …';
+    addInp.addEventListener('click',e=>e.stopPropagation());
+    addInp.addEventListener('keydown',e=>{if(e.key==='Enter'){e.stopPropagation();const v=addInp.value.trim();if(v){a.hinweise.push({text:v,done:false});saveAuto(a);render();}}});
+    const addBtn=document.createElement('button');addBtn.textContent='+';
+    addBtn.addEventListener('click',e=>{e.stopPropagation();const v=addInp.value.trim();if(v){a.hinweise.push({text:v,done:false});saveAuto(a);render();}});
+    addRow.appendChild(addInp);addRow.appendChild(addBtn);hintsDiv.appendChild(addRow);
+    body.appendChild(hintsDiv);
+    wrap.appendChild(body);
+
+    const timeEl=document.createElement('div');timeEl.className='card-time';timeEl.textContent=`${a.datum} · ${a.eingang}`;
+    wrap.appendChild(timeEl);
+
+    const actions=document.createElement('div');actions.className='card-actions';
+    const btnEdit=document.createElement('button');btnEdit.textContent='✎ Bearbeiten';
+    btnEdit.addEventListener('click',e=>{e.stopPropagation();openEdit(a.id);});
+    actions.appendChild(btnEdit);wrap.appendChild(actions);
+  }
+  return wrap;
+}
+
+// ── SUCHE ──
+function handleSearch(val){
+  currentSearch=val.trim().toLowerCase();
+  document.getElementById('searchClear').classList.toggle('visible',currentSearch.length>0);
+  if(currentSearch.length<2)return;
+  const hits=autos.filter(a=>
+    a.kennzeichen.toLowerCase().includes(currentSearch)||
+    (a.kunde||'').toLowerCase().includes(currentSearch)||
+    (a.fahrzeug||'').toLowerCase().includes(currentSearch)
+  );
+  if(!hits.length)return;
+  hits.forEach(a=>{
+    const laneCards=autos.filter(x=>x.status===a.status);
+    if(laneCards.length>=COLLAPSE_AT)expandedCards.add(a.id);
+    else collapsedCards.delete(a.id);
+  });
+  render();
+  setTimeout(()=>{
+    hits.forEach(a=>{
+      const s=STATI.find(x=>x.id===a.status);
+      document.querySelectorAll('.card-top-kz').forEach(el=>{
+        if(el.textContent.trim()===(a.kennzeichen||'—')){
+          const wrap=el.closest('.card-wrap');
+          if(wrap){wrap.style.setProperty('--flash-color',s.accent);wrap.classList.remove('card-flash');void wrap.offsetWidth;wrap.classList.add('card-flash');wrap.addEventListener('animationend',()=>wrap.classList.remove('card-flash'),{once:true});}
+        }
+      });
+    });
+  },50);
+}
+function clearSearch(){document.getElementById('searchInput').value='';document.getElementById('searchClear').classList.remove('visible');currentSearch='';}
+
+// ── MODAL ──
+function openModal(html){document.getElementById('modalBox').innerHTML=html;document.getElementById('modalOverlay').style.display='flex';}
+function closeModal(){document.getElementById('modalOverlay').style.display='none';}
+document.getElementById('modalOverlay').addEventListener('click',e=>{if(e.target===document.getElementById('modalOverlay'))closeModal();});
+
+function openConfirm(msg,onYes){
+  const o=document.createElement('div');
+  o.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:300;display:flex;align-items:center;justify-content:center;padding:24px';
+  o.innerHTML=`<div style="background:var(--bg2);border:1px solid var(--border2);border-top:3px solid var(--red);border-radius:6px;padding:24px;max-width:380px;width:100%">
+    <div style="font-family:var(--font-head);font-size:14px;color:var(--text);margin-bottom:18px">${msg}</div>
+    <div style="display:flex;justify-content:flex-end;gap:10px">
+      <button class="btn-secondary" id="cNo">Abbrechen</button>
+      <button class="btn-primary" id="cYes">Ja</button>
+    </div></div>`;
+  document.body.appendChild(o);
+  const close=()=>document.body.removeChild(o);
+  o.querySelector('#cNo').addEventListener('click',close);
+  o.querySelector('#cYes').addEventListener('click',()=>{close();onYes();});
+}
+
+// ── HINTS MODAL ──
+let editHinweise=[];
+function initHints(h){editHinweise=h.map(x=>typeof x==='string'?{text:x,done:false}:{...x});}
+function updateHint(fid,i,v){editHinweise[i].text=v;}
+function toggleHintDone(fid,i){editHinweise[i].done=!editHinweise[i].done;refreshHintsList(fid);}
+function removeHint(fid,i){editHinweise.splice(i,1);refreshHintsList(fid);}
+function addHint(fid){
+  const inp=document.getElementById(fid+'_new');const v=inp.value.trim();if(!v)return;
+  editHinweise.push({text:v,done:false});inp.value='';refreshHintsList(fid);
+  setTimeout(()=>document.getElementById(fid+'_new')?.focus(),0);
+}
+function refreshHintsList(fid){
+  const items=document.getElementById(fid+'_items');const wrap=document.getElementById(fid+'_list');if(!items)return;
+  wrap.style.display=editHinweise.length?'':'none';
+  items.innerHTML=editHinweise.map((h,i)=>`<div class="hint-row">
+    <span style="color:${h.done?'var(--text-muted)':'#E8454D'};font-size:13px">${h.done?'◇':'◆'}</span>
+    <button class="hint-check ${h.done?'checked':''}" onclick="toggleHintDone('fh',${i})">${h.done?'✓':''}</button>
+    <input type="text" class="${h.done?'done':''}" value="${h.text.replace(/"/g,'&quot;')}" oninput="updateHint('fh',${i},this.value)"/>
+    <button class="hint-remove" onclick="removeHint('fh',${i})">✕</button>
+  </div>`).join('');
+}
+function hintsEditorHTML(hinweise,fid){return `
+  <div id="${fid}_list" style="${hinweise.length?'':'display:none'}">
+    <div class="hints-list" id="${fid}_items">
+      ${hinweise.map((h,i)=>`<div class="hint-row">
+        <span style="color:${h.done?'var(--text-muted)':'#E8454D'};font-size:13px">${h.done?'◇':'◆'}</span>
+        <button class="hint-check ${h.done?'checked':''}" onclick="toggleHintDone('${fid}',${i})">${h.done?'✓':''}</button>
+        <input type="text" class="${h.done?'done':''}" value="${h.text.replace(/"/g,'&quot;')}" oninput="updateHint('${fid}',${i},this.value)"/>
+        <button class="hint-remove" onclick="removeHint('${fid}',${i})">✕</button>
+      </div>`).join('')}
+    </div>
+  </div>
+  <div class="hint-add">
+    <input id="${fid}_new" placeholder="Stichpunkt hinzufügen … (Enter)" onkeydown="if(event.key==='Enter'){event.preventDefault();addHint('${fid}')}"/>
+    <button class="hint-add-btn" onclick="addHint('${fid}')">+</button>
+  </div>`;}
+
+// ── FORM ──
+function formHTML(a,isEdit){
+  initHints(a.hinweise||[]);
+  return `
+  <div class="modal-header">
+    <span class="modal-title">${isEdit?'Bearbeiten: '+a.kennzeichen:'Neues Fahrzeug'}</span>
+    <button class="modal-close" onclick="closeModal()">✕</button>
+  </div>
+  <div class="section-label">Kundendaten</div>
+  <div class="form-grid2">
+    <div class="field"><label>Kunde / Firma</label><input id="f_kunde" value="${a.kunde||''}" placeholder="Max Mustermann" autofocus/></div>
+    <div class="field"><label>Kennzeichen</label><input id="f_kz" value="${a.kennzeichen}" oninput="this.value=this.value.toUpperCase()" placeholder="EN-AB 123"/></div>
+  </div>
+  <div class="section-label">Fahrzeug & Auftrag</div>
+  <div class="form-grid3">
+    <div class="field"><label>Fahrzeug</label><input id="f_fz" value="${a.fahrzeug}" placeholder="Mustang, Camaro …"/></div>
+    <div class="field"><label>Priorität</label><select id="f_prio">${PRIORITAET.map(x=>`<option${x===a.prioritaet?' selected':''}>${x}</option>`).join('')}</select></div>
+    <div class="field"><label>Arbeitsplatz (opt.)</label><input id="f_platz" value="${a.platz}" placeholder="Hebebühne 2 …"/></div>
+  </div>
+  <div class="section-label">Art der Arbeit & nächste Schritte</div>
+  <div class="field">${hintsEditorHTML(editHinweise,'fh')}</div>
+  <div class="form-footer">
+    <button class="btn-secondary" onclick="closeModal()">Abbrechen</button>
+    <button class="btn-primary" onclick="saveForm('${a.id}',${isEdit})">Speichern</button>
+  </div>`;}
+
+function openNeu(){
+  const a={id:genId(),kennzeichen:'',fahrzeug:'',kunde:'',prioritaet:'Normal',hinweise:[],platz:'',status:'wartend',eingang:uhrzeit(),datum:datumKurz(),statusSeit:uhrzeit()};
+  openModal(formHTML(a,false));
+}
+function openEdit(id){const a=autos.find(x=>x.id===id);if(a)openModal(formHTML(a,true));}
+async function saveForm(id,isEdit){
+  const kz=document.getElementById('f_kz').value.trim();
+  if(!kz){alert('Kennzeichen ist Pflichtfeld');return;}
+  const data={kennzeichen:kz,kunde:document.getElementById('f_kunde').value.trim(),fahrzeug:document.getElementById('f_fz').value,prioritaet:document.getElementById('f_prio').value,platz:document.getElementById('f_platz').value,hinweise:[...editHinweise]};
+  if(isEdit){const a=autos.find(x=>x.id===id);if(a){Object.assign(a,data);await saveAuto(a);}}
+  else{const a={id,...data,status:'wartend',eingang:uhrzeit(),datum:datumKurz(),statusSeit:uhrzeit()};autos.push(a);await saveAuto(a);}
+  closeModal();render();
+}
+
+// ── START ──
+loadAutos();
+startRealtime();
+</script>
+</body>
+</html>
