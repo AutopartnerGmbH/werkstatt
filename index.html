@@ -1309,7 +1309,7 @@ async function stopDiktieren(){
     :`Extrahiere durchgeführte Arbeiten aus dem Diktat. Antworte NUR mit JSON:{"eintraege":[{"beschreibung":"kurze Arbeit max 6 Wörter","stunden":"Zahl oder leer"}]}`;
   try{
     const res=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:500,system,messages:[{role:'user',content:`Diktat: "${txt}"`}]})});
+      body:JSON.stringify({model:'claude-sonnet-4-5',max_tokens:500,system,messages:[{role:'user',content:`Diktat: "${txt}"`}]})});
     if(!res.ok)throw new Error('API Fehler');
     const data=await res.json();
     const raw=data.content.map(i=>i.text||'').join('').trim();
@@ -1472,7 +1472,7 @@ async function analyzeSFKPDF(f){
         'anthropic-dangerous-direct-browser-access':'true'
       },
       body:JSON.stringify({
-        model:'claude-sonnet-4-20250514',
+        model:'claude-sonnet-4-5',
         max_tokens:1000,
         system:`Du bist ein Assistent der SFK-Werkstattaufträge analysiert. Antworte NUR mit einem JSON-Objekt, ohne Markdown-Blöcke, ohne Erklärung:
 {"kennzeichen":"","kunde":"","fahrzeug":"","auftragsnr":"","arbeiten":["max 5 Wörter pro Stichpunkt"]}
