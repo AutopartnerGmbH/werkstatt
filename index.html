@@ -484,6 +484,7 @@ async function angebotBioRegistrieren(){
   const bioName=isIOS?'Face ID / Touch ID':'Fingerabdruck';
   const o=document.createElement('div');
   o.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:300;display:flex;align-items:center;justify-content:center;padding:24px';
+  o.id='moveCardDialog';
   o.innerHTML=`<div style="background:var(--bg2);border:1px solid var(--border2);border-top:3px solid var(--red);border-radius:6px;padding:28px;max-width:360px;width:100%;text-align:center">
     <div style="font-size:36px;margin-bottom:12px">${isIOS?'':'👆'}</div>
     <div style="font-family:var(--font-head);font-size:14px;color:var(--text);margin-bottom:8px;text-transform:uppercase;letter-spacing:.06em">${bioName} aktivieren?</div>
@@ -958,6 +959,7 @@ function openMoveCard(autoId){
   const a=autos.find(x=>x.id===autoId);if(!a)return;
   const o=document.createElement('div');
   o.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:300;display:flex;align-items:center;justify-content:center;padding:24px';
+  o.id='moveCardDialog';
   const allTargets=[...STATI,{id:'fertig',label:'Fertige Aufträge',icon:'🏁',color:'#065F46',accent:'#6EE7B7'}];
   const btns=allTargets.filter(s=>s.id!==a.status).map(s=>
     `<button onclick="moveCardTo('${autoId}','${s.id}')" style="display:flex;align-items:center;gap:10px;width:100%;background:${s.color};border:1px solid ${s.accent}44;border-radius:6px;padding:12px 16px;color:${s.accent};font-size:14px;font-weight:700;cursor:pointer;margin-bottom:8px;font-family:var(--font-head);text-transform:uppercase;letter-spacing:.04em">
@@ -973,11 +975,9 @@ function openMoveCard(autoId){
   document.body.appendChild(o);
 }
 async function moveCardTo(autoId,newStatus){
-  // Close move dialog but NOT fertigDropdown and NOT pinScreen
-  document.querySelectorAll('[style*="position:fixed"]').forEach(el=>{
-    if(el.id==='pinScreen'||el.id==='fertigDropdown'||el.id==='toastMsg')return;
-    el.remove();
-  });
+  // Close move dialog specifically
+  const moveDialog=document.getElementById('moveCardDialog');
+  if(moveDialog)moveDialog.remove();
   const a=autos.find(x=>x.id===autoId);if(!a)return;
   if(newStatus==='fertig'&&(a.mitarbeiter||[]).length>0){
     a.mitarbeiterHistory=(a.mitarbeiterHistory||[]);
@@ -1034,6 +1034,7 @@ document.getElementById('modalOverlay').addEventListener('click',e=>{if(e.target
 function openConfirm(msg,onYes){
   const o=document.createElement('div');
   o.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:300;display:flex;align-items:center;justify-content:center;padding:24px';
+  o.id='moveCardDialog';
   o.innerHTML=`<div style="background:var(--bg2);border:1px solid var(--border2);border-top:3px solid var(--red);border-radius:6px;padding:24px;max-width:380px;width:100%">
     <div style="font-family:var(--font-head);font-size:14px;color:var(--text);margin-bottom:18px">${msg}</div>
     <div style="display:flex;justify-content:flex-end;gap:10px">
