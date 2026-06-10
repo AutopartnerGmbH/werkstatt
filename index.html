@@ -874,62 +874,6 @@ async function toggleMitarbeiter(autoId){
 // fertigKorb click + drag-drop — attached after DOM ready via init()
 function initFertigKorb(){
   const korb=document.getElementById('fertigKorb');
-  if(!korb){console.error('fertigKorb not found');return;}
-  console.log('initFertigKorb OK');
-
-  korb.addEventListener('click',function(){
-    const dd=document.getElementById('fertigDropdown');
-    if(!dd)return;
-    if(dd.style.display==='block'){
-      dd.style.display='none';
-    } else {
-      renderFertigDropdown();
-      dd.style.display='block';
-      setTimeout(()=>{
-        function outside(ev){
-          if(!korb.contains(ev.target)&&!dd.contains(ev.target)){
-            dd.style.display='none';
-            document.removeEventListener('click',outside);
-          }
-        }
-        document.addEventListener('click',outside);
-      },50);
-    }
-  });
-
-  // Drag & Drop via coordinate check
-  document.addEventListener('dragover',function(e){
-    if(!dragId)return;
-    const r=korb.getBoundingClientRect();
-    if(e.clientX>=r.left&&e.clientX<=r.right&&e.clientY>=r.top&&e.clientY<=r.bottom){
-      e.preventDefault();
-      korb.style.background='rgba(110,231,183,0.4)';
-      korb.style.transform='scale(1.05)';
-    } else {
-      korb.style.background='rgba(110,231,183,0.12)';
-      korb.style.transform='';
-    }
-  });
-  document.addEventListener('drop',function(e){
-    korb.style.background='rgba(110,231,183,0.12)';
-    korb.style.transform='';
-    if(!dragId)return;
-    const r=korb.getBoundingClientRect();
-    if(e.clientX>=r.left&&e.clientX<=r.right&&e.clientY>=r.top&&e.clientY<=r.bottom){
-      e.preventDefault();
-      moveCardTo(dragId,'fertig');
-    }
-  });
-  document.addEventListener('dragend',function(){
-    korb.style.background='rgba(110,231,183,0.12)';
-    korb.style.transform='';
-  });
-}
-
-
-// fertigKorb click + drag-drop — attached after DOM ready via init()
-function initFertigKorb(){
-  const korb=document.getElementById('fertigKorb');
   if(!korb)return;
 
   // Position the wrap over the hspace area in header
@@ -2219,7 +2163,7 @@ function importBackup(){
 // ── START ──
 if(sessionStorage.getItem('werkstatt-auth')==='1'){
   document.getElementById('pinScreen').style.display='none';
-  initMyName();loadAutos();startRealtime();
+  initViewMode();initMyName();initFertigKorb();loadAutos();startRealtime();
 }else{
   initBio();
 }
