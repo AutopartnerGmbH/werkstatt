@@ -871,17 +871,21 @@ async function toggleMitarbeiter(autoId){
 function toggleFertigDropdown(){
   const dd=document.getElementById('fertigDropdown');
   const isOpen=dd.style.display==='block';
-  dd.style.display=isOpen?'none':'block';
-  if(!isOpen)renderFertigDropdown();
+  if(isOpen){dd.style.display='none';return;}
+  renderFertigDropdown();
+  dd.style.display='block';
+  // Close on next outside click — setTimeout so this click doesn't trigger it
+  setTimeout(()=>{
+    function outsideClick(e){
+      const wrap=document.getElementById('fertigKorb')?.parentElement;
+      if(wrap&&!wrap.contains(e.target)){
+        dd.style.display='none';
+        document.removeEventListener('click',outsideClick,true);
+      }
+    }
+    document.addEventListener('click',outsideClick,true);
+  },0);
 }
-// Close on outside click — use capture=false and check after toggle
-document.addEventListener('click',function(e){
-  const korb=document.getElementById('fertigKorb');
-  const dd=document.getElementById('fertigDropdown');
-  if(!korb||!dd)return;
-  if(dd.style.display!=='block')return;
-  if(!korb.parentElement.contains(e.target))dd.style.display='none';
-},false);
 
 // Make fertigKorb a drop target
 document.addEventListener('DOMContentLoaded',()=>{
