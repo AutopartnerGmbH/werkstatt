@@ -1478,35 +1478,75 @@ async function uploadLS(autoId,input){
   }catch(e){setSync('error','✕ Upload-Fehler');}
 }
 
-// ── RECHNUNGSKONTROLLE ──
-function openRechnungskontrolle(autoId){
-  const a=autos.find(x=>x.id===autoId);if(!a)return;
-  const gesamtStd=(a.arbeiten||[]).reduce((s,ar)=>s+(parseFloat(ar.stunden)||0),0);
-  const html=`<!DOCTYPE html><html><head><meta charset="UTF-8"/><style>body{font-family:Arial,sans-serif;margin:0;padding:20px;color:#000;font-size:13px;}table{width:100%;border-collapse:collapse;margin-bottom:12px;}th{background:#C0141C;color:#fff;padding:5px 8px;font-size:12px;text-align:left;}td{padding:5px 8px;border-bottom:1px solid #eee;vertical-align:top;font-size:12px;}.box{border:1px solid #ddd;border-radius:4px;padding:8px 10px;margin-bottom:8px;}.label{font-size:10px;color:#888;text-transform:uppercase;letter-spacing:.06em;}@media print{@page{margin:15mm;}}</style></head><body>
-  <div style="display:flex;justify-content:space-between;border-bottom:3px solid #C0141C;padding-bottom:10px;margin-bottom:14px">
-    <div><div style="font-size:16px;font-weight:700">Rechnungskontrolle</div><div style="color:#C0141C;font-size:12px;font-weight:700">AUTOPARTNER AMERICANCARS · Auf dem Lölfert 37 · 58119 Hagen</div></div>
-    <div style="text-align:right"><div style="font-weight:700">${a.kennzeichen}</div><div>${a.kunde||'—'}</div><div style="color:#888">${a.fahrzeug||'—'}</div>${a.auftragsnr?`<div style="color:#C0141C;font-weight:700">Auftrag Nr. ${a.auftragsnr}</div>`:''}</div>
-  </div>
-  <table><thead><tr><th>Mitarbeiter</th><th>Arbeit</th><th>Std</th></tr></thead><tbody>
-    ${(a.arbeiten||[]).length>0?(a.arbeiten||[]).map(ar=>`<tr><td>${ar.wer||'—'}</td><td>${ar.beschreibung||'—'}</td><td>${ar.stunden||'—'}</td></tr>`).join(''):'<tr><td colspan="3" style="color:#aaa;font-style:italic">Keine Arbeiten erfasst</td></tr>'}
-    <tr style="background:#fff8f8"><td colspan="2" style="font-weight:700;color:#C0141C">Gesamt</td><td style="font-weight:700;color:#C0141C">${gesamtStd.toFixed(1)} Std</td></tr>
-  </tbody></table>
-  <table><thead><tr><th>Material</th><th>Menge</th><th>Einheit</th></tr></thead><tbody>
-    ${(a.material||[]).length>0?(a.material||[]).map(m=>`<tr><td>${m.bezeichnung||'—'}</td><td>${m.menge||'—'}</td><td>${m.einheit||'—'}</td></tr>`).join(''):'<tr><td colspan="3" style="color:#aaa;font-style:italic">Kein Material erfasst</td></tr>'}
-  </tbody></table>
-  ${(a.lieferscheine||[]).length>0?`<div class="box"><div class="label" style="margin-bottom:6px">Lieferscheine (${a.lieferscheine.length})</div>${a.lieferscheine.map(ls=>`<div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid #eee;font-size:12px"><span>${ls.typ==='pdf'?'📄':'🖼'} ${ls.name}</span><span style="color:#888">${ls.datum||''}</span></div>`).join('')}</div>`:''}
-  <div class="box" style="background:#fff8f8;border-color:#C0141C">
-    <div style="font-weight:700;color:#C0141C;margin-bottom:8px">✓ Checkliste vor Rechnungserstellung</div>
-    ${['Alle Arbeitsstunden eingetragen?','Alle Materialien erfasst?','Alle Lieferscheine hochgeladen?','Diagnosezettel ausgefüllt?','Probefahrt durchgeführt?'].map(p=>`<div style="display:flex;align-items:center;gap:8px;padding:4px 0;font-size:12px"><div style="width:14px;height:14px;border:1px solid #C0141C;border-radius:2px;flex-shrink:0"></div><span>${p}</span></div>`).join('')}
-  </div>
-  <div style="margin-top:20px;display:grid;grid-template-columns:1fr 1fr;gap:40px">
-    <div style="border-top:1px solid #000;padding-top:4px;font-size:11px;color:#666">Datum / Serviceberater</div>
-    <div style="border-top:1px solid #000;padding-top:4px;font-size:11px;color:#666">Geprüft</div>
-  </div>
-  </body></html>`;
-  const win=window.open('','_blank');if(win){win.document.write(html);win.document.close();}
+// ── RECHNUNGSKONTROLLE & VXS EXPORT ──
+
+function buildBereinigt(a){
+  const norm=s=>(s||'').toLowerCase().replace(/[^a-z0-9]/g,'');
+  const alle=[];
+  (a.hinweise||[]).forEach(h=>{
+    if(h.text)alle.push({beschreibung:h.text,stunden:parseFloat(h.stunden)||0,wer:'',quelle:'sfk',done:!!h.done});
+  });
+  (a.arbeiten||[]).forEach(ar=>{
+    const dup=alle.find(x=>norm(x.beschreibung).slice(0,8)&&(norm(ar.beschreibung).includes(norm(x.beschreibung).slice(0,8))||norm(x.beschreibung).includes(norm(ar.beschreibung).slice(0,8))));
+    if(dup){if(parseFloat(ar.stunden)>0)dup.stunden=parseFloat(ar.stunden);if(ar.wer)dup.wer=ar.wer;}
+    else alle.push({beschreibung:ar.beschreibung||'',stunden:parseFloat(ar.stunden)||0,wer:ar.wer||'',quelle:'manuell',done:true});
+  });
+  return alle.filter(x=>x.beschreibung);
 }
 
+function buildMaterialBereinigt(a){
+  const norm=s=>(s||'').toLowerCase().replace(/[^a-z0-9]/g,'');
+  const alle=[];
+  (a.material||[]).forEach(m=>{
+    if(!m.bezeichnung)return;
+    const dup=alle.find(x=>norm(x.bezeichnung).slice(0,6)&&(norm(m.bezeichnung).includes(norm(x.bezeichnung).slice(0,6))||norm(x.bezeichnung).includes(norm(m.bezeichnung).slice(0,6))));
+    if(dup){dup.duplikat=true;dup.duplikatInfo=(dup.duplikatInfo||[]);dup.duplikatInfo.push(m.bezeichnung);}
+    else alle.push({bezeichnung:m.bezeichnung,menge:m.menge||'1',einheit:m.einheit||'Stk',duplikat:false,duplikatInfo:[]});
+  });
+  return alle;
+}
+
+function openRechnungskontrolle(autoId){
+  const a=autos.find(x=>x.id===autoId);if(!a)return;
+  const arbeiten=buildBereinigt(a);
+  const material=buildMaterialBereinigt(a);
+  const gesamtStd=arbeiten.reduce((s,ar)=>s+ar.stunden,0);
+  const gesamtNetto=gesamtStd*114;
+  const dupMat=material.filter(m=>m.duplikat);
+  const aJSON=JSON.stringify({kennzeichen:a.kennzeichen,fahrzeug:a.fahrzeug,kunde:a.kunde,auftragsnr:a.auftragsnr,datum:a.datum,arbeiten,material});
+
+  const html='<!DOCTYPE html><html><head><meta charset="UTF-8"/><style>body{font-family:Arial,sans-serif;margin:0;padding:20px;color:#000;font-size:13px;}table{width:100%;border-collapse:collapse;margin-bottom:14px;}th{background:#C0141C;color:#fff;padding:6px 8px;font-size:12px;text-align:left;}td{padding:5px 8px;border-bottom:1px solid #eee;vertical-align:top;font-size:12px;}.box{border:1px solid #ddd;border-radius:4px;padding:10px;margin-bottom:10px;}.label{font-size:10px;color:#888;text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px;}.warn{background:#fffbeb;border-color:#f59e0b;}.total{background:#fff8f8;font-weight:700;color:#C0141C;}.no-print{margin-bottom:16px;display:flex;gap:10px;}@media print{.no-print{display:none;}@page{margin:15mm;}}</style></head><body>'
+  +'<div class="no-print">'
+  +'<button onclick="window.print()" style="background:#C0141C;color:#fff;border:none;padding:8px 18px;border-radius:4px;font-size:13px;cursor:pointer;font-weight:700">🖨 Drucken / PDF</button>'
+  +'<button onclick="exportVXS()" style="background:#065F46;color:#6EE7B7;border:1px solid #6EE7B7;padding:8px 18px;border-radius:4px;font-size:13px;cursor:pointer;font-weight:700">⬇ VXS Export für SFK</button>'
+  +'</div>'
+  +'<div style="display:flex;justify-content:space-between;border-bottom:3px solid #C0141C;padding-bottom:10px;margin-bottom:14px">'
+  +'<div><div style="font-size:18px;font-weight:700">Rechnungskontrolle</div><div style="color:#C0141C;font-size:12px;font-weight:700">AUTOPARTNER AMERICANCARS &middot; Auf dem L&ouml;lfert 37 &middot; 58119 Hagen</div></div>'
+  +'<div style="text-align:right"><div style="font-family:monospace;font-size:20px;font-weight:700;color:#C0141C">'+a.kennzeichen+'</div><div style="font-weight:700">'+(a.kunde||'&mdash;')+'</div><div style="color:#666">'+(a.fahrzeug||'&mdash;')+'</div>'+(a.auftragsnr?'<div style="color:#C0141C;font-size:11px;font-weight:700">Auftrag Nr. '+a.auftragsnr+'</div>':'')+'<div style="font-size:11px;color:#888">'+new Date().toLocaleDateString('de-DE')+'</div></div>'
+  +'</div>'
+  +(dupMat.length>0?'<div class="box warn" style="margin-bottom:14px;border-color:#f59e0b;"><div style="font-weight:700;margin-bottom:6px">&ensp;&#x26A0; M&ouml;gliche Duplikate im Material &mdash; bitte pr&uuml;fen:</div>'+dupMat.map(m=>'<div style="font-size:12px;padding:3px 0">&bull; <strong>'+m.bezeichnung+'</strong> &mdash; &auml;hnlich wie: '+m.duplikatInfo.join(', ')+'</div>').join('')+'</div>':'')
+  +'<table><thead><tr><th>Arbeitsschritt</th><th>Mitarbeiter</th><th style="text-align:right">Std (IST)</th><th style="text-align:right">Betrag netto</th></tr></thead><tbody>'
+  +arbeiten.map(ar=>'<tr><td>'+ar.beschreibung+(ar.quelle==='sfk'&&!ar.done?'<span style="color:#f59e0b;font-size:10px;margin-left:4px">(offen)</span>':'')+'</td><td style="color:#666">'+(ar.wer||'&mdash;')+'</td><td style="text-align:right">'+(ar.stunden>0?ar.stunden.toFixed(1)+' h':'&mdash;')+'</td><td style="text-align:right">'+(ar.stunden>0?(ar.stunden*114).toFixed(2)+' &euro;':'&mdash;')+'</td></tr>').join('')
+  +'<tr class="total"><td colspan="2">Gesamt Arbeitszeit</td><td style="text-align:right">'+gesamtStd.toFixed(1)+' h</td><td style="text-align:right">'+gesamtNetto.toFixed(2)+' &euro;</td></tr>'
+  +'<tr class="total"><td colspan="3">zzgl. 19% MwSt.</td><td style="text-align:right">'+(gesamtNetto*0.19).toFixed(2)+' &euro;</td></tr>'
+  +'<tr class="total"><td colspan="3">Gesamt Arbeit brutto</td><td style="text-align:right">'+(gesamtNetto*1.19).toFixed(2)+' &euro;</td></tr>'
+  +'</tbody></table>'
+  +'<table><thead><tr><th>Material / Ersatzteile</th><th style="text-align:right">Menge</th><th>Einheit</th><th>Hinweis</th></tr></thead><tbody>'
+  +(material.length>0?material.map(m=>'<tr'+(m.duplikat?' style="background:#fffbeb"':'')+'><td>'+m.bezeichnung+'</td><td style="text-align:right">'+m.menge+'</td><td>'+m.einheit+'</td><td style="color:#f59e0b;font-size:11px">'+(m.duplikat?'&#x26A0; Duplikat pr&uuml;fen':'')+'</td></tr>').join(''):'<tr><td colspan="4" style="color:#aaa;font-style:italic">Kein Material erfasst</td></tr>')
+  +'</tbody></table>'
+  +((a.lieferscheine||[]).length>0?'<div class="box"><div class="label">Lieferscheine ('+a.lieferscheine.length+')</div>'+a.lieferscheine.map(ls=>'<div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid #eee;font-size:12px"><span>'+(ls.geprueft?'&#x2713;':' ')+(ls.typ==='pdf'?'&#128196;':'&#128444;')+' '+ls.name+'</span><span style="color:#888">'+(ls.datum||'')+'</span></div>').join('')+'</div>':'')
+  +'<div class="box" style="background:#fff8f8;border-color:#C0141C;">'
+  +'<div style="font-weight:700;color:#C0141C;margin-bottom:8px">&#x2713; Checkliste vor Rechnungserstellung in SFK</div>'
+  +['Alle IST-Zeiten eingetragen?','Duplikate im Material gepr&uuml;ft?','Alle Lieferscheine hochgeladen?','Diagnosezettel ausgef&uuml;llt?','Probefahrt durchgef&uuml;hrt?','VXS-Datei in SFK importiert?'].map(p=>'<div style="display:flex;align-items:center;gap:8px;padding:5px 0;font-size:12px"><div style="width:14px;height:14px;border:1px solid #C0141C;border-radius:2px;flex-shrink:0"></div><span>'+p+'</span></div>').join('')
+  +'</div>'
+  +'<div style="margin-top:20px;display:grid;grid-template-columns:1fr 1fr;gap:40px">'
+  +'<div style="border-top:1px solid #000;padding-top:4px;font-size:11px;color:#666">Datum / Serviceberater</div>'
+  +'<div style="border-top:1px solid #000;padding-top:4px;font-size:11px;color:#666">Gepr&uuml;ft</div>'
+  +'</div>'
+  +'<script>var AUFTRAG='+aJSON+';function exportVXS(){var now=new Date();var iso=now.toISOString();var uuid="xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g,function(c){var r=Math.random()*16|0;return(c==="x"?r:r&0x3|0x8).toString(16);});var gs=AUFTRAG.arbeiten.reduce(function(s,a){return s+a.stunden;},0);var gn=(gs*114).toFixed(2);var ap=AUFTRAG.arbeiten.filter(function(a){return a.stunden>0;}).map(function(ar){return"\\n      <Work>\\n        <Type>MECHANICS</Type>\\n        <WageLevel>1</WageLevel>\\n        <Units>"+ar.stunden.toFixed(2)+"</Units>\\n        <PricePerUnit>114.00</PricePerUnit>\\n        <Price>"+(ar.stunden*114).toFixed(2)+"</Price>\\n        <Description>"+ar.beschreibung.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;")+"</Description>\\n      </Work>";}).join("");var mp=AUFTRAG.material.filter(function(m){return !m.duplikat;}).map(function(m){return"\\n      <SparePart>\\n        <Description>"+m.bezeichnung.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;")+"</Description>\\n        <Quantity>"+(m.menge||1)+"</Quantity>\\n        <Unit>"+(m.einheit||"Stk")+"</Unit>\\n      </SparePart>";}).join("");var xml=\'<?xml version="1.0" encoding="utf-8"?>\\n<Dossiers xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns="http://www.dat.de/vxs">\\n  <Dossier>\\n    <Name>\'+AUFTRAG.auftragsnr+\'</Name>\\n    <Description>\'+AUFTRAG.kennzeichen+" - "+AUFTRAG.kunde+\'</Description>\\n    <UUID>\'+uuid+\'</UUID>\\n    <Country>DE</Country>\\n    <Language>de_DE</Language>\\n    <DataVersion>1</DataVersion>\\n    <Currency>EUR</Currency>\\n    <DossierType>repairOrder</DossierType>\\n    <CreateDate>\'+iso+\'</CreateDate>\\n    <CreateUser>Autopartner GmbH</CreateUser>\\n    <Vehicle>\\n      <RegistrationData>\\n        <LicenseNumber>\'+AUFTRAG.kennzeichen+\'</LicenseNumber>\\n      </RegistrationData>\\n      <ManufacturerName origin="user">\'+AUFTRAG.fahrzeug.split(" ")[0]+\'</ManufacturerName>\\n      <BaseModelName origin="user">\'+AUFTRAG.fahrzeug.split(" ").slice(1).join(" ")+\'</BaseModelName>\\n    </Vehicle>\\n    <RepairCalculation>\\n      <CalculationSummary>\\n        <LabourCosts>\\n          <AllSum>\'+gn+\'</AllSum>\\n          <Mechanic><Type>MECHANICS</Type><Units>\'+gs.toFixed(2)+\'</Units><Price>\'+gn+\'</Price></Mechanic>\\n          <TotalSum>\'+gn+\'</TotalSum>\\n          <Works>\'+ap+\'\\n          </Works>\\n        </LabourCosts>\\n        <SparePartsCosts><SpareParts>\'+mp+\'\\n        </SpareParts></SparePartsCosts>\\n        <TotalNetCosts>\'+gn+\'</TotalNetCosts>\\n        <TotalVAT>\'+(parseFloat(gn)*0.19).toFixed(2)+\'</TotalVAT>\\n        <TotalGrossCosts>\'+(parseFloat(gn)*1.19).toFixed(2)+\'</TotalGrossCosts>\\n      </CalculationSummary>\\n    </RepairCalculation>\\n    <RepairOrder>\\n      <OrderNumber>\'+AUFTRAG.auftragsnr+\'</OrderNumber>\\n      <InvoiceDate>\'+iso+\'</InvoiceDate>\\n      <CustomerName>\'+AUFTRAG.kunde+\'</CustomerName>\\n    </RepairOrder>\\n  </Dossier>\\n</Dossiers>\';var blob=new Blob([xml],{type:"application/xml"});var url=URL.createObjectURL(blob);var link=document.createElement("a");link.href=url;link.download="Auftrag_"+AUFTRAG.kennzeichen.replace(/[^a-zA-Z0-9]/g,"_")+"_"+new Date().toISOString().slice(0,10)+".xml";link.click();setTimeout(function(){URL.revokeObjectURL(url);},1000);}<\/script>'
+  +'</body></html>';
+  const win=window.open('','_blank');if(win){win.document.write(html);win.document.close();}
+}
 // ── DIKTIEREN ──
 let recognition=null,isRecording=false,diktierText='',diktierAutoId=null,diktierTyp=null;
 function toggleDiktieren(autoId,typ){if(isRecording&&diktierAutoId===autoId&&diktierTyp===typ)stopDiktieren();else startDiktieren(autoId,typ);}
@@ -1541,7 +1581,7 @@ async function stopDiktieren(){
   const system=isMat?`Extrahiere verbrauchtes Material aus dem Diktat. Antworte NUR mit JSON:{"eintraege":[{"bezeichnung":"Name","menge":"Zahl oder leer","einheit":"Stk oder Ltr etc"}]}`
     :`Extrahiere durchgeführte Arbeiten aus dem Diktat. Antworte NUR mit JSON:{"eintraege":[{"beschreibung":"kurze Arbeit max 6 Wörter","stunden":"Zahl oder leer"}]}`;
   try{
-    const res=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},
+    const res=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json','anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true','x-api-key':getAnthropicKey()},
       body:JSON.stringify({model:'claude-sonnet-4-5',max_tokens:500,system,messages:[{role:'user',content:`Diktat: "${txt}"`}]})});
     if(!res.ok)throw new Error('API Fehler');
     const data=await res.json();
