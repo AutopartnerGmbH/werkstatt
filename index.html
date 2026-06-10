@@ -886,11 +886,23 @@ function initFertigKorb(){
   const korb=document.getElementById('fertigKorb');
   if(!korb)return;
   // click handled via onclick attribute
-  korb.addEventListener('dragover',e=>{e.preventDefault();korb.style.background='rgba(110,231,183,0.25)';korb.style.borderColor='#6EE7B7';});
-  korb.addEventListener('dragleave',()=>{korb.style.background='rgba(110,231,183,0.12)';korb.style.borderColor='rgba(110,231,183,0.45)';});
+  korb.addEventListener('dragover',e=>{
+    e.preventDefault();e.stopPropagation();
+    korb.style.background='rgba(110,231,183,0.35)';
+    korb.style.borderColor='#6EE7B7';
+    korb.style.transform='scale(1.05)';
+  });
+  korb.addEventListener('dragleave',e=>{
+    e.stopPropagation();
+    korb.style.background='rgba(110,231,183,0.12)';
+    korb.style.borderColor='rgba(110,231,183,0.45)';
+    korb.style.transform='';
+  });
   korb.addEventListener('drop',e=>{
-    e.preventDefault();
-    korb.style.background='rgba(110,231,183,0.12)';korb.style.borderColor='rgba(110,231,183,0.45)';
+    e.preventDefault();e.stopPropagation();
+    korb.style.background='rgba(110,231,183,0.12)';
+    korb.style.borderColor='rgba(110,231,183,0.45)';
+    korb.style.transform='';
     if(dragId){moveCardTo(dragId,'fertig');dragId=null;dragFrom=null;}
   });
 }
@@ -914,8 +926,8 @@ function renderFertigDropdown(){
       <div style="font-size:12px;color:var(--text);margin-bottom:2px">${a.fahrzeug||''} ${a.kunde?'· '+a.kunde:''}</div>
       <div style="font-size:11px;color:var(--text-dim)">👷 ${workers}</div>
       <div style="display:flex;gap:6px;margin-top:8px">
-        <button class="btn-secondary" style="font-size:11px;padding:4px 8px" onclick="event.stopPropagation();openArbeitenModal('${a.id}')">🧾 Rechnung</button>
-        <button class="btn-secondary" style="font-size:11px;padding:4px 8px" onclick="event.stopPropagation();openMoveCard('${a.id}')">↩ Zurück</button>
+        <button class="btn-secondary" style="font-size:11px;padding:4px 8px" onclick="event.stopPropagation();document.getElementById('fertigDropdown').style.display='none';openArbeitenModal('${a.id}')">🧾 Rechnung</button>
+        <button class="btn-secondary" style="font-size:11px;padding:4px 8px" onclick="event.stopPropagation();document.getElementById('fertigDropdown').style.display='none';openMoveCard('${a.id}')">↩ Zurück</button>
         <button style="font-size:11px;padding:4px 8px;background:none;border:1px solid rgba(192,20,28,0.4);border-radius:4px;color:var(--red);cursor:pointer;margin-left:auto" onclick="event.stopPropagation();deleteFertig('${a.id}')">🗑 Löschen</button>
       </div>`;
     dd.appendChild(card);
