@@ -269,8 +269,8 @@ input,select,textarea,button{font-family:var(--font-body);}
 .hint-add-btn{background:var(--red);border:none;border-radius:4px;color:#fff;
   padding:0 16px;cursor:pointer;font-size:20px;font-weight:700;}
 
-/* MOBILE */
-@media(max-width:1024px){
+.btn-mobile-only{display:none;}
+    const btnMove=document.createElement('button');btnMove.textContent='↔ Verschieben';btnMove.style.color='#6EE7B7';btnMove.className='btn-mobile-only';
   body{overflow:auto;}
   #header{height:auto;flex-wrap:wrap;padding:8px 12px;gap:6px;}
   .hlogo{padding-right:12px;border-right:none;}
@@ -339,14 +339,15 @@ input,select,textarea,button{font-family:var(--font-body);}
   <div class="hstat"><div class="hstat-val" id="statAllesDa" style="color:#C0DD97">0</div><div class="hstat-lbl">Bereit</div></div>
   <div class="hstat"><div class="hstat-val" id="statUnterbrochen" style="color:#FAC775">0</div><div class="hstat-lbl">Unterbrochen</div></div>
 
+  <div style="position:relative;margin:0 16px">
+    <button id="fertigKorb" onclick="toggleFertigDropdown()" style="background:rgba(110,231,183,0.12);border:2px solid rgba(110,231,183,0.45);color:#6EE7B7;border-radius:8px;padding:10px 18px;font-family:var(--font-head);font-size:15px;text-transform:uppercase;letter-spacing:.06em;cursor:pointer;display:flex;align-items:center;gap:8px;white-space:nowrap;font-weight:700">
+      🏁 Fertige Aufträge <span id="fertigCount" style="background:rgba(110,231,183,0.25);border-radius:12px;padding:2px 9px;font-size:13px;font-weight:700">0</span>
+    </button>
+    <div id="fertigDropdown" style="display:none;position:absolute;top:calc(100% + 8px);left:50%;transform:translateX(-50%);width:360px;max-height:70vh;overflow-y:auto;background:var(--bg2);border:1px solid rgba(110,231,183,0.35);border-radius:8px;box-shadow:0 8px 32px rgba(0,0,0,0.7);z-index:500;padding:10px"></div>
+  </div>
+
   <div class="hspace"></div>
   <span id="syncStatus" class="ok">● Live</span>
-  <div style="position:relative">
-    <button id="fertigKorb" onclick="toggleFertigDropdown()" style="background:rgba(110,231,183,0.1);border:1px solid rgba(110,231,183,0.3);color:#6EE7B7;border-radius:6px;padding:7px 12px;font-family:var(--font-head);font-size:13px;text-transform:uppercase;letter-spacing:.04em;cursor:pointer;display:flex;align-items:center;gap:6px;white-space:nowrap">
-      🏁 Fertig <span id="fertigCount" style="background:rgba(110,231,183,0.2);border-radius:10px;padding:1px 7px;font-size:12px">0</span>
-    </button>
-    <div id="fertigDropdown" style="display:none;position:absolute;top:calc(100% + 6px);right:0;width:340px;max-height:70vh;overflow-y:auto;background:var(--bg2);border:1px solid rgba(110,231,183,0.3);border-radius:8px;box-shadow:0 8px 32px rgba(0,0,0,0.6);z-index:200;padding:8px"></div>
-  </div>
   <div class="hactions">
     <div class="search-wrap">
       <input type="text" id="searchInput" placeholder="🔍 Suche …" oninput="handleSearch(this.value)" onkeydown="if(event.key==='Escape')clearSearch()"/>
@@ -808,7 +809,7 @@ function makeCard(a,s,autoCollapse,collapsed){
     const btnEdit=document.createElement('button');btnEdit.textContent='✎ Bearbeiten';btnEdit.addEventListener('click',e=>{e.stopPropagation();openEdit(a.id);});
     const btnDiag=document.createElement('button');btnDiag.textContent='📋 Diagnose';btnDiag.style.color='#fbbf24';btnDiag.addEventListener('click',e=>{e.stopPropagation();openDiagnose(a.id);});
     const btnArb=document.createElement('button');btnArb.textContent='📝 Arbeiten';btnArb.style.color='#AFA9EC';btnArb.addEventListener('click',e=>{e.stopPropagation();openArbeitenModal(a.id);});
-    const btnMove=document.createElement('button');btnMove.textContent='↔ Verschieben';btnMove.style.color='#6EE7B7';
+    const btnMove=document.createElement('button');btnMove.textContent='↔ Verschieben';btnMove.style.color='#6EE7B7';btnMove.style.display='none';btnMove.className='btn-mobile-only';
     btnMove.addEventListener('click',e=>{e.stopPropagation();openMoveCard(a.id);});
     actions.appendChild(btnEdit);actions.appendChild(btnDiag);actions.appendChild(btnArb);actions.appendChild(btnMove);wrap.appendChild(actions);
   }
@@ -848,14 +849,18 @@ async function toggleMitarbeiter(autoId){
 // ── FERTIG KORB ──
 function toggleFertigDropdown(){
   const dd=document.getElementById('fertigDropdown');
-  if(dd.style.display==='none'){dd.style.display='block';renderFertigDropdown();}
-  else dd.style.display='none';
+  const isOpen=dd.style.display==='block';
+  dd.style.display=isOpen?'none':'block';
+  if(!isOpen)renderFertigDropdown();
 }
-document.addEventListener('click',e=>{
+// Close on outside click — use capture=false and check after toggle
+document.addEventListener('click',function(e){
   const korb=document.getElementById('fertigKorb');
   const dd=document.getElementById('fertigDropdown');
-  if(korb&&dd&&!korb.contains(e.target)&&!dd.contains(e.target))dd.style.display='none';
-});
+  if(!korb||!dd)return;
+  if(dd.style.display!=='block')return;
+  if(!korb.parentElement.contains(e.target))dd.style.display='none';
+},false);
 
 // Make fertigKorb a drop target
 document.addEventListener('DOMContentLoaded',()=>{
