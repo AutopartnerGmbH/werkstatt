@@ -973,13 +973,30 @@ function openMoveCard(autoId){
   document.body.appendChild(o);
 }
 async function moveCardTo(autoId,newStatus){
-  document.querySelectorAll('[style*="position:fixed"]').forEach(el=>{if(el.id!=='pinScreen'&&el.id!=='trashOverlay')el.remove();});
+  // Close move dialog but NOT fertigDropdown and NOT pinScreen
+  document.querySelectorAll('[style*="position:fixed"]').forEach(el=>{
+    if(el.id==='pinScreen'||el.id==='fertigDropdown'||el.id==='toastMsg')return;
+    el.remove();
+  });
   const a=autos.find(x=>x.id===autoId);if(!a)return;
   if(newStatus==='fertig'&&(a.mitarbeiter||[]).length>0){
     a.mitarbeiterHistory=(a.mitarbeiterHistory||[]);
     a.mitarbeiter.forEach(m=>{if(!a.mitarbeiterHistory.find(h=>h.name===m.name))a.mitarbeiterHistory.push(m);});
   }
-  a.status=newStatus;a.statusSeit=uhrzeit();await saveAuto(a);render();
+  const ziel=newStatus==='fertig'?'Fertige Aufträge':(STATI.find(s=>s.id===newStatus)?.label||newStatus);
+  a.status=newStatus;a.statusSeit=uhrzeit();await saveAuto(a);
+  if(isMobileMode()&&newStatus!=='fertig'){activeMobileTab=newStatus;}  
+  render();
+  showToast(`✓ ${a.kennzeichen} → ${ziel}`);
+}
+
+function showToast(msg){
+  let t=document.getElementById('toastMsg');
+  if(!t){t=document.createElement('div');t.id='toastMsg';
+    t.style.cssText='position:fixed;bottom:32px;left:50%;transform:translateX(-50%);background:#065F46;border:1px solid #6EE7B7;color:#6EE7B7;padding:10px 22px;border-radius:8px;font-size:14px;font-weight:700;font-family:var(--font-head);z-index:9999;letter-spacing:.04em;box-shadow:0 4px 20px rgba(0,0,0,0.5);transition:opacity .3s';
+    document.body.appendChild(t);}
+  t.textContent=msg;t.style.opacity='1';
+  clearTimeout(t._t);t._t=setTimeout(()=>{t.style.opacity='0';setTimeout(()=>t.remove(),300);},2000);
 }
 
 async function removeMitarbeiter(autoId,name){
