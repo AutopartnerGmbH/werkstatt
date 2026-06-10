@@ -1579,7 +1579,146 @@ function openRechnungskontrolle(autoId){
   +'<div style="border-top:1px solid #000;padding-top:4px;font-size:11px;color:#666">Datum / Serviceberater</div>'
   +'<div style="border-top:1px solid #000;padding-top:4px;font-size:11px;color:#666">Gepr&uuml;ft</div>'
   +'</div>'
-  +'<script>var AUFTRAG='+aJSON+';function exportVXS(){var now=new Date();var iso=now.toISOString();var uuid="xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g,function(c){var r=Math.random()*16|0;return(c==="x"?r:r&0x3|0x8).toString(16);});var gs=AUFTRAG.arbeiten.reduce(function(s,a){return s+a.stunden;},0);var gn=(gs*114).toFixed(2);var ap=AUFTRAG.arbeiten.filter(function(a){return a.stunden>0;}).map(function(ar){return"\\n      <Work>\\n        <Type>MECHANICS</Type>\\n        <WageLevel>1</WageLevel>\\n        <Units>"+ar.stunden.toFixed(2)+"</Units>\\n        <PricePerUnit>114.00</PricePerUnit>\\n        <Price>"+(ar.stunden*114).toFixed(2)+"</Price>\\n        <Description>"+ar.beschreibung.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;")+"</Description>\\n      </Work>";}).join("");var mp=AUFTRAG.material.filter(function(m){return !m.duplikat;}).map(function(m){return"\\n      <SparePart>\\n        <Description>"+m.bezeichnung.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;")+"</Description>\\n        <Quantity>"+(m.menge||1)+"</Quantity>\\n        <Unit>"+(m.einheit||"Stk")+"</Unit>\\n      </SparePart>";}).join("");var xml=\'<?xml version="1.0" encoding="utf-8"?>\\n<Dossiers xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns="http://www.dat.de/vxs">\\n  <Dossier>\\n    <Name>\'+AUFTRAG.auftragsnr+\'</Name>\\n    <Description>\'+AUFTRAG.kennzeichen+" - "+AUFTRAG.kunde+\'</Description>\\n    <UUID>\'+uuid+\'</UUID>\\n    <Country>DE</Country>\\n    <Language>de_DE</Language>\\n    <DataVersion>1</DataVersion>\\n    <Currency>EUR</Currency>\\n    <DossierType>repairOrder</DossierType>\\n    <CreateDate>\'+iso+\'</CreateDate>\\n    <CreateUser>Autopartner GmbH</CreateUser>\\n    <Vehicle>\\n      <RegistrationData>\\n        <LicenseNumber>\'+AUFTRAG.kennzeichen+\'</LicenseNumber>\\n      </RegistrationData>\\n      <ManufacturerName origin="user">\'+AUFTRAG.fahrzeug.split(" ")[0]+\'</ManufacturerName>\\n      <BaseModelName origin="user">\'+AUFTRAG.fahrzeug.split(" ").slice(1).join(" ")+\'</BaseModelName>\\n    </Vehicle>\\n    <RepairCalculation>\\n      <CalculationSummary>\\n        <LabourCosts>\\n          <AllSum>\'+gn+\'</AllSum>\\n          <Mechanic><Type>MECHANICS</Type><Units>\'+gs.toFixed(2)+\'</Units><Price>\'+gn+\'</Price></Mechanic>\\n          <TotalSum>\'+gn+\'</TotalSum>\\n          <Works>\'+ap+\'\\n          </Works>\\n        </LabourCosts>\\n        <SparePartsCosts><SpareParts>\'+mp+\'\\n        </SpareParts></SparePartsCosts>\\n        <TotalNetCosts>\'+gn+\'</TotalNetCosts>\\n        <TotalVAT>\'+(parseFloat(gn)*0.19).toFixed(2)+\'</TotalVAT>\\n        <TotalGrossCosts>\'+(parseFloat(gn)*1.19).toFixed(2)+\'</TotalGrossCosts>\\n      </CalculationSummary>\\n    </RepairCalculation>\\n    <RepairOrder>\\n      <OrderNumber>\'+AUFTRAG.auftragsnr+\'</OrderNumber>\\n      <InvoiceDate>\'+iso+\'</InvoiceDate>\\n      <CustomerName>\'+AUFTRAG.kunde+\'</CustomerName>\\n    </RepairOrder>\\n  </Dossier>\\n</Dossiers>\';var blob=new Blob([xml],{type:"application/xml"});var url=URL.createObjectURL(blob);var link=document.createElement("a");link.href=url;link.download="Auftrag_"+AUFTRAG.kennzeichen.replace(/[^a-zA-Z0-9]/g,"_")+"_"+new Date().toISOString().slice(0,10)+".xml";link.click();setTimeout(function(){URL.revokeObjectURL(url);},1000);}<\/script>'
+  +'<script>var AUFTRAG='+aJSON+';function exportVXS(){
+    var now=new Date();
+    var iso=now.toISOString();
+    var uuid='xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g,function(c){var r=Math.random()*16|0;return(c==='x'?r:r&0x3|0x8).toString(16);});
+    var esc=function(s){return(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');};
+
+    // Build RepairPositions from Arbeiten
+    var repPos=AUFTRAG.arbeiten.filter(function(a){return a.stunden>0;}).map(function(ar,i){
+      return '<vxs:RepairPosition>'+
+        '<vxs:DATProcessId>0</vxs:DATProcessId>'+
+        '<vxs:RepairType>dis- and mounting</vxs:RepairType>'+
+        '<vxs:Description>'+esc(ar.beschreibung)+'</vxs:Description>'+
+        '<vxs:IsManualDescription>true</vxs:IsManualDescription>'+
+        '<vxs:PositionEntryType>IFL</vxs:PositionEntryType>'+
+        '<vxs:IsRepairExtension>false</vxs:IsRepairExtension>'+
+        '<vxs:SparePartUsed>false</vxs:SparePartUsed>'+
+        '<vxs:WorkPositionNumber>'+(i+1)+'</vxs:WorkPositionNumber>'+
+        '<vxs:WorkPositionNumberOrigin>MANUAL</vxs:WorkPositionNumberOrigin>'+
+        '<vxs:WorkType>mechanic</vxs:WorkType>'+
+        '<vxs:WorkTime>'+ar.stunden.toFixed(2)+'</vxs:WorkTime>'+
+        '<vxs:WorkLevel>1</vxs:WorkLevel>'+
+        '<vxs:PreDamage>false</vxs:PreDamage>'+
+        '<vxs:WorkIndication>1</vxs:WorkIndication>'+
+      '</vxs:RepairPosition>';
+    }).join('');
+
+    // Build MaterialPositions from Material (no duplicates)
+    var matPos=AUFTRAG.material.filter(function(m){return !m.duplikat&&m.bezeichnung;}).map(function(m){
+      return '<vxs:MaterialPosition>'+
+        '<vxs:DATProcessId>0</vxs:DATProcessId>'+
+        '<vxs:Description>'+esc(m.bezeichnung)+'</vxs:Description>'+
+        '<vxs:Amount>'+(m.menge||1)+'</vxs:Amount>'+
+        '<vxs:ManualPosition>true</vxs:ManualPosition>'+
+        '<vxs:ManualAmount>true</vxs:ManualAmount>'+
+        '<vxs:ManualPrice>true</vxs:ManualPrice>'+
+        '<vxs:UsedPart>false</vxs:UsedPart>'+
+        '<vxs:IsRepairSet>false</vxs:IsRepairSet>'+
+        '<vxs:IsSpecific>false</vxs:IsSpecific>'+
+        '<vxs:Extended>false</vxs:Extended>'+
+        '<vxs:IncludedInCalculation>true</vxs:IncludedInCalculation>'+
+      '</vxs:MaterialPosition>';
+    }).join('');
+
+    // Labour positions
+    var gs=AUFTRAG.arbeiten.reduce(function(s,a){return s+a.stunden;},0);
+    var gn=(gs*114).toFixed(2);
+    var labPos=AUFTRAG.arbeiten.filter(function(a){return a.stunden>0;}).map(function(ar,i){
+      return '<vxs:LabourPosition>'+
+        '<vxs:LabourPositionKind>1</vxs:LabourPositionKind>'+
+        '<vxs:RepairType>dis- and mounting</vxs:RepairType>'+
+        '<vxs:LabourPosId>IFL '+(i+1)+'</vxs:LabourPosId>'+
+        '<vxs:Description>'+esc(ar.beschreibung)+'</vxs:Description>'+
+        '<vxs:WageType>mechanic</vxs:WageType>'+
+        '<vxs:ManualWageType>true</vxs:ManualWageType>'+
+        '<vxs:WageLevel>1</vxs:WageLevel>'+
+        '<vxs:Duration>'+ar.stunden.toFixed(2)+'</vxs:Duration>'+
+        '<vxs:ManualDuration>true</vxs:ManualDuration>'+
+        '<vxs:ValueTotal>'+(ar.stunden*114).toFixed(2)+'</vxs:ValueTotal>'+
+        '<vxs:ManualPosition>false</vxs:ManualPosition>'+
+        '<vxs:ValueTotalCorrected>'+(ar.stunden*114).toFixed(2)+'</vxs:ValueTotalCorrected>'+
+        '<vxs:hasRequiredByPosition>false</vxs:hasRequiredByPosition>'+
+        '<vxs:Extended>false</vxs:Extended>'+
+        '<vxs:IncludedInCalculation>true</vxs:IncludedInCalculation>'+
+        '<vxs:LabourPositionTimeState>IFL*</vxs:LabourPositionTimeState>'+
+        '<vxs:WorkNumber>'+(i+1)+'</vxs:WorkNumber>'+
+        '<vxs:WorkNumberOrigin>IFL</vxs:WorkNumberOrigin>'+
+      '</vxs:LabourPosition>';
+    }).join('');
+
+    var fzParts=(AUFTRAG.fahrzeug||'').split(' ');
+    var mfr=esc(fzParts[0]||'');
+    var mdl=esc(fzParts.slice(1).join(' ')||'');
+
+    var xml='<?xml version="1.0" encoding="utf-8"?>'+
+      '<vxs:Dossiers xmlns:vxs="http://www.dat.de/vxs" source="SD3" type="VehicleRepairOnline">'+
+      '<vxs:Dossier>'+
+        '<vxs:Name>'+esc(AUFTRAG.auftragsnr||AUFTRAG.kennzeichen)+'</vxs:Name>'+
+        '<vxs:Description>'+esc(AUFTRAG.kennzeichen)+' - '+esc(AUFTRAG.kunde)+'</vxs:Description>'+
+        '<vxs:UUID>'+uuid+'</vxs:UUID>'+
+        '<vxs:Country>DE</vxs:Country>'+
+        '<vxs:Language>de_DE</vxs:Language>'+
+        '<vxs:DataVersion>1</vxs:DataVersion>'+
+        '<vxs:Currency>EUR</vxs:Currency>'+
+        '<vxs:DossierType>repairOrder</vxs:DossierType>'+
+        '<vxs:CreateDate>'+iso+'</vxs:CreateDate>'+
+        '<vxs:CreateUser>Autopartner GmbH</vxs:CreateUser>'+
+        '<vxs:ChangeDate>'+iso+'</vxs:ChangeDate>'+
+        '<vxs:VAT><vxs:VatAtCalculationTime>19</vxs:VatAtCalculationTime></vxs:VAT>'+
+        '<vxs:TradingData>'+
+          '<vxs:Owner>'+
+            '<vxs:LastName>'+esc(AUFTRAG.kunde)+'</vxs:LastName>'+
+            '<vxs:Country>DE</vxs:Country>'+
+            '<vxs:VatEntitled>false</vxs:VatEntitled>'+
+          '</vxs:Owner>'+
+        '</vxs:TradingData>'+
+        '<vxs:RepairCalculation>'+
+          '<vxs:Vehicle>'+
+            '<vxs:ManufacturerName origin="user">'+mfr+'</vxs:ManufacturerName>'+
+            '<vxs:BaseModelName origin="user">'+mdl+'</vxs:BaseModelName>'+
+            '<vxs:RegistrationData>'+
+              '<vxs:LicenseNumber>'+esc(AUFTRAG.kennzeichen)+'</vxs:LicenseNumber>'+
+            '</vxs:RegistrationData>'+
+          '</vxs:Vehicle>'+
+          '<vxs:RepairPositions>'+repPos+'</vxs:RepairPositions>'+
+          '<vxs:CalcResultCommon>'+
+            '<vxs:MaterialPositions>'+matPos+'</vxs:MaterialPositions>'+
+            '<vxs:LabourPositions>'+labPos+'</vxs:LabourPositions>'+
+            '<vxs:RepairCalculationSummary>'+
+              '<vxs:LabourCosts>'+
+                '<vxs:AllSum>'+gn+'</vxs:AllSum>'+
+                '<vxs:Mechanic>'+
+                  '<vxs:Type>MECHANICS</vxs:Type>'+
+                  '<vxs:Units>'+gs.toFixed(2)+'</vxs:Units>'+
+                  '<vxs:PricePerUnit>114.00</vxs:PricePerUnit>'+
+                  '<vxs:Price>'+gn+'</vxs:Price>'+
+                '</vxs:Mechanic>'+
+                '<vxs:TotalSum>'+gn+'</vxs:TotalSum>'+
+              '</vxs:LabourCosts>'+
+              '<vxs:TotalNetCosts>'+gn+'</vxs:TotalNetCosts>'+
+              '<vxs:TotalVAT>'+(parseFloat(gn)*0.19).toFixed(2)+'</vxs:TotalVAT>'+
+              '<vxs:TotalGrossCosts>'+(parseFloat(gn)*1.19).toFixed(2)+'</vxs:TotalGrossCosts>'+
+            '</vxs:RepairCalculationSummary>'+
+          '</vxs:CalcResultCommon>'+
+        '</vxs:RepairCalculation>'+
+        '<vxs:RepairOrder>'+
+          '<vxs:OrderNumber>'+esc(AUFTRAG.auftragsnr)+'</vxs:OrderNumber>'+
+          '<vxs:InvoiceDate>'+iso+'</vxs:InvoiceDate>'+
+          '<vxs:CustomerName>'+esc(AUFTRAG.kunde)+'</vxs:CustomerName>'+
+        '</vxs:RepairOrder>'+
+      '</vxs:Dossier>'+
+    '</vxs:Dossiers>';
+
+    var blob=new Blob([xml],{type:'application/xml'});
+    var url=URL.createObjectURL(blob);
+    var link=document.createElement('a');
+    link.href=url;
+    link.download='Auftrag_'+AUFTRAG.kennzeichen.replace(/[^a-zA-Z0-9]/g,'_')+'_'+new Date().toISOString().slice(0,10)+'.xml';
+    link.click();
+    setTimeout(function(){URL.revokeObjectURL(url);},1000);
+  }<\/script>'
   +'</body></html>';
   const win=window.open('','_blank');if(win){win.document.write(html);win.document.close();}
 }
