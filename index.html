@@ -369,7 +369,7 @@ input,select,textarea,button{font-family:var(--font-body);}
 const SUPABASE_URL = 'https://ttzaocdqkiylkweklrsv.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InR0emFvY2Rxa2l5bGt3ZWtscnN2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODEwMjU4NjIsImV4cCI6MjA5NjYwMTg2Mn0.MGOpJU30yZinZ2rXUG6V08m1mVqGrR17FB4Ew-wh5PY';
 function getAnthropicKey(){return localStorage.getItem('werkstatt-anthropic-key')||'';}
-const COLLAPSE_AT  = 3;
+const COLLAPSE_AT  = 0; // 0 = immer eingeklappt
 const DEFAULT_PIN  = '808140';
 const ADMIN_PW     = 'admin';
 
@@ -655,7 +655,7 @@ function render(){
   STATI.forEach(s=>{
     const cards=autos.filter(a=>a.status===s.id)
       .sort((a,b)=>({'Express':0,'Dringend':1,'Normal':2}[a.prioritaet])-({'Express':0,'Dringend':1,'Normal':2}[b.prioritaet]));
-    const autoCollapse=cards.length>=COLLAPSE_AT;
+    const autoCollapse=COLLAPSE_AT===0||cards.length>=COLLAPSE_AT;
 
     const lane=document.createElement('div');lane.className='lane';lane.dataset.status=s.id;
 
@@ -664,7 +664,7 @@ function render(){
     hdr.innerHTML=`<span style="font-size:18px">${s.icon}</span>
       <span class="lane-title" style="color:${s.accent}">${s.label}</span>
       ${cards.length>0?`<span class="lane-count" style="background:rgba(0,0,0,0.4);color:${s.accent}">${cards.length}</span>`:''}`;
-    if(cards.length>0&&autoCollapse){
+    if(cards.length>0){
       const btn=document.createElement('button');btn.className='lane-toggle-btn';
       btn.style.cssText=`border:1px solid ${s.accent}66;color:${s.accent}`;
       const allOpen=cards.every(c=>expandedCards.has(c.id));
@@ -679,7 +679,12 @@ function render(){
     body.addEventListener('dragleave',()=>{body.style.background='';body.style.borderColor='';body.style.boxShadow='';});
     body.addEventListener('drop',e=>{
       e.preventDefault();body.style.background='';body.style.borderColor='';body.style.boxShadow='';
-      if(dragId&&dragFrom!==s.id){const a=autos.find(x=>x.id===dragId);if(a){a.status=s.id;a.statusSeit=uhrzeit();saveAuto(a);}render();}
+      if(dragId&&dragFrom!==s.id){const a=autos.find(x=>x.id===dragId);if(a){
+        if(s.id==='fertig'&&(a.mitarbeiter||[]).length>0){
+          a.mitarbeiterHistory=(a.mitarbeiterHistory||[]);
+          a.mitarbeiter.forEach(m=>{if(!a.mitarbeiterHistory.find(h=>h.name===m.name))a.mitarbeiterHistory.push(m);});
+        }
+        a.status=s.id;a.statusSeit=uhrzeit();saveAuto(a);}render();}
     });
 
     if(cards.length===0){body.innerHTML='<div class="lane-empty">Leer</div>';}
@@ -759,10 +764,19 @@ function makeCard(a,s,autoCollapse,collapsed){
     });
     const amIon=(a.mitarbeiter||[]).some(m=>m.name===myName);
     const btnMa=document.createElement('button');btnMa.className='btn-ma';
-    btnMa.textContent=amIon?'✓ Ich bin dran':'+ Ich arbeite daran';
+    btnMa.textContent=amIon?'✓ Ich bin dran – Austragen':'+ Ich arbeite daran';
     if(amIon){btnMa.style.borderColor='var(--red)';btnMa.style.color='var(--red)';btnMa.style.background='rgba(192,20,28,0.1)';}
     btnMa.addEventListener('click',e=>{e.stopPropagation();toggleMitarbeiter(a.id);});
-    maDiv.appendChild(btnMa);wrap.appendChild(maDiv);
+    maDiv.appendChild(btnMa);
+
+    // Wenn fertig: zeige wer daran gearbeitet hat
+    if(a.status==='fertig'&&(a.mitarbeiterHistory||[]).length>0){
+      const hist=document.createElement('div');
+      hist.style.cssText='padding:4px 12px 6px;font-size:11px;color:var(--text-dim)';
+      hist.innerHTML='<span style="color:#4ade80">✓ Bearbeitet von: </span>'+a.mitarbeiterHistory.map(m=>`<span style="font-weight:600;color:var(--text)">${m.name}</span>`).join(', ');
+      wrap.appendChild(hist);
+    }
+    wrap.appendChild(maDiv);
 
     // SFK-PDF Badge (falls vorhanden)
     const sfkDatei=(a.dateien||[]).find(d=>d.typ==='sfk_auftrag');
@@ -1001,7 +1015,7 @@ function openDiagnose(autoId){
     const val=d[key]||'';
     return `<div class="diag-btns">
       <button class="diag-btn diag-btn-ok ${val==='ok'?'active':''}" data-key="${key}" data-val="ok">OK</button>
-      <button class="diag-btn diag-btn-nok ${val==='nok'?'active':''}" data-key="${key}" data-val="nok">!</button>
+      <button class="diag-btn diag-btn-nok ${val==='nok'?'active':''}" data-key="${key}" data-val="nok">✕</button>
     </div>`;}
   function diagRow(label,key){
     return `<div class="diag-row"><span class="diag-row-label">${label}</span>${statusBtns(key)}</div>`;}
@@ -1012,10 +1026,10 @@ function openDiagnose(autoId){
       <button class="modal-close" onclick="closeModal()">✕</button>
     </div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:0 12px;margin-bottom:12px">
-      <div class="diag-input-row"><label>KM-Stand</label>
-        <input id="diag_km" value="${d.km||''}" placeholder="z.B. 125000"/></div>
-      <div class="diag-input-row"><label>TÜV</label>
-        <input id="diag_tuev" value="${d.tuev||''}" placeholder="z.B. 05/2026"/></div>
+      <div class="diag-input-row"><label>KM-Stand <span style="color:var(--red)">*</span></label>
+        <input id="diag_km" value="${d.km||''}" placeholder="z.B. 125000" style="border-color:${d.km?'var(--border2)':'var(--red)'}" required/></div>
+      <div class="diag-input-row"><label>TÜV-Fälligkeit <span style="color:var(--red)">*</span></label>
+        <input id="diag_tuev" value="${d.tuev||''}" placeholder="z.B. 05/2026" style="border-color:${d.tuev?'var(--border2)':'var(--red)'}" required/></div>
     </div>
     <div class="diag-section">
       <div class="diag-section-title">Allgemein</div>
@@ -1071,7 +1085,20 @@ function openDiagnose(autoId){
     }
   });
 
-  document.getElementById('btnDiagPDF').addEventListener('click',()=>exportDiagnosePDF(autoId));
+  document.getElementById('btnDiagPDF').addEventListener('click',()=>{
+    const km=document.getElementById('diag_km').value.trim();
+    const tuev=document.getElementById('diag_tuev').value.trim();
+    if(!km||!tuev){
+      // Highlight missing fields
+      if(!km)document.getElementById('diag_km').style.borderColor='var(--red)';
+      if(!tuev)document.getElementById('diag_tuev').style.borderColor='var(--red)';
+      const msg=document.getElementById('diagSaved');
+      msg.textContent='⚠ KM-Stand und TÜV sind Pflichtfelder';msg.style.color='var(--red)';msg.style.display='block';
+      setTimeout(()=>{msg.style.display='none';msg.style.color='#4ade80';},3000);
+      return;
+    }
+    exportDiagnosePDF(autoId);
+  });
 }
 
 async function saveDiagNow(a){
@@ -1085,13 +1112,13 @@ function exportDiagnosePDF(autoId){
   const d=a.diagnose||emptyDiagnose();
   function badge(key){const v=d[key]||'';
     if(v==='ok')return '<span style="background:#14532d;color:#4ade80;padding:2px 8px;border-radius:3px;font-size:11px;font-weight:700">OK</span>';
-    if(v==='nok')return '<span style="background:#7f1d1d;color:#fca5a5;padding:2px 8px;border-radius:3px;font-size:11px;font-weight:700">!</span>';
+    if(v==='nok')return '<span style="background:#7f1d1d;color:#fca5a5;padding:2px 8px;border-radius:3px;font-size:11px;font-weight:700">✕</span>';
     return '<span style="color:#aaa;font-size:11px">—</span>';}
   function tbl(items,title){return `<table style="width:100%;border-collapse:collapse;margin-bottom:10px">
     <thead><tr><th colspan="2" style="background:#C0141C;color:#fff;padding:5px 8px;font-size:12px;text-align:left">${title}</th></tr></thead>
     <tbody>${items.map(k=>`<tr><td style="padding:5px 8px;border-bottom:1px solid #eee;font-size:12px">${k}</td><td style="padding:5px 8px;border-bottom:1px solid #eee;text-align:center">${badge(k)}</td></tr>`).join('')}</tbody>
   </table>`;}
-  const html=`<!DOCTYPE html><html><head><meta charset="UTF-8"/><style>body{font-family:Arial,sans-serif;margin:0;padding:20px;color:#000;font-size:13px;}.two{display:grid;grid-template-columns:1fr 1fr;gap:8px;}.box{border:1px solid #ddd;border-radius:4px;padding:8px 10px;margin-bottom:8px;}.label{font-size:10px;color:#888;text-transform:uppercase;letter-spacing:.06em;}@media print{@page{margin:15mm;}}</style></head><body>
+  const html=`<!DOCTYPE html><html><head><meta charset="UTF-8"/><style>body{font-family:Arial,sans-serif;margin:0;padding:20px;color:#000;font-size:13px;}.two{display:grid;grid-template-columns:1fr 1fr;gap:8px;}.box{border:1px solid #ddd;border-radius:4px;padding:8px 10px;margin-bottom:8px;}.label{font-size:10px;color:#888;text-transform:uppercase;letter-spacing:.06em;}.no-print{margin-bottom:16px;text-align:right;}@media print{.no-print{display:none;}@page{margin:15mm;}}</style></head><body><div class="no-print"><button onclick="window.print()" style="background:#C0141C;color:#fff;border:none;padding:8px 18px;border-radius:4px;font-size:13px;cursor:pointer;font-weight:700">🖨 Drucken / Als PDF speichern</button></div>
   <div style="display:flex;justify-content:space-between;border-bottom:3px solid #C0141C;padding-bottom:10px;margin-bottom:14px">
     <div><div style="font-size:18px;font-weight:700">KFZ-Meisterbetrieb</div><div style="color:#C0141C;font-weight:700;font-size:13px">AUTOPARTNER AMERICANCARS</div><div style="font-size:11px;color:#666">Auf dem Lölfert 37 · 58119 Hagen · 02334/808140</div></div>
     <div style="color:#C0141C;font-size:18px;font-weight:700">Diagnose</div>
@@ -1117,7 +1144,7 @@ function exportDiagnosePDF(autoId){
     <div style="border-top:1px solid #000;padding-top:4px;font-size:11px;color:#666">Datum / Unterschrift Mechaniker</div>
     <div style="border-top:1px solid #000;padding-top:4px;font-size:11px;color:#666">Datum / Unterschrift Kunde</div>
   </div>
-  <script>window.onload=()=>window.print();<\/script></body></html>`;
+  </body></html>`;
   const win=window.open('','_blank');if(win){win.document.write(html);win.document.close();}
 }
 
@@ -1271,7 +1298,7 @@ function openRechnungskontrolle(autoId){
     <div style="border-top:1px solid #000;padding-top:4px;font-size:11px;color:#666">Datum / Serviceberater</div>
     <div style="border-top:1px solid #000;padding-top:4px;font-size:11px;color:#666">Geprüft</div>
   </div>
-  <script>window.onload=()=>window.print();<\/script></body></html>`;
+  </body></html>`;
   const win=window.open('','_blank');if(win){win.document.write(html);win.document.close();}
 }
 
@@ -1555,6 +1582,34 @@ async function doImportSFK(){
   btn.disabled=true;
   statusEl.style.display='block';
   statusEl.textContent='⏳ Auftrag wird angelegt …';
+
+  // Duplikatsprüfung
+  const kzCheck=(p.kennzeichen||'').toUpperCase().trim();
+  const nrCheck=(p.auftragsnr||'').trim();
+  const duplikat=autos.find(x=>
+    (kzCheck&&x.kennzeichen===kzCheck&&nrCheck&&x.auftragsnr===nrCheck)||
+    (kzCheck&&x.kennzeichen===kzCheck&&!nrCheck)
+  );
+  if(duplikat){
+    const confirmed=await new Promise(res=>{
+      const o=document.createElement('div');
+      o.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:400;display:flex;align-items:center;justify-content:center;padding:24px';
+      o.innerHTML=`<div style="background:var(--bg2);border:1px solid var(--border2);border-top:3px solid #fbbf24;border-radius:6px;padding:28px;max-width:400px;width:100%">
+        <div style="font-size:20px;margin-bottom:8px">⚠️</div>
+        <div style="font-family:var(--font-head);font-size:15px;color:#fbbf24;margin-bottom:8px;text-transform:uppercase">Auftrag bereits vorhanden</div>
+        <div style="font-size:13px;color:var(--text-dim);margin-bottom:20px;line-height:1.6">
+          Ein Auftrag für <strong style="color:var(--text)">${kzCheck}</strong>${nrCheck?' (Nr. '+nrCheck+')':''} ist bereits angelegt.<br>Trotzdem als neuen Auftrag importieren?
+        </div>
+        <div style="display:flex;gap:10px;justify-content:flex-end">
+          <button class="btn-secondary" id="dupNein">Abbrechen</button>
+          <button class="btn-primary" id="dupJa" style="background:#92400e;border-color:#b45309">Trotzdem importieren</button>
+        </div></div>`;
+      document.body.appendChild(o);
+      o.querySelector('#dupNein').addEventListener('click',()=>{document.body.removeChild(o);res(false);});
+      o.querySelector('#dupJa').addEventListener('click',()=>{document.body.removeChild(o);res(true);});
+    });
+    if(!confirmed){btn.disabled=false;statusEl.style.display='none';return;}
+  }
 
   const id=genId();
   const a={
