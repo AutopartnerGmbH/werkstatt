@@ -270,19 +270,21 @@ input,select,textarea,button{font-family:var(--font-body);}
   padding:0 16px;cursor:pointer;font-size:20px;font-weight:700;}
 
 .btn-mobile-only{display:none;}
-  body{overflow:auto;}
-  #header{height:auto;flex-wrap:wrap;padding:8px 12px;gap:6px;}
-  .hlogo{padding-right:12px;border-right:none;}
-  .hstat{padding:0 8px;}
-  .hstat-val{font-size:20px;}
-  .hstat-lbl{font-size:9px;}
-  .hactions{padding-left:0;width:100%;justify-content:flex-end;}
-  .mobile-tabs{display:flex;}
-  #board{padding:8px;overflow:visible;}
-  .board-grid{display:block !important;min-width:unset !important;}
-  .lane{display:none;}
-  .lane.mobile-active{display:flex;}
-}
+
+/* MOBILE MODE (class-based, manual toggle) */
+body.mobile-mode .btn-mobile-only{display:inline-flex !important;}
+body.mobile-mode #header{height:auto;flex-wrap:wrap;padding:8px 12px;gap:6px;}
+body.mobile-mode .hlogo{padding-right:12px;border-right:none;}
+body.mobile-mode .hstat{padding:0 8px;}
+body.mobile-mode .hstat-val{font-size:20px;}
+body.mobile-mode .hstat-lbl{font-size:9px;}
+body.mobile-mode .hactions{padding-left:0;width:100%;justify-content:flex-end;}
+body.mobile-mode .mobile-tabs{display:flex;}
+body.mobile-mode #board{padding:8px;overflow:visible;}
+body.mobile-mode .board-grid{display:block !important;min-width:unset !important;}
+body.mobile-mode .lane{display:none;}
+body.mobile-mode .lane.mobile-active{display:flex;}
+body.mobile-mode{overflow:auto;}
 
 ::-webkit-scrollbar{width:5px;}
 ::-webkit-scrollbar-track{background:var(--bg);}
@@ -326,6 +328,7 @@ input,select,textarea,button{font-family:var(--font-body);}
       <div class="hlogo-title">Werkstatt</div>
       <div class="hlogo-sub">Autopartner GmbH</div>
       <div class="hlogo-date" id="clockEl"></div>
+    <button id="viewToggleBtn" onclick="toggleViewMode()" style="margin-top:4px;background:none;border:1px solid var(--border2);border-radius:4px;color:var(--text-dim);font-size:10px;padding:2px 8px;cursor:pointer;letter-spacing:.04em;text-transform:uppercase;font-family:var(--font-head)">🖥 Desktop</button>
     </div>
   </div>
   <div id="myNameBadge" onclick="changeMyName()" title="Namen ändern">
@@ -518,6 +521,7 @@ function checkPin(){
 function pinErfolgreich(){
   document.getElementById('pinScreen').style.display='none';
   sessionStorage.setItem('werkstatt-auth','1');
+  initViewMode();
   initMyName();loadAutos();startRealtime();
 }
 document.addEventListener('keydown',e=>{
@@ -634,13 +638,31 @@ function renderMobileTabs(){
     c.appendChild(btn);
   });
 }
+function isMobileMode(){return document.body.classList.contains('mobile-mode');}
+function toggleViewMode(){
+  const mobile=isMobileMode();
+  document.body.classList.toggle('mobile-mode',!mobile);
+  localStorage.setItem('werkstatt-viewmode',!mobile?'mobile':'desktop');
+  updateViewToggleBtn();
+  render();
+}
+function updateViewToggleBtn(){
+  const btn=document.getElementById('viewToggleBtn');if(!btn)return;
+  if(isMobileMode()){btn.textContent='📱 Mobil';btn.style.borderColor='var(--red)';btn.style.color='var(--red)';}
+  else{btn.textContent='🖥 Desktop';btn.style.borderColor='var(--border2)';btn.style.color='var(--text-dim)';}
+}
+function initViewMode(){
+  const saved=localStorage.getItem('werkstatt-viewmode')||'desktop';
+  document.body.classList.toggle('mobile-mode',saved==='mobile');
+  updateViewToggleBtn();
+}
 function updateMobileLanes(){
-  if(window.innerWidth>1024)return;
+  if(!isMobileMode())return;
   document.querySelectorAll('.lane').forEach(l=>l.classList.remove('mobile-active'));
   const al=document.querySelector(`.lane[data-status="${activeMobileTab}"]`);
   if(al)al.classList.add('mobile-active');
 }
-window.addEventListener('resize',updateMobileLanes);
+// resize listener removed — mode is manual
 
 // ── COLLAPSE ──
 function isCollapsed(id,autoCollapse){return autoCollapse?!expandedCards.has(id):collapsedCards.has(id);}
