@@ -270,7 +270,6 @@ input,select,textarea,button{font-family:var(--font-body);}
   padding:0 16px;cursor:pointer;font-size:20px;font-weight:700;}
 
 .btn-mobile-only{display:none;}
-    const btnMove=document.createElement('button');btnMove.textContent='↔ Verschieben';btnMove.style.color='#6EE7B7';btnMove.className='btn-mobile-only';
   body{overflow:auto;}
   #header{height:auto;flex-wrap:wrap;padding:8px 12px;gap:6px;}
   .hlogo{padding-right:12px;border-right:none;}
@@ -809,7 +808,7 @@ function makeCard(a,s,autoCollapse,collapsed){
     const btnEdit=document.createElement('button');btnEdit.textContent='✎ Bearbeiten';btnEdit.addEventListener('click',e=>{e.stopPropagation();openEdit(a.id);});
     const btnDiag=document.createElement('button');btnDiag.textContent='📋 Diagnose';btnDiag.style.color='#fbbf24';btnDiag.addEventListener('click',e=>{e.stopPropagation();openDiagnose(a.id);});
     const btnArb=document.createElement('button');btnArb.textContent='📝 Arbeiten';btnArb.style.color='#AFA9EC';btnArb.addEventListener('click',e=>{e.stopPropagation();openArbeitenModal(a.id);});
-    const btnMove=document.createElement('button');btnMove.textContent='↔ Verschieben';btnMove.style.color='#6EE7B7';btnMove.style.display='none';btnMove.className='btn-mobile-only';
+    const btnMove=document.createElement('button');btnMove.textContent='↔ Verschieben';btnMove.style.color='#6EE7B7';btnMove.className='btn-mobile-only';
     btnMove.addEventListener('click',e=>{e.stopPropagation();openMoveCard(a.id);});
     actions.appendChild(btnEdit);actions.appendChild(btnDiag);actions.appendChild(btnArb);actions.appendChild(btnMove);wrap.appendChild(actions);
   }
