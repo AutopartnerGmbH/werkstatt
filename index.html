@@ -270,7 +270,7 @@ input,select,textarea,button{font-family:var(--font-body);}
   padding:0 16px;cursor:pointer;font-size:20px;font-weight:700;}
 
 /* MOBILE */
-@media(max-width:768px){
+@media(max-width:1024px){
   body{overflow:auto;}
   #header{height:auto;flex-wrap:wrap;padding:8px 12px;gap:6px;}
   .hlogo{padding-right:12px;border-right:none;}
@@ -338,8 +338,15 @@ input,select,textarea,button{font-family:var(--font-body);}
   <div class="hstat"><div class="hstat-val" id="statTeile" style="color:#AFA9EC">0</div><div class="hstat-lbl">Teile</div></div>
   <div class="hstat"><div class="hstat-val" id="statAllesDa" style="color:#C0DD97">0</div><div class="hstat-lbl">Bereit</div></div>
   <div class="hstat"><div class="hstat-val" id="statUnterbrochen" style="color:#FAC775">0</div><div class="hstat-lbl">Unterbrochen</div></div>
+
   <div class="hspace"></div>
   <span id="syncStatus" class="ok">● Live</span>
+  <div style="position:relative">
+    <button id="fertigKorb" onclick="toggleFertigDropdown()" style="background:rgba(110,231,183,0.1);border:1px solid rgba(110,231,183,0.3);color:#6EE7B7;border-radius:6px;padding:7px 12px;font-family:var(--font-head);font-size:13px;text-transform:uppercase;letter-spacing:.04em;cursor:pointer;display:flex;align-items:center;gap:6px;white-space:nowrap">
+      🏁 Fertig <span id="fertigCount" style="background:rgba(110,231,183,0.2);border-radius:10px;padding:1px 7px;font-size:12px">0</span>
+    </button>
+    <div id="fertigDropdown" style="display:none;position:absolute;top:calc(100% + 6px);right:0;width:340px;max-height:70vh;overflow-y:auto;background:var(--bg2);border:1px solid rgba(110,231,183,0.3);border-radius:8px;box-shadow:0 8px 32px rgba(0,0,0,0.6);z-index:200;padding:8px"></div>
+  </div>
   <div class="hactions">
     <div class="search-wrap">
       <input type="text" id="searchInput" placeholder="🔍 Suche …" oninput="handleSearch(this.value)" onkeydown="if(event.key==='Escape')clearSearch()"/>
@@ -628,7 +635,7 @@ function renderMobileTabs(){
   });
 }
 function updateMobileLanes(){
-  if(window.innerWidth>768)return;
+  if(window.innerWidth>1024)return;
   document.querySelectorAll('.lane').forEach(l=>l.classList.remove('mobile-active'));
   const al=document.querySelector(`.lane[data-status="${activeMobileTab}"]`);
   if(al)al.classList.add('mobile-active');
@@ -650,6 +657,10 @@ function render(){
   document.getElementById('statTeile').textContent=autos.filter(a=>a.status==='teile').length;
   document.getElementById('statAllesDa').textContent=autos.filter(a=>a.status==='alles_da').length;
   document.getElementById('statUnterbrochen').textContent=autos.filter(a=>a.status==='unterbrochen').length;
+  const fertigList=autos.filter(a=>a.status==='fertig');
+  document.getElementById('fertigCount').textContent=fertigList.length;
+  // Refresh dropdown if open
+  if(document.getElementById('fertigDropdown').style.display!=='none')renderFertigDropdown();
 
   const grid=document.getElementById('boardGrid');grid.innerHTML='';
   STATI.forEach(s=>{
@@ -797,7 +808,9 @@ function makeCard(a,s,autoCollapse,collapsed){
     const btnEdit=document.createElement('button');btnEdit.textContent='✎ Bearbeiten';btnEdit.addEventListener('click',e=>{e.stopPropagation();openEdit(a.id);});
     const btnDiag=document.createElement('button');btnDiag.textContent='📋 Diagnose';btnDiag.style.color='#fbbf24';btnDiag.addEventListener('click',e=>{e.stopPropagation();openDiagnose(a.id);});
     const btnArb=document.createElement('button');btnArb.textContent='📝 Arbeiten';btnArb.style.color='#AFA9EC';btnArb.addEventListener('click',e=>{e.stopPropagation();openArbeitenModal(a.id);});
-    actions.appendChild(btnEdit);actions.appendChild(btnDiag);actions.appendChild(btnArb);wrap.appendChild(actions);
+    const btnMove=document.createElement('button');btnMove.textContent='↔ Verschieben';btnMove.style.color='#6EE7B7';
+    btnMove.addEventListener('click',e=>{e.stopPropagation();openMoveCard(a.id);});
+    actions.appendChild(btnEdit);actions.appendChild(btnDiag);actions.appendChild(btnArb);actions.appendChild(btnMove);wrap.appendChild(actions);
   }
   return wrap;
 }
@@ -832,6 +845,106 @@ async function toggleMitarbeiter(autoId){
   if(idx>=0)a.mitarbeiter.splice(idx,1);else a.mitarbeiter.push({name:myName,seit:uhrzeit()});
   await saveAuto(a);render();
 }
+// ── FERTIG KORB ──
+function toggleFertigDropdown(){
+  const dd=document.getElementById('fertigDropdown');
+  if(dd.style.display==='none'){dd.style.display='block';renderFertigDropdown();}
+  else dd.style.display='none';
+}
+document.addEventListener('click',e=>{
+  const korb=document.getElementById('fertigKorb');
+  const dd=document.getElementById('fertigDropdown');
+  if(korb&&dd&&!korb.contains(e.target)&&!dd.contains(e.target))dd.style.display='none';
+});
+
+// Make fertigKorb a drop target
+document.addEventListener('DOMContentLoaded',()=>{
+  const korb=document.getElementById('fertigKorb');
+  if(!korb)return;
+  korb.addEventListener('dragover',e=>{e.preventDefault();korb.style.background='rgba(110,231,183,0.25)';korb.style.borderColor='#6EE7B7';});
+  korb.addEventListener('dragleave',()=>{korb.style.background='rgba(110,231,183,0.1)';korb.style.borderColor='rgba(110,231,183,0.3)';});
+  korb.addEventListener('drop',e=>{
+    e.preventDefault();
+    korb.style.background='rgba(110,231,183,0.1)';korb.style.borderColor='rgba(110,231,183,0.3)';
+    if(dragId){moveCardTo(dragId,'fertig');dragId=null;dragFrom=null;}
+  });
+});
+
+function renderFertigDropdown(){
+  const dd=document.getElementById('fertigDropdown');if(!dd)return;
+  const fertig=autos.filter(a=>a.status==='fertig').sort((a,b)=>b.datum?.localeCompare(a.datum)||0);
+  if(fertig.length===0){
+    dd.innerHTML='<div style="text-align:center;padding:20px;color:var(--text-dim);font-size:13px">Keine fertigen Aufträge</div>';return;
+  }
+  dd.innerHTML='<div style="font-size:11px;color:var(--text-dim);text-transform:uppercase;letter-spacing:.06em;padding:4px 8px 8px">🏁 Fertige Aufträge</div>';
+  fertig.forEach(a=>{
+    const card=document.createElement('div');
+    card.style.cssText='background:var(--bg3);border:1px solid rgba(110,231,183,0.2);border-radius:6px;padding:10px 12px;margin-bottom:6px;cursor:pointer';
+    const workers=(a.mitarbeiterHistory||[]).map(m=>m.name).join(', ')||'—';
+    card.innerHTML=`
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
+        <span style="font-family:var(--font-head);font-size:15px;color:#6EE7B7;font-weight:700">${a.kennzeichen}</span>
+        <span style="font-size:11px;color:var(--text-dim)">${a.datum||''}</span>
+      </div>
+      <div style="font-size:12px;color:var(--text);margin-bottom:2px">${a.fahrzeug||''} ${a.kunde?'· '+a.kunde:''}</div>
+      <div style="font-size:11px;color:var(--text-dim)">👷 ${workers}</div>
+      <div style="display:flex;gap:6px;margin-top:8px">
+        <button class="btn-secondary" style="font-size:11px;padding:4px 8px" onclick="event.stopPropagation();openArbeitenModal('${a.id}')">🧾 Rechnung</button>
+        <button class="btn-secondary" style="font-size:11px;padding:4px 8px" onclick="event.stopPropagation();openMoveCard('${a.id}')">↩ Zurück</button>
+        <button style="font-size:11px;padding:4px 8px;background:none;border:1px solid rgba(192,20,28,0.4);border-radius:4px;color:var(--red);cursor:pointer;margin-left:auto" onclick="event.stopPropagation();deleteFertig('${a.id}')">🗑 Löschen</button>
+      </div>`;
+    dd.appendChild(card);
+  });
+}
+
+async function deleteFertig(autoId){
+  const a=autos.find(x=>x.id===autoId);if(!a)return;
+  const o=document.createElement('div');
+  o.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:400;display:flex;align-items:center;justify-content:center;padding:24px';
+  o.innerHTML=`<div style="background:var(--bg2);border:1px solid var(--border2);border-top:3px solid var(--red);border-radius:6px;padding:28px;max-width:360px;width:100%">
+    <div style="font-family:var(--font-head);font-size:15px;margin-bottom:8px">Auftrag löschen?</div>
+    <div style="font-size:13px;color:var(--text-dim);margin-bottom:20px">${a.kennzeichen} ${a.fahrzeug?'· '+a.fahrzeug:''} endgültig löschen?<br><span style="color:var(--red)">Kann nicht rückgängig gemacht werden.</span></div>
+    <div style="display:flex;gap:10px;justify-content:flex-end">
+      <button class="btn-secondary" id="delNo">Abbrechen</button>
+      <button class="btn-primary" id="delYes">Löschen</button>
+    </div></div>`;
+  document.body.appendChild(o);
+  o.querySelector('#delNo').addEventListener('click',()=>document.body.removeChild(o));
+  o.querySelector('#delYes').addEventListener('click',async()=>{
+    document.body.removeChild(o);
+    await deleteAuto(autoId);
+    renderFertigDropdown();
+  });
+}
+
+function openMoveCard(autoId){
+  const a=autos.find(x=>x.id===autoId);if(!a)return;
+  const o=document.createElement('div');
+  o.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:300;display:flex;align-items:center;justify-content:center;padding:24px';
+  const allTargets=[...STATI,{id:'fertig',label:'Fertige Aufträge',icon:'🏁',color:'#065F46',accent:'#6EE7B7'}];
+  const btns=allTargets.filter(s=>s.id!==a.status).map(s=>
+    `<button onclick="moveCardTo('${autoId}','${s.id}')" style="display:flex;align-items:center;gap:10px;width:100%;background:${s.color};border:1px solid ${s.accent}44;border-radius:6px;padding:12px 16px;color:${s.accent};font-size:14px;font-weight:700;cursor:pointer;margin-bottom:8px;font-family:var(--font-head);text-transform:uppercase;letter-spacing:.04em">
+      <span style="font-size:20px">${s.icon}</span>${s.label}
+    </button>`
+  ).join('');
+  o.innerHTML=`<div style="background:var(--bg2);border:1px solid var(--border2);border-top:3px solid var(--red);border-radius:6px;padding:24px;max-width:380px;width:100%">
+    <div style="font-family:var(--font-head);font-size:13px;color:var(--text-dim);text-transform:uppercase;letter-spacing:.06em;margin-bottom:16px">↔ ${a.kennzeichen} verschieben nach …</div>
+    ${btns}
+    <button onclick="this.closest('[style*=fixed]').remove()" style="width:100%;background:none;border:1px solid var(--border2);border-radius:6px;padding:10px;color:var(--text-dim);cursor:pointer;margin-top:4px">Abbrechen</button>
+  </div>`;
+  o.addEventListener('click',e=>{if(e.target===o)o.remove();});
+  document.body.appendChild(o);
+}
+async function moveCardTo(autoId,newStatus){
+  document.querySelectorAll('[style*="position:fixed"]').forEach(el=>{if(el.id!=='pinScreen'&&el.id!=='trashOverlay')el.remove();});
+  const a=autos.find(x=>x.id===autoId);if(!a)return;
+  if(newStatus==='fertig'&&(a.mitarbeiter||[]).length>0){
+    a.mitarbeiterHistory=(a.mitarbeiterHistory||[]);
+    a.mitarbeiter.forEach(m=>{if(!a.mitarbeiterHistory.find(h=>h.name===m.name))a.mitarbeiterHistory.push(m);});
+  }
+  a.status=newStatus;a.statusSeit=uhrzeit();await saveAuto(a);render();
+}
+
 async function removeMitarbeiter(autoId,name){
   const a=autos.find(x=>x.id===autoId);if(!a)return;
   a.mitarbeiter=(a.mitarbeiter||[]).filter(m=>m.name!==name);await saveAuto(a);render();
@@ -1162,7 +1275,8 @@ function openArbeitenModal(autoId){
     </div>
     <div id="diktierPreview_arbeit" class="diktier-preview" style="display:none;margin-bottom:8px"></div>
     <div id="arbeitenList" style="margin-bottom:8px"></div>
-    <button class="btn-secondary" id="btnAddArbeit" style="width:100%;margin-bottom:16px">+ Arbeit hinzufügen</button>
+    <div id="hinweiseZeiten" style="margin-bottom:8px"></div>
+    <button class="btn-secondary" id="btnAddArbeit" style="width:100%;margin-bottom:16px">+ Weitere Arbeit hinzufügen</button>
 
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
       <div class="section-label" style="flex:1;margin:0">Verbrauchtes Material</div>
@@ -1186,6 +1300,7 @@ function openArbeitenModal(autoId){
     </div>
   `);
 
+  renderHinweiseZeiten(autoId);
   renderArbeitenList(autoId);
   renderMaterialList(autoId);
   renderLSList(autoId);
@@ -1207,6 +1322,35 @@ function openArbeitenModal(autoId){
 }
 
 function showArbSaved(){const el=document.getElementById('arbSaved');if(!el)return;el.style.display='block';clearTimeout(el._t);el._t=setTimeout(()=>el.style.display='none',2000);}
+
+function renderHinweiseZeiten(autoId){
+  const a=autos.find(x=>x.id===autoId);if(!a)return;
+  const el=document.getElementById('hinweiseZeiten');if(!el)return;
+  el.innerHTML='';
+  if(!(a.hinweise||[]).length)return;
+  const hdr=document.createElement('div');
+  hdr.style.cssText='font-size:11px;color:var(--text-dim);text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px;margin-top:4px';
+  hdr.textContent='Aus SFK-Auftrag — Stunden eintragen:';
+  el.appendChild(hdr);
+  a.hinweise.forEach((h,i)=>{
+    const row=document.createElement('div');
+    row.style.cssText='display:grid;grid-template-columns:auto 1fr 90px;gap:6px;margin-bottom:6px;align-items:center';
+    // Checkbox (done status)
+    const chk=document.createElement('input');chk.type='checkbox';chk.checked=!!h.done;
+    chk.style.cssText='width:16px;height:16px;cursor:pointer;accent-color:var(--red);flex-shrink:0';
+    chk.addEventListener('change',()=>{h.done=chk.checked;saveAuto(a);showArbSaved();});
+    // Label
+    const lbl=document.createElement('span');
+    lbl.style.cssText=`font-size:13px;color:var(--text);${h.done?'text-decoration:line-through;color:var(--text-dim)':''}`;
+    lbl.textContent=h.text||'';
+    // Stunden
+    const std=document.createElement('input');std.type='number';std.step='0.5';std.min='0';
+    std.value=h.stunden||'';std.placeholder='Std';
+    std.style.cssText='background:var(--bg3);border:1px solid var(--border2);border-radius:4px;color:var(--text);padding:7px 8px;font-size:13px;outline:none;width:100%';
+    std.addEventListener('input',()=>{h.stunden=std.value;saveAuto(a);showArbSaved();});
+    row.appendChild(chk);row.appendChild(lbl);row.appendChild(std);el.appendChild(row);
+  });
+}
 
 function renderArbeitenList(autoId){
   const a=autos.find(x=>x.id===autoId);if(!a)return;
@@ -1252,7 +1396,14 @@ function renderLSList(autoId){
   (a.lieferscheine||[]).forEach((ls,i)=>{
     const row=document.createElement('div');
     row.style.cssText='display:flex;align-items:center;gap:8px;margin-bottom:6px;background:var(--bg3);border-radius:4px;padding:8px 10px';
-    row.innerHTML=`<span style="font-size:16px">${ls.typ==='pdf'?'📄':'🖼'}</span><span style="flex:1;font-size:13px;color:var(--text)">${ls.name}</span>`;
+    // Checkbox für Rechnungskontrolle
+    const chk=document.createElement('input');chk.type='checkbox';chk.checked=!!ls.geprueft;
+    chk.style.cssText='width:16px;height:16px;cursor:pointer;accent-color:#4ade80;flex-shrink:0';
+    chk.title='Für Rechnungskontrolle abhaken';
+    chk.addEventListener('change',()=>{ls.geprueft=chk.checked;saveAuto(a);showArbSaved();});
+    const icon=document.createElement('span');icon.style.cssText='font-size:16px';icon.textContent=ls.typ==='pdf'?'📄':'🖼';
+    const name=document.createElement('span');name.style.cssText=`flex:1;font-size:13px;color:var(--text);${ls.geprueft?'text-decoration:line-through;color:var(--text-dim)':''}`;name.textContent=ls.name;
+    row.appendChild(chk);row.appendChild(icon);row.appendChild(name);
     const link=document.createElement('a');link.href=ls.url;link.target='_blank';link.textContent='Öffnen';link.style.cssText='color:var(--red);font-size:12px;font-weight:600;text-decoration:none';
     const del=document.createElement('button');del.style.cssText='background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:14px;padding:0 4px';del.textContent='✕';
     del.addEventListener('click',()=>{a.lieferscheine.splice(i,1);saveAuto(a);renderLSList(autoId);});
