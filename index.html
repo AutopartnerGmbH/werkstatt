@@ -975,9 +975,8 @@ function openMoveCard(autoId){
   document.body.appendChild(o);
 }
 async function moveCardTo(autoId,newStatus){
-  // Close move dialog specifically
-  const moveDialog=document.getElementById('moveCardDialog');
-  if(moveDialog)moveDialog.remove();
+  // Close ALL move dialogs
+  document.querySelectorAll('#moveCardDialog').forEach(el=>el.remove());
   const a=autos.find(x=>x.id===autoId);if(!a)return;
   if(newStatus==='fertig'&&(a.mitarbeiter||[]).length>0){
     a.mitarbeiterHistory=(a.mitarbeiterHistory||[]);
