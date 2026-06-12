@@ -119,7 +119,7 @@ input,select,textarea,button{font-family:var(--font-body);}
 #fertigZone.drag-over #fertigBtn{background:rgba(74,222,128,0.25);border-color:#4ade80;border-style:dashed;box-shadow:0 0 14px rgba(74,222,128,0.35);}
 .fertig-val{font-family:var(--font-head);font-weight:700;font-size:28px;color:#4ade80;line-height:1;}
 .fertig-lbl{color:#4ade80;font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;opacity:0.8;}
-#fertigDropdown{display:none;position:absolute;top:calc(100% + 6px);right:0;min-width:380px;
+#fertigDropdown{display:none;position:absolute;top:calc(100% + 6px);left:0;min-width:380px;
   background:var(--bg2);border:2px solid #4ade8055;border-top:3px solid #4ade80;
   border-radius:8px;z-index:9999;max-height:480px;overflow-y:auto;
   box-shadow:0 12px 40px rgba(0,0,0,0.7);}
@@ -397,7 +397,6 @@ input,select,textarea,button{font-family:var(--font-body);}
   <div class="hstat"><div class="hstat-val" id="statAllesDa" style="color:#C0DD97">0</div><div class="hstat-lbl">Bereit</div></div>
   <div class="hstat"><div class="hstat-val" id="statUnterbrochen" style="color:#FAC775">0</div><div class="hstat-lbl">Unterbrochen</div></div>
   <div class="hspace"></div>
-  <span id="syncStatus" class="ok"><span class="sync-dot"></span><span id="syncText">Live</span></span>
   <div id="fertigZone">
     <button id="fertigBtn">
       <div class="fertig-val" id="statFertig">0</div>
@@ -411,6 +410,7 @@ input,select,textarea,button{font-family:var(--font-body);}
       </div>
     </div>
   </div>
+  <span id="syncStatus" class="ok"><span class="sync-dot"></span><span id="syncText">Live</span></span>
   <div class="hactions">
     <div class="search-wrap">
       <input type="text" id="searchInput" placeholder="🔍 Suche …" oninput="handleSearch(this.value)" onkeydown="if(event.key==='Escape')clearSearch()"/>
@@ -1254,7 +1254,8 @@ function exportDiagnosePDF(autoId){
     <thead><tr><th colspan="2" style="background:#C0141C;color:#fff;padding:5px 8px;font-size:12px;text-align:left">${title}</th></tr></thead>
     <tbody>${items.map(k=>`<tr><td style="padding:5px 8px;border-bottom:1px solid #eee;font-size:12px">${k}</td><td style="padding:5px 8px;border-bottom:1px solid #eee;text-align:center">${badge(k)}</td></tr>`).join('')}</tbody>
   </table>`;}
-  const html=`<!DOCTYPE html><html><head><meta charset="UTF-8"/><style>body{font-family:Arial,sans-serif;margin:0;padding:20px;color:#000;font-size:13px;}.two{display:grid;grid-template-columns:1fr 1fr;gap:8px;}.box{border:1px solid #ddd;border-radius:4px;padding:8px 10px;margin-bottom:8px;}.label{font-size:10px;color:#888;text-transform:uppercase;letter-spacing:.06em;}@media print{@page{margin:15mm;}}</style></head><body>
+  const html=`<!DOCTYPE html><html><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/><style>*{box-sizing:border-box;}body{font-family:Arial,sans-serif;margin:0;padding:56px 20px 20px;color:#000;font-size:13px;}.two{display:grid;grid-template-columns:1fr 1fr;gap:8px;}.box{border:1px solid #ddd;border-radius:4px;padding:8px 10px;margin-bottom:8px;}.label{font-size:10px;color:#888;text-transform:uppercase;letter-spacing:.06em;}#closeBar{position:fixed;top:0;left:0;right:0;height:44px;background:#C0141C;display:flex;align-items:center;justify-content:space-between;padding:0 16px;z-index:9999;box-shadow:0 2px 6px rgba(0,0,0,0.3);}#closeBar span{color:#fff;font-weight:700;font-size:13px;}#closeBar button{background:rgba(255,255,255,0.2);border:1px solid rgba(255,255,255,0.4);border-radius:6px;color:#fff;font-size:14px;font-weight:700;padding:5px 14px;cursor:pointer;}@media print{#closeBar{display:none;}body{padding:0;}@page{margin:15mm;}}@media(max-width:600px){body{padding:56px 12px 12px;}.two{grid-template-columns:1fr;}}</style></head><body>
+  <div id="closeBar"><span>Diagnose — ${a.kennzeichen}</span><button onclick="window.close()">✕ Schließen</button></div>
   <div style="display:flex;justify-content:space-between;border-bottom:3px solid #C0141C;padding-bottom:10px;margin-bottom:14px">
     <div><div style="font-size:18px;font-weight:700">KFZ-Meisterbetrieb</div><div style="color:#C0141C;font-weight:700;font-size:13px">AUTOPARTNER AMERICANCARS</div><div style="font-size:11px;color:#666">Auf dem Lölfert 37 · 58119 Hagen · 02334/808140</div></div>
     <div style="color:#C0141C;font-size:18px;font-weight:700">Diagnose</div>
@@ -1280,7 +1281,7 @@ function exportDiagnosePDF(autoId){
     <div style="border-top:1px solid #000;padding-top:4px;font-size:11px;color:#666">Datum / Unterschrift Mechaniker</div>
     <div style="border-top:1px solid #000;padding-top:4px;font-size:11px;color:#666">Datum / Unterschrift Kunde</div>
   </div>
-  <script>window.onload=()=>window.print();<\/script></body></html>`;
+  </body></html>`;
   const win=window.open('','_blank');if(win){win.document.write(html);win.document.close();}
 }
 
@@ -1522,7 +1523,50 @@ function openRechnungskontrolle(autoId){
       <button class="btn-secondary" id="btnRkXML">⬇ XML exportieren</button>
       <button class="btn-secondary" onclick="closeModal()">Schließen</button>
     </div>
+
+    <div class="section-label" style="margin-top:16px">✓ Checkliste vor Rechnungserstellung</div>
+    <div id="rkChecklisteContainer" style="background:var(--bg3);border-radius:6px;padding:8px 12px;margin-bottom:8px"></div>
+    <div style="display:flex;gap:6px;margin-bottom:8px">
+      <input id="rkCheckNeu" placeholder="Neuer Checkpunkt …" style="flex:1;background:var(--bg4);border:1px dashed var(--border2);border-radius:4px;color:var(--text);padding:6px 10px;font-size:12px;outline:none"/>
+      <button class="btn-primary" id="rkCheckAdd" style="padding:6px 14px">+</button>
+    </div>
   `);
+
+  // Checkliste laden (pro Auftrag gespeichert, sonst Standard)
+  const defaultChecks = ['Alle Arbeitsstunden eingetragen?','Alle Materialien erfasst?','Alle Lieferscheine hochgeladen?','Diagnosezettel ausgefüllt?'];
+  if(!a.checkliste||!a.checkliste.length) a.checkliste = defaultChecks.map(t=>({text:t,checked:false}));
+
+  function renderChecklist(){
+    const c = document.getElementById('rkChecklisteContainer'); if(!c)return;
+    c.innerHTML='';
+    (a.checkliste||[]).forEach((item,i)=>{
+      const row=document.createElement('div');
+      row.style.cssText='display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid var(--border)';
+      const cb=document.createElement('input');cb.type='checkbox';cb.checked=!!item.checked;
+      cb.style.cssText='width:16px;height:16px;accent-color:var(--red);flex-shrink:0;cursor:pointer';
+      cb.addEventListener('change',()=>{item.checked=cb.checked;saveAuto(a);});
+      const inp=document.createElement('input');inp.type='text';inp.value=item.text;
+      inp.style.cssText='flex:1;background:transparent;border:none;outline:none;color:var(--text);font-size:13px;font-family:var(--font-body)';
+      inp.addEventListener('blur',()=>{item.text=inp.value.trim()||item.text;saveAuto(a);});
+      inp.addEventListener('keydown',e=>{if(e.key==='Enter')inp.blur();});
+      const del=document.createElement('button');del.textContent='✕';
+      del.style.cssText='background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:13px;padding:0 2px';
+      del.addEventListener('click',()=>{a.checkliste.splice(i,1);saveAuto(a);renderChecklist();});
+      row.appendChild(cb);row.appendChild(inp);row.appendChild(del);c.appendChild(row);
+    });
+  }
+  renderChecklist();
+
+  document.getElementById('rkCheckAdd').addEventListener('click',()=>{
+    const inp=document.getElementById('rkCheckNeu');
+    const v=inp.value.trim(); if(!v)return;
+    if(!a.checkliste)a.checkliste=[];
+    a.checkliste.push({text:v,checked:false});
+    saveAuto(a); inp.value=''; renderChecklist();
+  });
+  document.getElementById('rkCheckNeu').addEventListener('keydown',e=>{
+    if(e.key==='Enter')document.getElementById('rkCheckAdd').click();
+  });
 
   document.getElementById('btnRkPDF').addEventListener('click',()=>exportRechnungPDF(autoId));
   document.getElementById('btnRkXML').addEventListener('click',()=>exportRechnungXML(autoId));
@@ -1532,18 +1576,28 @@ function exportRechnungPDF(autoId){
   const a=autos.find(x=>x.id===autoId);if(!a)return;
   const gesamtStd=(a.arbeiten||[]).reduce((s,ar)=>s+(parseFloat(ar.stunden)||0),0);
   const html=`<!DOCTYPE html><html><head><meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <style>
-    body{font-family:Arial,sans-serif;margin:0;padding:20px;color:#000;font-size:13px;}
+    *{box-sizing:border-box;}
+    body{font-family:Arial,sans-serif;margin:0;padding:56px 20px 20px;color:#000;font-size:13px;}
     table{width:100%;border-collapse:collapse;margin-bottom:14px;}
     th{background:#C0141C;color:#fff;padding:6px 8px;font-size:12px;text-align:left;}
     td{padding:5px 8px;border-bottom:1px solid #eee;vertical-align:top;font-size:12px;}
-    .warn{color:#b45309;font-weight:600;}
     .box{border:1px solid #ddd;border-radius:4px;padding:8px 10px;margin-bottom:10px;}
-    .close-btn{position:fixed;top:12px;right:12px;background:#C0141C;color:#fff;border:none;
-      border-radius:6px;padding:8px 16px;font-size:14px;font-weight:700;cursor:pointer;z-index:999;}
-    @media print{.close-btn,.no-print{display:none;}@page{margin:15mm;}}
+    #closeBar{position:fixed;top:0;left:0;right:0;height:44px;background:#C0141C;
+      display:flex;align-items:center;justify-content:space-between;padding:0 16px;
+      z-index:9999;box-shadow:0 2px 6px rgba(0,0,0,0.3);}
+    #closeBar span{color:#fff;font-weight:700;font-size:13px;letter-spacing:.04em;}
+    #closeBar button{background:rgba(255,255,255,0.2);border:1px solid rgba(255,255,255,0.4);
+      border-radius:6px;color:#fff;font-size:14px;font-weight:700;padding:5px 14px;cursor:pointer;}
+    #closeBar button:hover{background:rgba(255,255,255,0.35);}
+    @media print{#closeBar{display:none;}body{padding:0;}@page{margin:15mm;}}
+    @media(max-width:600px){body{padding:56px 12px 12px;}td,th{font-size:11px;padding:4px 6px;}}
   </style></head><body>
-  <button class="close-btn" onclick="window.close()">✕ Schließen</button>
+  <div id="closeBar">
+    <span>Rechnungskontrolle — ${a.kennzeichen}</span>
+    <button onclick="window.close()">✕ Schließen</button>
+  </div>
   <div style="display:flex;justify-content:space-between;border-bottom:3px solid #C0141C;padding-bottom:10px;margin-bottom:14px">
     <div>
       <div style="font-size:16px;font-weight:700">Rechnungskontrolle</div>
@@ -1588,17 +1642,18 @@ function exportRechnungPDF(autoId){
   </div>`:''}
   <div class="box" style="background:#fff8f8;border-color:#C0141C">
     <div style="font-weight:700;color:#C0141C;margin-bottom:8px;font-size:12px">✓ Checkliste vor Rechnungserstellung in SFK</div>
-    ${['Alle Arbeitsstunden eingetragen?','Alle Materialien erfasst?','Alle Lieferscheine hochgeladen?','Diagnosezettel ausgefüllt?','Probefahrt durchgeführt?'].map(p=>`
+    ${(a.checkliste&&a.checkliste.length?a.checkliste:['Alle Arbeitsstunden eingetragen?','Alle Materialien erfasst?','Alle Lieferscheine hochgeladen?','Diagnosezettel ausgefüllt?'].map(t=>({text:t,checked:false}))).map(p=>`
       <div style="display:flex;align-items:center;gap:8px;padding:4px 0;border-bottom:1px solid #fde8e8;font-size:12px">
-        <div style="width:14px;height:14px;border:1.5px solid #C0141C;border-radius:3px;flex-shrink:0"></div>
-        <span>${p}</span>
+        <div style="width:14px;height:14px;border:1.5px solid #C0141C;border-radius:3px;flex-shrink:0;background:${p.checked?'#C0141C':'transparent'};display:flex;align-items:center;justify-content:center">
+          ${p.checked?'<span style="color:#fff;font-size:10px;font-weight:700">✓</span>':''}
+        </div>
+        <span style="${p.checked?'text-decoration:line-through;color:#aaa':''}">${p.text}</span>
       </div>`).join('')}
   </div>
   <div style="margin-top:24px;display:grid;grid-template-columns:1fr 1fr;gap:40px">
     <div style="border-top:1px solid #000;padding-top:4px;font-size:11px;color:#666">Datum / Serviceberater</div>
     <div style="border-top:1px solid #000;padding-top:4px;font-size:11px;color:#666">Geprüft</div>
   </div>
-  <script>if(window.innerWidth>768)window.onload=()=>window.print();<\/script>
   </body></html>`;
   const win=window.open('','_blank');
   if(win){win.document.write(html);win.document.close();}
@@ -1638,6 +1693,9 @@ function exportRechnungXML(autoId){
       <Typ>${esc(ls.typ)}</Typ>
     </Lieferschein>`).join('\n    ')}
   </Lieferscheine>
+  <Checkliste>
+    ${(a.checkliste||[]).map(p=>`<Punkt erledigt="${p.checked?'ja':'nein'}">${esc(p.text)}</Punkt>`).join('\n    ')}
+  </Checkliste>
 </Rechnungskontrolle>`;
   const blob=new Blob([xml],{type:'application/xml'});
   const url=URL.createObjectURL(blob);
