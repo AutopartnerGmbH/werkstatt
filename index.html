@@ -327,20 +327,50 @@ input,select,textarea,button{font-family:var(--font-body);}
 .hint-add-btn{background:var(--red);border:none;border-radius:4px;color:#fff;
   padding:0 16px;cursor:pointer;font-size:20px;font-weight:700;}
 
-/* MOBILE */
+/* ANSICHT UMSCHALTEN */
+body.force-mobile #board .board-grid{display:block !important;min-width:unset !important;}
+body.force-mobile .lane{display:none;}
+body.force-mobile .lane.mobile-active{display:flex;}
+body.force-mobile .mobile-tabs{display:flex !important;}
+body.force-desktop #board .board-grid{display:grid !important;min-width:960px !important;}
+body.force-desktop .lane{display:flex !important;}
+body.force-desktop .mobile-tabs{display:none !important;}
+#btnViewToggle{background:var(--bg3);border:1px solid var(--border2);border-radius:4px;
+  color:var(--text-dim);padding:7px 10px;cursor:pointer;font-size:12px;font-weight:600;
+  white-space:nowrap;}
+#btnViewToggle:hover{border-color:var(--red);color:var(--text);}
+
+/* VERSCHIEBEN BUTTON (nur mobile sichtbar) */
+.btn-verschieben{display:none;width:100%;background:rgba(192,20,28,0.1);border:1px solid rgba(192,20,28,0.3);
+  border-radius:0 0 5px 5px;color:var(--red);padding:9px;cursor:pointer;font-size:12px;
+  font-weight:700;font-family:var(--font-head);letter-spacing:.06em;text-transform:uppercase;}
+.btn-verschieben:hover{background:rgba(192,20,28,0.2);}
+@media(max-width:768px){.btn-verschieben{display:block;}}
+body.force-mobile .btn-verschieben{display:block;}
+body.force-desktop .btn-verschieben{display:none !important;}
+
+/* VERSCHIEBEN POPUP */
+#verschiebenPopup{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:400;
+  align-items:flex-end;justify-content:center;}
+#verschiebenPopup.open{display:flex;}
+#verschiebenSheet{background:var(--bg2);border-radius:12px 12px 0 0;padding:16px;width:100%;max-width:480px;
+  border-top:3px solid var(--red);}
+#verschiebenSheet h3{font-family:var(--font-head);font-size:13px;color:var(--text-dim);
+  letter-spacing:.08em;text-transform:uppercase;margin-bottom:12px;}
+
 @media(max-width:768px){
-  body{overflow:auto;}
-  #header{height:auto;flex-wrap:wrap;padding:8px 12px;gap:6px;}
-  .hlogo{padding-right:12px;border-right:none;}
-  .hstat{padding:0 8px;}
-  .hstat-val{font-size:20px;}
-  .hstat-lbl{font-size:9px;}
-  .hactions{padding-left:0;width:100%;justify-content:flex-end;}
-  .mobile-tabs{display:flex;}
-  #board{padding:8px;overflow:visible;}
-  .board-grid{display:block !important;min-width:unset !important;}
-  .lane{display:none;}
-  .lane.mobile-active{display:flex;}
+  body:not(.force-desktop){overflow:auto;}
+  body:not(.force-desktop) #header{height:auto;flex-wrap:wrap;padding:8px 12px;gap:6px;}
+  body:not(.force-desktop) .hlogo{padding-right:12px;border-right:none;}
+  body:not(.force-desktop) .hstat{padding:0 8px;}
+  body:not(.force-desktop) .hstat-val{font-size:20px;}
+  body:not(.force-desktop) .hstat-lbl{font-size:9px;}
+  body:not(.force-desktop) .hactions{padding-left:0;width:100%;justify-content:flex-end;}
+  body:not(.force-desktop) .mobile-tabs{display:flex;}
+  body:not(.force-desktop) #board{padding:8px;overflow:visible;}
+  body:not(.force-desktop) .board-grid{display:block !important;min-width:unset !important;}
+  body:not(.force-desktop) .lane{display:none;}
+  body:not(.force-desktop) .lane.mobile-active{display:flex;}
 }
 
 ::-webkit-scrollbar{width:5px;}
@@ -416,6 +446,7 @@ input,select,textarea,button{font-family:var(--font-body);}
       <input type="text" id="searchInput" placeholder="🔍 Suche …" oninput="handleSearch(this.value)" onkeydown="if(event.key==='Escape')clearSearch()"/>
       <button class="search-clear" id="searchClear" onclick="clearSearch()">✕</button>
     </div>
+    <button id="btnViewToggle" onclick="toggleViewMode()">📱 Mobil</button>
     <button class="btn-secondary" onclick="openAdmin()" style="padding:7px 10px">⚙️</button>
     <button class="btn-secondary" onclick="openBarcodeScanner()" style="padding:7px 10px">⬛ Scan</button>
     <button class="btn-secondary" onclick="openSFKImport()">↑ SFK</button>
@@ -425,6 +456,14 @@ input,select,textarea,button{font-family:var(--font-body);}
 
 <div class="mobile-tabs" id="mobileTabs"></div>
 <div id="board"><div class="board-grid" id="boardGrid"></div></div>
+
+<div id="verschiebenPopup">
+  <div id="verschiebenSheet">
+    <h3>Auftrag verschieben nach …</h3>
+    <div id="verschiebenOptionen"></div>
+    <button class="btn-secondary" style="width:100%;margin-top:10px" onclick="document.getElementById('verschiebenPopup').classList.remove('open')">Abbrechen</button>
+  </div>
+</div>
 
 <div id="trash">
   <span id="trashIcon">🗑️</span>
@@ -804,12 +843,104 @@ function renderMobileTabs(){
   });
 }
 function updateMobileLanes(){
-  if(window.innerWidth>768)return;
+  const isMobileScreen=window.innerWidth<=768;
+  const forceMobile=document.body.classList.contains('force-mobile');
+  const forceDesktop=document.body.classList.contains('force-desktop');
+  if(forceDesktop)return;
+  if(!isMobileScreen&&!forceMobile)return;
   document.querySelectorAll('.lane').forEach(l=>l.classList.remove('mobile-active'));
   const al=document.querySelector(`.lane[data-status="${activeMobileTab}"]`);
   if(al)al.classList.add('mobile-active');
 }
-window.addEventListener('resize',updateMobileLanes);
+window.addEventListener('resize',()=>{
+  // Button-Text aktualisieren wenn kein manueller Override aktiv
+  const hasForce=document.body.classList.contains('force-mobile')||document.body.classList.contains('force-desktop');
+  if(!hasForce){
+    viewMode=window.innerWidth<=768?'mobile':'desktop';
+    const btn=document.getElementById('btnViewToggle');
+    if(btn)btn.textContent=viewMode==='mobile'?'🖥 Desktop':'📱 Mobil';
+  }
+  updateMobileLanes();
+});
+
+// ── ANSICHT UMSCHALTEN ──
+let viewMode = window.innerWidth<=768 ? 'mobile' : 'desktop';
+function toggleViewMode(){
+  const btn=document.getElementById('btnViewToggle');
+  const isMobileScreen=window.innerWidth<=768;
+  if(viewMode==='desktop'){
+    // Zu Mobil wechseln
+    viewMode='mobile';
+    document.body.classList.remove('force-desktop');
+    if(isMobileScreen) document.body.classList.remove('force-mobile'); // media query reicht
+    else document.body.classList.add('force-mobile');
+    if(btn)btn.textContent='🖥 Desktop';
+  } else {
+    // Zu Desktop wechseln
+    viewMode='desktop';
+    document.body.classList.remove('force-mobile');
+    document.body.classList.add('force-desktop');
+    if(btn)btn.textContent='📱 Mobil';
+  }
+  renderMobileTabs();
+  updateMobileLanes();
+}
+// Initialzustand setzen — media query übernimmt mobile automatisch, kein force-mobile nötig
+(function(){
+  const btn=document.getElementById('btnViewToggle');
+  if(window.innerWidth<=768){
+    viewMode='mobile';
+    // Kein force-mobile setzen — @media(max-width:768px) greift bereits
+    if(btn)btn.textContent='🖥 Desktop';
+  } else {
+    viewMode='desktop';
+    if(btn)btn.textContent='📱 Mobil';
+  }
+})();
+
+// ── VERSCHIEBEN POPUP ──
+function openVerschiebenPopup(autoId, aktuellerStatus){
+  const popup=document.getElementById('verschiebenPopup');
+  const optionen=document.getElementById('verschiebenOptionen');
+  if(!popup||!optionen)return;
+  optionen.innerHTML='';
+  STATI.forEach(s=>{
+    if(s.id===aktuellerStatus)return; // aktuelle Spalte überspringen
+    const btn=document.createElement('button');
+    btn.style.cssText=`width:100%;display:flex;align-items:center;gap:12px;padding:12px 14px;
+      margin-bottom:6px;background:var(--bg3);border:1px solid ${s.accent}44;border-radius:6px;
+      color:var(--text);cursor:pointer;font-size:14px;font-family:var(--font-body);text-align:left`;
+    btn.innerHTML=`<span style="font-size:20px">${s.icon}</span>
+      <span style="flex:1;font-weight:600">${s.label}</span>
+      <span style="width:10px;height:10px;border-radius:50%;background:${s.accent};flex-shrink:0"></span>`;
+    btn.addEventListener('click',()=>{
+      const a=autos.find(x=>x.id===autoId);
+      if(a){a.status=s.id;a.statusSeit=uhrzeit();saveAuto(a);}
+      activeMobileTab=s.id;
+      popup.classList.remove('open');
+      render();
+    });
+    optionen.appendChild(btn);
+  });
+  // Auch "Fertig" als Option
+  const btnFertig=document.createElement('button');
+  btnFertig.style.cssText=`width:100%;display:flex;align-items:center;gap:12px;padding:12px 14px;
+    margin-bottom:6px;background:rgba(74,222,128,0.08);border:1px solid rgba(74,222,128,0.3);border-radius:6px;
+    color:#4ade80;cursor:pointer;font-size:14px;font-family:var(--font-body);text-align:left`;
+  btnFertig.innerHTML=`<span style="font-size:20px">🏁</span><span style="flex:1;font-weight:600">Fertige Aufträge</span>`;
+  if(aktuellerStatus!=='fertig'){
+    btnFertig.addEventListener('click',()=>{
+      const a=autos.find(x=>x.id===autoId);
+      if(a){a.status='fertig';a.statusSeit=uhrzeit();saveAuto(a);}
+      popup.classList.remove('open');
+      render();
+    });
+    optionen.appendChild(btnFertig);
+  }
+  popup.classList.add('open');
+  // Klick außerhalb schließt
+  popup.onclick=e=>{if(e.target===popup)popup.classList.remove('open');};
+}
 
 // ── COLLAPSE ──
 function isCollapsed(id){return !expandedCards.has(id);}
@@ -947,6 +1078,13 @@ function makeCard(a,s,collapsed){
     const btnDiag=document.createElement('button');btnDiag.textContent='📋 Diagnose';btnDiag.style.color='#fbbf24';btnDiag.addEventListener('click',e=>{e.stopPropagation();openDiagnose(a.id);});
     const btnArb=document.createElement('button');btnArb.textContent='📝 Arbeiten';btnArb.style.color='#AFA9EC';btnArb.addEventListener('click',e=>{e.stopPropagation();openArbeitenModal(a.id);});
     actions.appendChild(btnEdit);actions.appendChild(btnDiag);actions.appendChild(btnArb);wrap.appendChild(actions);
+
+    // Verschieben-Button (nur mobil sichtbar)
+    const btnVerschieben=document.createElement('button');
+    btnVerschieben.className='btn-verschieben';
+    btnVerschieben.textContent='⇄ Verschieben';
+    btnVerschieben.addEventListener('click',e=>{e.stopPropagation();openVerschiebenPopup(a.id,a.status);});
+    wrap.appendChild(btnVerschieben);
   }
   return wrap;
 }
@@ -1306,10 +1444,18 @@ function openArbeitenModal(autoId){
       <button class="btn-diktier" id="btnDiktierMaterial" style="margin-left:10px">🎤 Diktieren</button>
     </div>
     <div id="diktierPreview_material" class="diktier-preview" style="display:none;margin-bottom:8px"></div>
+    <div id="lsVorschlagBox" style="display:none;background:rgba(74,222,128,0.07);border:1px solid rgba(74,222,128,0.3);border-radius:8px;padding:12px;margin-bottom:10px">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+        <span style="font-size:12px;font-weight:700;color:#4ade80">🤖 KI hat erkannt — bitte abhaken:</span>
+        <button id="btnVorschlagAlle" style="background:rgba(74,222,128,0.15);border:1px solid rgba(74,222,128,0.4);border-radius:4px;color:#4ade80;font-size:11px;font-weight:700;padding:3px 10px;cursor:pointer">✓ Alle übernehmen</button>
+      </div>
+      <div id="lsVorschlagListe"></div>
+      <button id="btnVorschlagUebernehmen" style="width:100%;margin-top:8px;background:rgba(74,222,128,0.2);border:1px solid rgba(74,222,128,0.5);border-radius:6px;color:#4ade80;font-size:13px;font-weight:700;padding:8px;cursor:pointer">✓ Ausgewählte übernehmen</button>
+    </div>
     <div id="materialList" style="margin-bottom:8px"></div>
-    <button class="btn-secondary" id="btnAddMaterial" style="width:100%;margin-bottom:16px">+ Material hinzufügen</button>
+    <button class="btn-secondary" id="btnAddMaterial" style="width:100%;margin-bottom:16px">+ Material manuell hinzufügen</button>
 
-    <div class="section-label">Lieferscheine</div>
+    <div class="section-label">Lieferscheine <span style="font-size:10px;color:var(--text-muted);font-weight:400;text-transform:none;letter-spacing:0">(werden automatisch analysiert)</span></div>
     <div id="lsList" style="margin-bottom:8px"></div>
     <div id="ls_drop" style="border:2px dashed var(--border2);border-radius:8px;padding:18px;text-align:center;cursor:pointer;background:var(--bg3);margin-bottom:8px">
       <div style="font-size:20px;margin-bottom:4px">📎</div>
@@ -1350,18 +1496,46 @@ function renderArbeitenList(autoId){
   const el=document.getElementById('arbeitenList');if(!el)return;
   el.innerHTML='';
   (a.arbeiten||[]).forEach((ar,i)=>{
-    const row=document.createElement('div');
-    row.style.cssText='display:grid;grid-template-columns:2fr 1fr auto auto;gap:6px;margin-bottom:6px;align-items:center';
-    const inp1=document.createElement('input');inp1.value=ar.beschreibung||'';inp1.placeholder='Arbeitsbeschreibung';
-    inp1.style.cssText='background:var(--bg3);border:1px solid var(--border2);border-radius:4px;color:var(--text);padding:8px;font-size:13px;outline:none';
-    inp1.addEventListener('input',()=>{ar.beschreibung=inp1.value;saveAuto(a);showArbSaved();});
-    const inp2=document.createElement('input');inp2.value=ar.stunden||'';inp2.placeholder='Std';inp2.type='number';inp2.step='0.5';inp2.min='0';
-    inp2.style.cssText='background:var(--bg3);border:1px solid var(--border2);border-radius:4px;color:var(--text);padding:8px;font-size:13px;outline:none';
+    const wrap=document.createElement('div');
+    wrap.style.cssText='background:var(--bg3);border:1px solid var(--border2);border-radius:6px;padding:10px 12px;margin-bottom:8px;';
+
+    // Kopfzeile: Mitarbeiter + Stunden + Löschen
+    const header=document.createElement('div');
+    header.style.cssText='display:flex;align-items:center;gap:8px;margin-bottom:8px';
+    const wer=document.createElement('span');
+    wer.style.cssText='font-size:12px;color:var(--text-dim);font-weight:600;flex:1';
+    wer.textContent='👤 '+(ar.wer||'Unbekannt');
+    const stdWrap=document.createElement('div');
+    stdWrap.style.cssText='display:flex;align-items:center;gap:6px;flex-shrink:0';
+    const stdLbl=document.createElement('span');stdLbl.style.cssText='font-size:12px;color:var(--text-dim)';stdLbl.textContent='Std:';
+    const inp2=document.createElement('input');
+    inp2.value=ar.stunden||'';inp2.placeholder='0.0';inp2.type='number';inp2.step='0.5';inp2.min='0';
+    inp2.style.cssText='width:60px;background:var(--bg4);border:1px solid var(--border2);border-radius:4px;color:var(--text);padding:5px 7px;font-size:13px;outline:none;text-align:center';
     inp2.addEventListener('input',()=>{ar.stunden=inp2.value;saveAuto(a);showArbSaved();});
-    const wer=document.createElement('span');wer.style.cssText='font-size:12px;color:var(--text-dim);white-space:nowrap';wer.textContent=ar.wer||'—';
-    const del=document.createElement('button');del.style.cssText='background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:16px;padding:0 4px';del.textContent='✕';
+    inp2.addEventListener('focus',()=>inp2.style.borderColor='var(--red)');
+    inp2.addEventListener('blur',()=>inp2.style.borderColor='var(--border2)');
+    const del=document.createElement('button');
+    del.style.cssText='background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:18px;padding:0 2px;line-height:1';
+    del.textContent='✕';
     del.addEventListener('click',()=>{a.arbeiten.splice(i,1);saveAuto(a);renderArbeitenList(autoId);});
-    row.appendChild(inp1);row.appendChild(inp2);row.appendChild(wer);row.appendChild(del);el.appendChild(row);
+    stdWrap.appendChild(stdLbl);stdWrap.appendChild(inp2);
+    header.appendChild(wer);header.appendChild(stdWrap);header.appendChild(del);
+
+    // Textarea für Beschreibung
+    const ta=document.createElement('textarea');
+    ta.value=ar.beschreibung||'';
+    ta.placeholder='Arbeitsbeschreibung — was wurde gemacht?';
+    ta.rows=2;
+    ta.style.cssText='width:100%;background:var(--bg4);border:1px solid var(--border2);border-radius:4px;color:var(--text);padding:8px 10px;font-size:14px;outline:none;resize:none;font-family:var(--font-body);line-height:1.5;overflow:hidden';
+    // Auto-Resize
+    function autoResize(){ta.style.height='auto';ta.style.height=Math.max(ta.scrollHeight,52)+'px';}
+    ta.addEventListener('input',()=>{ar.beschreibung=ta.value;saveAuto(a);showArbSaved();autoResize();});
+    ta.addEventListener('focus',()=>ta.style.borderColor='var(--red)');
+    ta.addEventListener('blur',()=>ta.style.borderColor='var(--border2)');
+    setTimeout(autoResize,0);
+
+    wrap.appendChild(header);wrap.appendChild(ta);
+    el.appendChild(wrap);
   });
 }
 
@@ -1402,12 +1576,152 @@ function addMaterial(autoId){const a=autos.find(x=>x.id===autoId);if(!a)return;a
 async function uploadLS(autoId,input){
   const file=input.files[0];if(!file)return;
   const a=autos.find(x=>x.id===autoId);if(!a)return;
+  const lsDrop=document.getElementById('ls_drop');
   try{
     setSync('syncing','↻ Hochladen …');
+    if(lsDrop){lsDrop.innerHTML='<div style="font-size:20px">⏳</div><div style="color:#fbbf24;font-size:12px;font-weight:600">Wird hochgeladen …</div>';}
     const url=await uploadFile(file,`auftraege/${autoId}/ls_${Date.now()}_${file.name}`);
     a.lieferscheine.push({name:file.name,url,typ:file.type.includes('pdf')?'pdf':'bild',datum:datumKurz()});
     await saveAuto(a);setSync('ok','● Live');renderLSList(autoId);
-  }catch(e){setSync('error','✕ Upload-Fehler');}
+    if(lsDrop){lsDrop.innerHTML='<div style="font-size:20px">🤖</div><div style="color:#4ade80;font-size:12px;font-weight:600">KI analysiert Lieferschein …</div>';}
+    // KI-Analyse starten
+    await analysiereLieferscheinMitKI(autoId, file);
+  }catch(e){
+    setSync('error','✕ Upload-Fehler');
+    if(lsDrop){lsDrop.innerHTML='<div style="font-size:20px">📎</div><div style="color:var(--text-dim);font-size:12px">Lieferschein ablegen oder klicken · Foto, PDF</div>';}
+  }
+}
+
+async function analysiereLieferscheinMitKI(autoId, file){
+  const lsDrop=document.getElementById('ls_drop');
+  const vorschlagBox=document.getElementById('lsVorschlagBox');
+  const vorschlagListe=document.getElementById('lsVorschlagListe');
+  try{
+    // Datei als Base64 lesen
+    const base64=await new Promise((res,rej)=>{
+      const r=new FileReader();
+      r.onload=()=>res(r.result.split(',')[1]);
+      r.onerror=rej;
+      r.readAsDataURL(file);
+    });
+
+    const isPDF=file.type.includes('pdf');
+    const mediaType=isPDF?'application/pdf':file.type||'image/jpeg';
+
+    // API-Key aus localStorage
+    const apiKey=localStorage.getItem('anthropic-api-key');
+
+    const messages=[{
+      role:'user',
+      content:[
+        isPDF
+          ?{type:'document',source:{type:'base64',media_type:mediaType,data:base64}}
+          :{type:'image',source:{type:'base64',media_type:mediaType,data:base64}},
+        {type:'text',text:`Analysiere diesen Lieferschein und extrahiere alle Artikel/Positionen.
+Antworte NUR mit gültigem JSON, kein Text davor oder danach:
+{"positionen":[{"bezeichnung":"Artikelname","menge":"Zahl","einheit":"Stk oder Ltr oder m etc"}]}`}
+      ]
+    }];
+
+    const res=await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',
+      headers:{'Content-Type':'application/json',...(apiKey?{'x-api-key':apiKey}:{})},
+      body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:1000,messages})
+    });
+
+    if(!res.ok) throw new Error('API '+res.status);
+    const data=await res.json();
+    const raw=data.content.map(i=>i.text||'').join('').trim().replace(/^```json\s*/,'').replace(/\s*```$/,'');
+    const parsed=JSON.parse(raw);
+    const positionen=(parsed.positionen||[]).filter(p=>p.bezeichnung&&p.bezeichnung.trim());
+
+    if(!positionen.length) throw new Error('Keine Positionen erkannt');
+
+    // Vorschläge anzeigen
+    if(vorschlagBox) vorschlagBox.style.display='block';
+    if(vorschlagListe){
+      vorschlagListe.innerHTML='';
+      positionen.forEach((p,i)=>{
+        const row=document.createElement('div');
+        row.style.cssText='display:flex;align-items:center;gap:10px;padding:6px 0;border-bottom:1px solid rgba(74,222,128,0.15)';
+        const cb=document.createElement('input');cb.type='checkbox';cb.checked=true;cb.id='lsv_'+i;
+        cb.style.cssText='width:18px;height:18px;accent-color:#4ade80;flex-shrink:0;cursor:pointer';
+        const lbl=document.createElement('label');lbl.htmlFor='lsv_'+i;
+        lbl.style.cssText='flex:1;font-size:13px;color:var(--text);cursor:pointer';
+        lbl.textContent=p.bezeichnung;
+        const menge=document.createElement('span');
+        menge.style.cssText='font-size:12px;color:#4ade80;font-weight:600;white-space:nowrap';
+        menge.textContent=(p.menge||'1')+' '+(p.einheit||'Stk');
+        row.appendChild(cb);row.appendChild(lbl);row.appendChild(menge);
+        row.dataset.bezeichnung=p.bezeichnung;
+        row.dataset.menge=p.menge||'1';
+        row.dataset.einheit=p.einheit||'Stk';
+        vorschlagListe.appendChild(row);
+      });
+    }
+
+    // "Alle übernehmen" Button
+    const btnAlle=document.getElementById('btnVorschlagAlle');
+    if(btnAlle) btnAlle.onclick=()=>{
+      vorschlagListe.querySelectorAll('input[type=checkbox]').forEach(cb=>cb.checked=true);
+    };
+
+    // "Ausgewählte übernehmen" Button
+    const btnUebernehmen=document.getElementById('btnVorschlagUebernehmen');
+    if(btnUebernehmen) btnUebernehmen.onclick=()=>{
+      const a=autos.find(x=>x.id===autoId);if(!a)return;
+      if(!a.material)a.material=[];
+      vorschlagListe.querySelectorAll('div[data-bezeichnung]').forEach(row=>{
+        const cb=row.querySelector('input[type=checkbox]');
+        if(cb&&cb.checked){
+          // Nur hinzufügen wenn noch nicht vorhanden
+          if(!a.material.some(m=>m.bezeichnung===row.dataset.bezeichnung)){
+            a.material.push({bezeichnung:row.dataset.bezeichnung,menge:row.dataset.menge,einheit:row.dataset.einheit});
+          }
+        }
+      });
+      saveAuto(a);renderMaterialList(autoId);
+      if(vorschlagBox) vorschlagBox.style.display='none';
+      showArbSaved();
+    };
+
+    if(lsDrop){lsDrop.innerHTML='<div style="font-size:20px">📎</div><div style="color:var(--text-dim);font-size:12px">Weiteren Lieferschein ablegen oder klicken</div>';}
+
+  }catch(e){
+    console.error('KI-Analyse Fehler:',e);
+    // Hinweis + erneuter Upload anbieten
+    if(vorschlagBox){
+      vorschlagBox.style.display='block';
+      vorschlagBox.style.background='rgba(250,199,117,0.07)';
+      vorschlagBox.style.borderColor='rgba(250,199,117,0.35)';
+      vorschlagBox.innerHTML=`
+        <div style="display:flex;gap:10px;align-items:flex-start;margin-bottom:10px">
+          <span style="font-size:22px">⚠️</span>
+          <div>
+            <div style="font-size:13px;font-weight:700;color:#FAC775;margin-bottom:4px">KI konnte den Lieferschein nicht vollständig lesen</div>
+            <div style="font-size:12px;color:var(--text-dim);line-height:1.5">Das kann passieren bei schlechter Beleuchtung, Unschärfe oder einem schwer lesbaren Schriftbild.<br>Bitte erneut fotografieren oder manuell eintragen.</div>
+          </div>
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <button id="btnLsNochmal" style="background:rgba(250,199,117,0.15);border:1px solid rgba(250,199,117,0.4);border-radius:6px;color:#FAC775;font-size:12px;font-weight:700;padding:7px 14px;cursor:pointer">📷 Erneut hochladen</button>
+          <button id="btnLsManuell" style="background:var(--bg4);border:1px solid var(--border2);border-radius:6px;color:var(--text-dim);font-size:12px;font-weight:700;padding:7px 14px;cursor:pointer">✏️ Manuell eingeben</button>
+        </div>`;
+      document.getElementById('btnLsNochmal').onclick=()=>{
+        vorschlagBox.style.display='none';
+        document.getElementById('lsFile').click();
+      };
+      document.getElementById('btnLsManuell').onclick=()=>{
+        vorschlagBox.style.display='none';
+        const a=autos.find(x=>x.id===autoId);if(!a)return;
+        if(!a.material)a.material=[];
+        a.material.push({bezeichnung:'',menge:'',einheit:'Stk'});
+        saveAuto(a);renderMaterialList(autoId);
+        // Fokus auf erstes leeres Feld
+        setTimeout(()=>{const inputs=document.querySelectorAll('#materialList input');if(inputs.length)inputs[inputs.length-3].focus();},100);
+      };
+    }
+    if(lsDrop){lsDrop.innerHTML='<div style="font-size:20px">📎</div><div style="color:var(--text-dim);font-size:12px">Lieferschein ablegen oder klicken · Foto, PDF</div>';}
+  }
 }
 
 // ── RECHNUNGSKONTROLLE ──
