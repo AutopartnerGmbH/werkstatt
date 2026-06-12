@@ -27,7 +27,7 @@ input,select,textarea,button{font-family:var(--font-body);}
 
 /* HEADER */
 #header{background:var(--bg2);border-bottom:2px solid var(--red);padding:0 16px;
-  display:flex;align-items:stretch;height:72px;gap:0;overflow-x:auto;flex-shrink:0;}
+  display:flex;align-items:stretch;height:72px;gap:0;overflow:visible;flex-shrink:0;}
 .hlogo{display:flex;align-items:center;gap:12px;padding-right:20px;border-right:1px solid var(--border);flex-shrink:0;}
 .hlogo-title{font-family:var(--font-head);font-weight:700;font-size:17px;color:var(--text);letter-spacing:.08em;text-transform:uppercase;line-height:1;}
 .hlogo-sub{font-family:var(--font-head);font-weight:400;font-size:11px;color:var(--red);letter-spacing:.12em;text-transform:uppercase;margin-top:2px;}
@@ -113,10 +113,10 @@ input,select,textarea,button{font-family:var(--font-body);}
 /* FERTIGE AUFTRÄGE BUTTON */
 #fertigZone{position:relative;display:flex;align-items:center;flex-shrink:0;padding:0 12px;border-left:1px solid var(--border);border-right:1px solid var(--border);}
 #fertigBtn{display:flex;flex-direction:column;align-items:center;justify-content:center;
-  background:rgba(74,222,128,0.1);border:1px solid rgba(74,222,128,0.35);border-radius:8px;
-  padding:8px 18px;cursor:pointer;transition:all .15s;min-width:110px;gap:2px;}
+  background:rgba(74,222,128,0.1);border:1px solid rgba(74,222,128,0.35);
+  border-radius:8px;padding:8px 18px;cursor:pointer;transition:all .15s;min-width:110px;gap:2px;}
 #fertigBtn:hover{background:rgba(74,222,128,0.2);border-color:#4ade80;}
-#fertigBtn.drag-over{background:rgba(74,222,128,0.25);border-color:#4ade80;border-style:dashed;box-shadow:0 0 14px rgba(74,222,128,0.35);}
+#fertigZone.drag-over #fertigBtn{background:rgba(74,222,128,0.25);border-color:#4ade80;border-style:dashed;box-shadow:0 0 14px rgba(74,222,128,0.35);}
 .fertig-val{font-family:var(--font-head);font-weight:700;font-size:30px;color:#4ade80;line-height:1;}
 .fertig-lbl{color:#4ade80;font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;opacity:0.8;}
 #fertigDropdown{display:none;position:absolute;top:calc(100% + 4px);left:0;min-width:360px;
@@ -397,10 +397,10 @@ input,select,textarea,button{font-family:var(--font-body);}
   <div class="hstat"><div class="hstat-val" id="statAllesDa" style="color:#C0DD97">0</div><div class="hstat-lbl">Bereit</div></div>
   <div class="hstat"><div class="hstat-val" id="statUnterbrochen" style="color:#FAC775">0</div><div class="hstat-lbl">Unterbrochen</div></div>
   <div id="fertigZone">
-    <div id="fertigBtn" onclick="fertigToggle()">
+    <button id="fertigBtn" onclick="document.getElementById('fertigDropdown').classList.toggle('open')">
       <div class="fertig-val" id="statFertig">0</div>
       <div class="fertig-lbl">Fertige Aufträge</div>
-    </div>
+    </button>
     <div id="fertigDropdown">
       <div class="fertig-drop-header">🏁 Fertige Aufträge — hier reinziehen</div>
       <div id="fertigInnerDrop" class="fertig-inner-drop">
@@ -684,36 +684,28 @@ trash.addEventListener('drop',e=>{
 });
 
 // ── FERTIGE AUFTRÄGE ZONE ──
-let fertigDropOpen = false;
-function fertigToggle(){
-  fertigDropOpen = !fertigDropOpen;
-  document.getElementById('fertigDropdown').classList.toggle('open', fertigDropOpen);
-}
-function fertigClose(){
-  fertigDropOpen = false;
-  document.getElementById('fertigDropdown').classList.remove('open');
-}
-// Klick außerhalb schließt
-document.addEventListener('click', e=>{
-  const zone = document.getElementById('fertigZone');
-  if(zone && !zone.contains(e.target)) fertigClose();
-});
-// Drag über Button → Dropdown öffnen + Drop annehmen
 (function(){
-  const btn = document.getElementById('fertigBtn');
-  const dd  = document.getElementById('fertigDropdown');
-  const inner = document.getElementById('fertigInnerDrop');
+  const zone   = document.getElementById('fertigZone');
+  const btn    = document.getElementById('fertigBtn');
+  const dd     = document.getElementById('fertigDropdown');
+  const inner  = document.getElementById('fertigInnerDrop');
 
+  // Klick außerhalb schließt
+  document.addEventListener('click', e=>{
+    if(!zone.contains(e.target)) dd.classList.remove('open');
+  });
+
+  // Drag über Button → Dropdown öffnen + Drop annehmen
   btn.addEventListener('dragover', e=>{
     e.preventDefault(); e.dataTransfer.dropEffect='move';
-    btn.classList.add('drag-over');
-    dd.classList.add('open'); fertigDropOpen = true;
+    zone.classList.add('drag-over');
+    dd.classList.add('open');
   });
   btn.addEventListener('dragleave', e=>{
-    if(!btn.contains(e.relatedTarget)) btn.classList.remove('drag-over');
+    if(!zone.contains(e.relatedTarget)) zone.classList.remove('drag-over');
   });
   btn.addEventListener('drop', e=>{
-    e.preventDefault(); btn.classList.remove('drag-over');
+    e.preventDefault(); zone.classList.remove('drag-over');
     if(dragId){
       const a=autos.find(x=>x.id===dragId);
       if(a&&a.status!=='fertig'){a.status='fertig';a.statusSeit=uhrzeit();saveAuto(a);}
@@ -721,6 +713,7 @@ document.addEventListener('click', e=>{
     }
   });
 
+  // Drag in innere Drop-Zone
   inner.addEventListener('dragover', e=>{
     e.preventDefault(); e.dataTransfer.dropEffect='move';
     inner.classList.add('drag-over');
@@ -738,7 +731,7 @@ document.addEventListener('click', e=>{
   });
 
   document.addEventListener('dragend', ()=>{
-    btn.classList.remove('drag-over');
+    zone.classList.remove('drag-over');
     inner.classList.remove('drag-over');
   });
 })();
