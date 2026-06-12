@@ -39,7 +39,8 @@ input,select,textarea,button{font-family:var(--font-body);}
 
 /* VERSCHIEBEN INLINE (nur mobil) */
 .btn-verschieben-inline{display:none;background:rgba(192,20,28,0.1);border:none;border-left:1px solid var(--border);
-  color:var(--red);padding:9px 12px;cursor:pointer;font-size:16px;font-weight:700;}
+  color:var(--red);padding:9px 10px;cursor:pointer;font-size:11px;font-weight:700;
+  font-family:var(--font-head);letter-spacing:.04em;text-transform:uppercase;white-space:nowrap;}
 .btn-verschieben-inline:hover{background:rgba(192,20,28,0.2);}
 @media(max-width:768px){.btn-verschieben-inline{display:block;}}
 body.force-mobile .btn-verschieben-inline{display:block;}
@@ -1077,7 +1078,7 @@ function makeCard(a,s,collapsed){
     const btnDiag=document.createElement('button');btnDiag.textContent='📋 Diagnose';btnDiag.style.color='#fbbf24';btnDiag.addEventListener('click',e=>{e.stopPropagation();openDiagnose(a.id);});
     const btnArb=document.createElement('button');btnArb.textContent='📝 Arbeiten';btnArb.style.color='#AFA9EC';btnArb.addEventListener('click',e=>{e.stopPropagation();openArbeitenModal(a.id);});
     const btnVerschieben=document.createElement('button');
-    btnVerschieben.textContent='⇄';
+    btnVerschieben.textContent='⇄ Verschieben';
     btnVerschieben.title='Verschieben';
     btnVerschieben.className='btn-verschieben-inline';
     btnVerschieben.addEventListener('click',e=>{e.stopPropagation();openVerschiebenPopup(a.id,a.status);});
