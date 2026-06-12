@@ -1608,6 +1608,9 @@ async function analysiereLieferscheinMitKI(autoId, file){
 
     // API-Key aus localStorage
     const apiKey=localStorage.getItem('anthropic-api-key');
+    if(!apiKey){
+      throw new Error('Kein API-Key hinterlegt. Bitte im Admin-Bereich den Anthropic API-Key eintragen.');
+    }
 
     const messages=[{
       role:'user',
@@ -1615,16 +1618,22 @@ async function analysiereLieferscheinMitKI(autoId, file){
         isPDF
           ?{type:'document',source:{type:'base64',media_type:mediaType,data:base64}}
           :{type:'image',source:{type:'base64',media_type:mediaType,data:base64}},
-        {type:'text',text:`Analysiere diesen Lieferschein und extrahiere alle Artikel/Positionen.
-Antworte NUR mit gültigem JSON, kein Text davor oder danach:
-{"positionen":[{"bezeichnung":"Artikelname","menge":"Zahl","einheit":"Stk oder Ltr oder m etc"}]}`}
+        {type:'text',text:`Du siehst einen Kfz-Lieferschein oder eine Teileliste. Extrahiere alle Artikel/Positionen mit Menge und Einheit.
+Antworte NUR mit gültigem JSON ohne Markdown, kein Text davor oder danach:
+{"positionen":[{"bezeichnung":"Artikelname wie auf dem Schein","menge":"Zahl","einheit":"Stk oder Ltr oder m etc"}]}
+Wenn du keine Positionen erkennst, antworte mit: {"positionen":[]}`}
       ]
     }];
 
     const res=await fetch('https://api.anthropic.com/v1/messages',{
       method:'POST',
-      headers:{'Content-Type':'application/json',...(apiKey?{'x-api-key':apiKey}:{})},
-      body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:1000,messages})
+      headers:{
+        'Content-Type':'application/json',
+        'x-api-key':apiKey,
+        'anthropic-version':'2023-06-01',
+        'anthropic-dangerous-direct-browser-calls':'true'
+      },
+      body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:1500,messages})
     });
 
     if(!res.ok) throw new Error('API '+res.status);
@@ -1672,10 +1681,7 @@ Antworte NUR mit gültigem JSON, kein Text davor oder danach:
       vorschlagListe.querySelectorAll('div[data-bezeichnung]').forEach(row=>{
         const cb=row.querySelector('input[type=checkbox]');
         if(cb&&cb.checked){
-          // Nur hinzufügen wenn noch nicht vorhanden
-          if(!a.material.some(m=>m.bezeichnung===row.dataset.bezeichnung)){
-            a.material.push({bezeichnung:row.dataset.bezeichnung,menge:row.dataset.menge,einheit:row.dataset.einheit});
-          }
+          a.material.push({bezeichnung:row.dataset.bezeichnung,menge:row.dataset.menge,einheit:row.dataset.einheit});
         }
       });
       saveAuto(a);renderMaterialList(autoId);
@@ -1687,65 +1693,58 @@ Antworte NUR mit gültigem JSON, kein Text davor oder danach:
 
   }catch(e){
     console.error('KI-Analyse Fehler:',e);
-    // Hinweis + erneuter Upload anbieten
+    if(lsDrop){lsDrop.innerHTML='<div style="font-size:20px">📎</div><div style="color:var(--text-dim);font-size:12px">Lieferschein ablegen oder klicken · Foto, PDF</div>';}
+
+    const isKeyError = e.message&&e.message.includes('API-Key');
+    const isApiError = e.message&&e.message.includes('API 4');
+
     if(vorschlagBox){
       vorschlagBox.style.display='block';
       vorschlagBox.style.background='rgba(250,199,117,0.07)';
       vorschlagBox.style.borderColor='rgba(250,199,117,0.35)';
-      vorschlagBox.innerHTML=`
-        <div style="display:flex;gap:10px;align-items:flex-start;margin-bottom:10px">
-          <span style="font-size:22px">⚠️</span>
-          <div>
-            <div style="font-size:13px;font-weight:700;color:#FAC775;margin-bottom:4px">KI konnte den Lieferschein nicht vollständig lesen</div>
-            <div style="font-size:12px;color:var(--text-dim);line-height:1.5">Das kann passieren bei schlechter Beleuchtung, Unschärfe oder einem schwer lesbaren Schriftbild.<br>Bitte erneut fotografieren oder manuell eintragen.</div>
+
+      if(isKeyError){
+        vorschlagBox.innerHTML=`
+          <div style="display:flex;gap:10px;align-items:flex-start;margin-bottom:10px">
+            <span style="font-size:22px">🔑</span>
+            <div>
+              <div style="font-size:13px;font-weight:700;color:#FAC775;margin-bottom:4px">API-Key nicht hinterlegt</div>
+              <div style="font-size:12px;color:var(--text-dim);line-height:1.5">Bitte im Admin-Bereich (⚙️) den Anthropic API-Key eintragen, damit die KI Lieferscheine lesen kann.</div>
+            </div>
+          </div>`;
+      } else {
+        vorschlagBox.innerHTML=`
+          <div style="display:flex;gap:10px;align-items:flex-start;margin-bottom:10px">
+            <span style="font-size:22px">⚠️</span>
+            <div>
+              <div style="font-size:13px;font-weight:700;color:#FAC775;margin-bottom:4px">KI konnte den Lieferschein nicht vollständig lesen</div>
+              <div style="font-size:12px;color:var(--text-dim);line-height:1.5">Das kann passieren bei schlechter Beleuchtung, Unschärfe oder einem schwer lesbaren Schriftbild.<br>Bitte erneut fotografieren oder manuell eintragen.</div>
+            </div>
           </div>
-        </div>
-        <div style="display:flex;gap:8px;flex-wrap:wrap">
-          <button id="btnLsNochmal" style="background:rgba(250,199,117,0.15);border:1px solid rgba(250,199,117,0.4);border-radius:6px;color:#FAC775;font-size:12px;font-weight:700;padding:7px 14px;cursor:pointer">📷 Erneut hochladen</button>
-          <button id="btnLsManuell" style="background:var(--bg4);border:1px solid var(--border2);border-radius:6px;color:var(--text-dim);font-size:12px;font-weight:700;padding:7px 14px;cursor:pointer">✏️ Manuell eingeben</button>
-        </div>`;
-      document.getElementById('btnLsNochmal').onclick=()=>{
-        vorschlagBox.style.display='none';
-        document.getElementById('lsFile').click();
-      };
-      document.getElementById('btnLsManuell').onclick=()=>{
-        vorschlagBox.style.display='none';
-        const a=autos.find(x=>x.id===autoId);if(!a)return;
-        if(!a.material)a.material=[];
-        a.material.push({bezeichnung:'',menge:'',einheit:'Stk'});
-        saveAuto(a);renderMaterialList(autoId);
-        // Fokus auf erstes leeres Feld
-        setTimeout(()=>{const inputs=document.querySelectorAll('#materialList input');if(inputs.length)inputs[inputs.length-3].focus();},100);
-      };
+          <div style="display:flex;gap:8px;flex-wrap:wrap">
+            <button id="btnLsNochmal" style="background:rgba(250,199,117,0.15);border:1px solid rgba(250,199,117,0.4);border-radius:6px;color:#FAC775;font-size:12px;font-weight:700;padding:7px 14px;cursor:pointer">📷 Erneut hochladen</button>
+            <button id="btnLsManuell" style="background:var(--bg4);border:1px solid var(--border2);border-radius:6px;color:var(--text-dim);font-size:12px;font-weight:700;padding:7px 14px;cursor:pointer">✏️ Manuell eingeben</button>
+          </div>`;
+        document.getElementById('btnLsNochmal').onclick=()=>{
+          vorschlagBox.style.display='none';
+          document.getElementById('lsFile').click();
+        };
+        document.getElementById('btnLsManuell').onclick=()=>{
+          vorschlagBox.style.display='none';
+          const a=autos.find(x=>x.id===autoId);if(!a)return;
+          if(!a.material)a.material=[];
+          a.material.push({bezeichnung:'',menge:'',einheit:'Stk'});
+          saveAuto(a);renderMaterialList(autoId);
+          setTimeout(()=>{const inputs=document.querySelectorAll('#materialList input');if(inputs.length)inputs[inputs.length-3].focus();},100);
+        };
+      }
     }
-    if(lsDrop){lsDrop.innerHTML='<div style="font-size:20px">📎</div><div style="color:var(--text-dim);font-size:12px">Lieferschein ablegen oder klicken · Foto, PDF</div>';}
   }
 }
 
 // ── RECHNUNGSKONTROLLE ──
 function openRechnungskontrolle(autoId){
   const a=autos.find(x=>x.id===autoId);if(!a)return;
-
-  // Lieferscheine → Material automatisch übernehmen
-  const lsMaterial=[];
-  (a.lieferscheine||[]).forEach(ls=>{
-    // Versuche aus dem Dateinamen Material zu extrahieren
-    const name=ls.name||'';
-    const clean=name.replace(/\.(pdf|jpg|jpeg|png)$/i,'').replace(/[-_]/g,' ');
-    if(clean&&!lsMaterial.some(m=>m.bezeichnung===clean)){
-      lsMaterial.push({bezeichnung:clean,menge:'1',einheit:'Stk',quelle:'Lieferschein'});
-    }
-  });
-  // Neu hinzufügen was noch nicht in a.material ist
-  let neuHinzugefuegt=0;
-  lsMaterial.forEach(lm=>{
-    if(!(a.material||[]).some(m=>m.bezeichnung===lm.bezeichnung)){
-      if(!a.material)a.material=[];
-      a.material.push({bezeichnung:lm.bezeichnung,menge:lm.menge,einheit:lm.einheit});
-      neuHinzugefuegt++;
-    }
-  });
-  if(neuHinzugefuegt>0)saveAuto(a);
 
   // Plausibilitätsprüfung
   const warnungen=[];
@@ -1767,10 +1766,6 @@ function openRechnungskontrolle(autoId){
       <span class="modal-title">🧾 Rechnungskontrolle — ${a.kennzeichen}</span>
       <button class="modal-close" onclick="closeModal()">✕</button>
     </div>
-
-    ${neuHinzugefuegt>0?`<div style="background:rgba(74,222,128,0.1);border:1px solid #4ade8044;border-radius:6px;padding:8px 12px;margin-bottom:12px;font-size:12px;color:#4ade80">
-      ✓ ${neuHinzugefuegt} Position(en) aus Lieferscheinen automatisch zu Material hinzugefügt
-    </div>`:''}
 
     ${warnungen.length?`<div style="margin-bottom:14px">
       ${warnungen.map(w=>`<div style="display:flex;align-items:center;gap:8px;padding:6px 10px;margin-bottom:4px;border-radius:6px;font-size:12px;
