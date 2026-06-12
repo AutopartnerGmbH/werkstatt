@@ -27,11 +27,23 @@ input,select,textarea,button{font-family:var(--font-body);}
 
 /* HEADER */
 #header{background:var(--bg2);border-bottom:2px solid var(--red);padding:0 16px;
-  display:flex;align-items:stretch;height:72px;gap:0;overflow:visible;flex-shrink:0;}
+  display:flex;align-items:stretch;height:84px;gap:0;overflow:visible;flex-shrink:0;}
 .hlogo{display:flex;align-items:center;gap:12px;padding-right:20px;border-right:1px solid var(--border);flex-shrink:0;}
 .hlogo-title{font-family:var(--font-head);font-weight:700;font-size:17px;color:var(--text);letter-spacing:.08em;text-transform:uppercase;line-height:1;}
 .hlogo-sub{font-family:var(--font-head);font-weight:400;font-size:11px;color:var(--red);letter-spacing:.12em;text-transform:uppercase;margin-top:2px;}
 .hlogo-date{color:var(--text-dim);font-size:11px;margin-top:3px;}
+#btnViewToggle{margin-top:5px;background:var(--bg3);border:1px solid var(--border2);border-radius:4px;
+  color:var(--text-dim);padding:3px 8px;cursor:pointer;font-size:10px;font-weight:700;
+  font-family:var(--font-head);letter-spacing:.06em;text-transform:uppercase;white-space:nowrap;}
+#btnViewToggle:hover{border-color:var(--red);color:var(--red);}
+
+/* VERSCHIEBEN INLINE (nur mobil) */
+.btn-verschieben-inline{display:none;background:rgba(192,20,28,0.1);border:none;border-left:1px solid var(--border);
+  color:var(--red);padding:9px 12px;cursor:pointer;font-size:16px;font-weight:700;}
+.btn-verschieben-inline:hover{background:rgba(192,20,28,0.2);}
+@media(max-width:768px){.btn-verschieben-inline{display:block;}}
+body.force-mobile .btn-verschieben-inline{display:block;}
+body.force-desktop .btn-verschieben-inline{display:none !important;}
 .hstat{display:flex;align-items:center;gap:8px;padding:0 14px;border-right:1px solid var(--border);flex-shrink:0;}
 .hstat-val{font-family:var(--font-head);font-weight:700;font-size:28px;}
 .hstat-lbl{color:var(--text-dim);font-size:10px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;line-height:1.3;}
@@ -335,19 +347,6 @@ body.force-mobile .mobile-tabs{display:flex !important;}
 body.force-desktop #board .board-grid{display:grid !important;min-width:960px !important;}
 body.force-desktop .lane{display:flex !important;}
 body.force-desktop .mobile-tabs{display:none !important;}
-#btnViewToggle{background:var(--bg3);border:1px solid var(--border2);border-radius:4px;
-  color:var(--text-dim);padding:7px 10px;cursor:pointer;font-size:12px;font-weight:600;
-  white-space:nowrap;}
-#btnViewToggle:hover{border-color:var(--red);color:var(--text);}
-
-/* VERSCHIEBEN BUTTON (nur mobile sichtbar) */
-.btn-verschieben{display:none;width:100%;background:rgba(192,20,28,0.1);border:1px solid rgba(192,20,28,0.3);
-  border-radius:0 0 5px 5px;color:var(--red);padding:9px;cursor:pointer;font-size:12px;
-  font-weight:700;font-family:var(--font-head);letter-spacing:.06em;text-transform:uppercase;}
-.btn-verschieben:hover{background:rgba(192,20,28,0.2);}
-@media(max-width:768px){.btn-verschieben{display:block;}}
-body.force-mobile .btn-verschieben{display:block;}
-body.force-desktop .btn-verschieben{display:none !important;}
 
 /* VERSCHIEBEN POPUP */
 #verschiebenPopup{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:400;
@@ -415,6 +414,7 @@ body.force-desktop .btn-verschieben{display:none !important;}
       <div class="hlogo-title">Werkstatt</div>
       <div class="hlogo-sub">Autopartner GmbH</div>
       <div class="hlogo-date" id="clockEl"></div>
+      <button id="btnViewToggle" onclick="toggleViewMode()">📱 Mobil</button>
     </div>
   </div>
   <div id="myNameBadge" onclick="changeMyName()" title="Namen ändern">
@@ -446,7 +446,6 @@ body.force-desktop .btn-verschieben{display:none !important;}
       <input type="text" id="searchInput" placeholder="🔍 Suche …" oninput="handleSearch(this.value)" onkeydown="if(event.key==='Escape')clearSearch()"/>
       <button class="search-clear" id="searchClear" onclick="clearSearch()">✕</button>
     </div>
-    <button id="btnViewToggle" onclick="toggleViewMode()">📱 Mobil</button>
     <button class="btn-secondary" onclick="openAdmin()" style="padding:7px 10px">⚙️</button>
     <button class="btn-secondary" onclick="openBarcodeScanner()" style="padding:7px 10px">⬛ Scan</button>
     <button class="btn-secondary" onclick="openSFKImport()">↑ SFK</button>
@@ -1077,14 +1076,12 @@ function makeCard(a,s,collapsed){
     const btnEdit=document.createElement('button');btnEdit.textContent='✎ Bearbeiten';btnEdit.addEventListener('click',e=>{e.stopPropagation();openEdit(a.id);});
     const btnDiag=document.createElement('button');btnDiag.textContent='📋 Diagnose';btnDiag.style.color='#fbbf24';btnDiag.addEventListener('click',e=>{e.stopPropagation();openDiagnose(a.id);});
     const btnArb=document.createElement('button');btnArb.textContent='📝 Arbeiten';btnArb.style.color='#AFA9EC';btnArb.addEventListener('click',e=>{e.stopPropagation();openArbeitenModal(a.id);});
-    actions.appendChild(btnEdit);actions.appendChild(btnDiag);actions.appendChild(btnArb);wrap.appendChild(actions);
-
-    // Verschieben-Button (nur mobil sichtbar)
     const btnVerschieben=document.createElement('button');
-    btnVerschieben.className='btn-verschieben';
-    btnVerschieben.textContent='⇄ Verschieben';
+    btnVerschieben.textContent='⇄';
+    btnVerschieben.title='Verschieben';
+    btnVerschieben.className='btn-verschieben-inline';
     btnVerschieben.addEventListener('click',e=>{e.stopPropagation();openVerschiebenPopup(a.id,a.status);});
-    wrap.appendChild(btnVerschieben);
+    actions.appendChild(btnEdit);actions.appendChild(btnDiag);actions.appendChild(btnArb);actions.appendChild(btnVerschieben);wrap.appendChild(actions);
   }
   return wrap;
 }
