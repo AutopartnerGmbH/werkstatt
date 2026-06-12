@@ -111,15 +111,15 @@ input,select,textarea,button{font-family:var(--font-body);}
 .card-actions button:hover{background:rgba(255,255,255,0.05);color:var(--text);}
 
 /* FERTIGE AUFTRÄGE BUTTON */
-#fertigZone{position:relative;display:flex;align-items:center;flex-shrink:0;padding:0 12px;border-left:1px solid var(--border);border-right:1px solid var(--border);}
+#fertigZone{position:relative;display:flex;align-items:center;flex-shrink:0;}
 #fertigBtn{display:flex;flex-direction:column;align-items:center;justify-content:center;
   background:rgba(74,222,128,0.1);border:1px solid rgba(74,222,128,0.35);
-  border-radius:8px;padding:8px 18px;cursor:pointer;transition:all .15s;min-width:110px;gap:2px;}
+  border-radius:8px;padding:8px 20px;cursor:pointer;transition:all .15s;min-width:120px;gap:2px;}
 #fertigBtn:hover{background:rgba(74,222,128,0.2);border-color:#4ade80;}
 #fertigZone.drag-over #fertigBtn{background:rgba(74,222,128,0.25);border-color:#4ade80;border-style:dashed;box-shadow:0 0 14px rgba(74,222,128,0.35);}
-.fertig-val{font-family:var(--font-head);font-weight:700;font-size:30px;color:#4ade80;line-height:1;}
+.fertig-val{font-family:var(--font-head);font-weight:700;font-size:28px;color:#4ade80;line-height:1;}
 .fertig-lbl{color:#4ade80;font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;opacity:0.8;}
-#fertigDropdown{display:none;position:absolute;top:calc(100% + 4px);left:0;min-width:360px;
+#fertigDropdown{display:none;position:absolute;top:calc(100% + 6px);right:0;min-width:380px;
   background:var(--bg2);border:2px solid #4ade8055;border-top:3px solid #4ade80;
   border-radius:8px;z-index:9999;max-height:480px;overflow-y:auto;
   box-shadow:0 12px 40px rgba(0,0,0,0.7);}
@@ -396,8 +396,10 @@ input,select,textarea,button{font-family:var(--font-body);}
   <div class="hstat"><div class="hstat-val" id="statTeile" style="color:#AFA9EC">0</div><div class="hstat-lbl">Teile</div></div>
   <div class="hstat"><div class="hstat-val" id="statAllesDa" style="color:#C0DD97">0</div><div class="hstat-lbl">Bereit</div></div>
   <div class="hstat"><div class="hstat-val" id="statUnterbrochen" style="color:#FAC775">0</div><div class="hstat-lbl">Unterbrochen</div></div>
+  <div class="hspace"></div>
+  <span id="syncStatus" class="ok"><span class="sync-dot"></span><span id="syncText">Live</span></span>
   <div id="fertigZone">
-    <button id="fertigBtn" onclick="document.getElementById('fertigDropdown').classList.toggle('open')">
+    <button id="fertigBtn">
       <div class="fertig-val" id="statFertig">0</div>
       <div class="fertig-lbl">Fertige Aufträge</div>
     </button>
@@ -409,8 +411,6 @@ input,select,textarea,button{font-family:var(--font-body);}
       </div>
     </div>
   </div>
-  <div class="hspace"></div>
-  <span id="syncStatus" class="ok"><span class="sync-dot"></span><span id="syncText">Live</span></span>
   <div class="hactions">
     <div class="search-wrap">
       <input type="text" id="searchInput" placeholder="🔍 Suche …" oninput="handleSearch(this.value)" onkeydown="if(event.key==='Escape')clearSearch()"/>
@@ -685,32 +685,43 @@ trash.addEventListener('drop',e=>{
 
 // ── FERTIGE AUFTRÄGE ZONE ──
 (function(){
-  const zone   = document.getElementById('fertigZone');
-  const btn    = document.getElementById('fertigBtn');
-  const dd     = document.getElementById('fertigDropdown');
-  const inner  = document.getElementById('fertigInnerDrop');
+  const zone  = document.getElementById('fertigZone');
+  const btn   = document.getElementById('fertigBtn');
+  const dd    = document.getElementById('fertigDropdown');
+  const inner = document.getElementById('fertigInnerDrop');
+  let pinned  = false;
+  let hoverTimer = null;
 
-  // Klick außerhalb schließt
-  document.addEventListener('click', e=>{
-    if(!zone.contains(e.target)) dd.classList.remove('open');
+  function openDD(){ dd.classList.add('open'); }
+  function closeDD(){ if(!pinned){ dd.classList.remove('open'); } }
+
+  // Hover öffnet
+  zone.addEventListener('mouseenter', ()=>{ clearTimeout(hoverTimer); openDD(); });
+  zone.addEventListener('mouseleave', ()=>{ hoverTimer = setTimeout(closeDD, 200); });
+
+  // Klick fixiert / löst
+  btn.addEventListener('click', e=>{
+    e.stopPropagation();
+    pinned = !pinned;
+    if(pinned) openDD(); else closeDD();
   });
 
-  // Drag über Button → Dropdown öffnen + Drop annehmen
+  // Klick außerhalb schließt + löst Pin
+  document.addEventListener('click', e=>{
+    if(!zone.contains(e.target)){ pinned=false; dd.classList.remove('open'); }
+  });
+
+  // Drag über Button → öffnen + Drop
   btn.addEventListener('dragover', e=>{
     e.preventDefault(); e.dataTransfer.dropEffect='move';
-    zone.classList.add('drag-over');
-    dd.classList.add('open');
+    zone.classList.add('drag-over'); openDD();
   });
   btn.addEventListener('dragleave', e=>{
     if(!zone.contains(e.relatedTarget)) zone.classList.remove('drag-over');
   });
   btn.addEventListener('drop', e=>{
     e.preventDefault(); zone.classList.remove('drag-over');
-    if(dragId){
-      const a=autos.find(x=>x.id===dragId);
-      if(a&&a.status!=='fertig'){a.status='fertig';a.statusSeit=uhrzeit();saveAuto(a);}
-      dragId=null; dragFrom=null; render();
-    }
+    dropIntoFertig();
   });
 
   // Drag in innere Drop-Zone
@@ -723,17 +734,21 @@ trash.addEventListener('drop',e=>{
   });
   inner.addEventListener('drop', e=>{
     e.preventDefault(); inner.classList.remove('drag-over');
-    if(dragId){
-      const a=autos.find(x=>x.id===dragId);
-      if(a&&a.status!=='fertig'){a.status='fertig';a.statusSeit=uhrzeit();saveAuto(a);}
-      dragId=null; dragFrom=null; render();
-    }
+    dropIntoFertig();
   });
 
   document.addEventListener('dragend', ()=>{
     zone.classList.remove('drag-over');
     inner.classList.remove('drag-over');
   });
+
+  function dropIntoFertig(){
+    if(dragId){
+      const a=autos.find(x=>x.id===dragId);
+      if(a&&a.status!=='fertig'){ a.status='fertig'; a.statusSeit=uhrzeit(); saveAuto(a); }
+      dragId=null; dragFrom=null; render();
+    }
+  }
 })();
 
 function renderFertigDropdown(list){
@@ -1397,91 +1412,240 @@ async function uploadLS(autoId,input){
 // ── RECHNUNGSKONTROLLE ──
 function openRechnungskontrolle(autoId){
   const a=autos.find(x=>x.id===autoId);if(!a)return;
-  const gesamtStd=(a.arbeiten||[]).reduce((s,ar)=>s+(parseFloat(ar.stunden)||0),0);
 
+  // Lieferscheine → Material automatisch übernehmen
+  const lsMaterial=[];
+  (a.lieferscheine||[]).forEach(ls=>{
+    // Versuche aus dem Dateinamen Material zu extrahieren
+    const name=ls.name||'';
+    const clean=name.replace(/\.(pdf|jpg|jpeg|png)$/i,'').replace(/[-_]/g,' ');
+    if(clean&&!lsMaterial.some(m=>m.bezeichnung===clean)){
+      lsMaterial.push({bezeichnung:clean,menge:'1',einheit:'Stk',quelle:'Lieferschein'});
+    }
+  });
+  // Neu hinzufügen was noch nicht in a.material ist
+  let neuHinzugefuegt=0;
+  lsMaterial.forEach(lm=>{
+    if(!(a.material||[]).some(m=>m.bezeichnung===lm.bezeichnung)){
+      if(!a.material)a.material=[];
+      a.material.push({bezeichnung:lm.bezeichnung,menge:lm.menge,einheit:lm.einheit});
+      neuHinzugefuegt++;
+    }
+  });
+  if(neuHinzugefuegt>0)saveAuto(a);
+
+  // Plausibilitätsprüfung
+  const warnungen=[];
+  if(!(a.arbeiten||[]).length) warnungen.push({typ:'fehler',text:'Keine Arbeitsschritte erfasst'});
+  if(!(a.material||[]).length) warnungen.push({typ:'warn',text:'Kein Material erfasst'});
+  if(!(a.lieferscheine||[]).length) warnungen.push({typ:'warn',text:'Keine Lieferscheine hochgeladen'});
+  const ohneStunden=(a.arbeiten||[]).filter(ar=>!ar.stunden||ar.stunden==='0'||ar.stunden==='');
+  if(ohneStunden.length) warnungen.push({typ:'warn',text:`${ohneStunden.length} Arbeit(en) ohne Stunden`});
+  const ohneMenge=(a.material||[]).filter(m=>!m.menge||m.menge==='');
+  if(ohneMenge.length) warnungen.push({typ:'warn',text:`${ohneMenge.length} Material(ien) ohne Menge`});
+  if(!a.kunde) warnungen.push({typ:'warn',text:'Kein Kundenname eingetragen'});
+  if(!a.auftragsnr) warnungen.push({typ:'info',text:'Keine Auftragsnummer — vor SFK-Export eintragen'});
+  const gesamtStd=(a.arbeiten||[]).reduce((s,ar)=>s+(parseFloat(ar.stunden)||0),0);
+  if(gesamtStd>16) warnungen.push({typ:'warn',text:`Ungewöhnlich viele Stunden: ${gesamtStd.toFixed(1)} Std`});
+
+  // Modal öffnen
+  openModal(`
+    <div class="modal-header">
+      <span class="modal-title">🧾 Rechnungskontrolle — ${a.kennzeichen}</span>
+      <button class="modal-close" onclick="closeModal()">✕</button>
+    </div>
+
+    ${neuHinzugefuegt>0?`<div style="background:rgba(74,222,128,0.1);border:1px solid #4ade8044;border-radius:6px;padding:8px 12px;margin-bottom:12px;font-size:12px;color:#4ade80">
+      ✓ ${neuHinzugefuegt} Position(en) aus Lieferscheinen automatisch zu Material hinzugefügt
+    </div>`:''}
+
+    ${warnungen.length?`<div style="margin-bottom:14px">
+      ${warnungen.map(w=>`<div style="display:flex;align-items:center;gap:8px;padding:6px 10px;margin-bottom:4px;border-radius:6px;font-size:12px;
+        background:${w.typ==='fehler'?'rgba(192,20,28,0.12)':w.typ==='warn'?'rgba(250,199,117,0.12)':'rgba(175,169,236,0.12)'};
+        border:1px solid ${w.typ==='fehler'?'rgba(192,20,28,0.3)':w.typ==='warn'?'rgba(250,199,117,0.3)':'rgba(175,169,236,0.3)'}">
+        <span>${w.typ==='fehler'?'🔴':w.typ==='warn'?'⚠️':'ℹ️'}</span>
+        <span style="color:${w.typ==='fehler'?'#E8454D':w.typ==='warn'?'#FAC775':'#AFA9EC'}">${w.text}</span>
+      </div>`).join('')}
+    </div>`:'<div style="background:rgba(74,222,128,0.1);border:1px solid #4ade8044;border-radius:6px;padding:8px 12px;margin-bottom:12px;font-size:12px;color:#4ade80">✓ Alles plausibel — bereit zur Rechnungserstellung</div>'}
+
+    <div class="section-label">Durchgeführte Arbeiten</div>
+    <table style="width:100%;border-collapse:collapse;margin-bottom:14px;font-size:12px">
+      <thead><tr style="background:var(--bg3)">
+        <th style="padding:6px 8px;text-align:left;color:var(--text-dim)">Mitarbeiter</th>
+        <th style="padding:6px 8px;text-align:left;color:var(--text-dim)">Arbeit</th>
+        <th style="padding:6px 8px;text-align:center;color:var(--text-dim)">Std</th>
+      </tr></thead>
+      <tbody id="rk_arbeiten">
+        ${(a.arbeiten||[]).length
+          ?(a.arbeiten||[]).map((ar,i)=>`<tr style="border-bottom:1px solid var(--border)">
+            <td style="padding:6px 8px;color:var(--text-dim)">${ar.wer||'—'}</td>
+            <td style="padding:6px 8px">${ar.beschreibung||'—'}</td>
+            <td style="padding:6px 8px;text-align:center;font-weight:600;${!ar.stunden?'color:var(--red)':''}">${ar.stunden||'⚠'}</td>
+          </tr>`).join('')
+          :'<tr><td colspan="3" style="padding:12px 8px;color:var(--text-muted);font-style:italic">Keine Arbeiten erfasst</td></tr>'}
+        <tr style="background:rgba(192,20,28,0.08);border-top:2px solid var(--red)">
+          <td colspan="2" style="padding:6px 8px;font-weight:700;color:var(--red)">Gesamt</td>
+          <td style="padding:6px 8px;text-align:center;font-weight:700;color:var(--red)">${gesamtStd.toFixed(1)}</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="section-label">Verbrauchtes Material</div>
+    <table style="width:100%;border-collapse:collapse;margin-bottom:14px;font-size:12px">
+      <thead><tr style="background:var(--bg3)">
+        <th style="padding:6px 8px;text-align:left;color:var(--text-dim)">Bezeichnung</th>
+        <th style="padding:6px 8px;text-align:center;color:var(--text-dim)">Menge</th>
+        <th style="padding:6px 8px;text-align:left;color:var(--text-dim)">Einheit</th>
+      </tr></thead>
+      <tbody>
+        ${(a.material||[]).length
+          ?(a.material||[]).map(m=>`<tr style="border-bottom:1px solid var(--border)">
+            <td style="padding:6px 8px">${m.bezeichnung||'—'}</td>
+            <td style="padding:6px 8px;text-align:center;${!m.menge?'color:var(--red)':''}">${m.menge||'⚠'}</td>
+            <td style="padding:6px 8px;color:var(--text-dim)">${m.einheit||'Stk'}</td>
+          </tr>`).join('')
+          :'<tr><td colspan="3" style="padding:12px 8px;color:var(--text-muted);font-style:italic">Kein Material erfasst</td></tr>'}
+      </tbody>
+    </table>
+
+    ${(a.lieferscheine||[]).length?`
+    <div class="section-label">Lieferscheine (${a.lieferscheine.length})</div>
+    <div style="background:var(--bg3);border-radius:6px;padding:8px 12px;margin-bottom:14px;font-size:12px">
+      ${a.lieferscheine.map(ls=>`<div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid var(--border)">
+        <span>${ls.typ==='pdf'?'📄':'🖼'} ${ls.name}</span>
+        <span style="color:var(--text-muted)">${ls.datum||''}</span>
+      </div>`).join('')}
+    </div>`:''}
+
+    <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap">
+      <button class="btn-primary" id="btnRkPDF">⬇ PDF exportieren</button>
+      <button class="btn-secondary" id="btnRkXML">⬇ XML exportieren</button>
+      <button class="btn-secondary" onclick="closeModal()">Schließen</button>
+    </div>
+  `);
+
+  document.getElementById('btnRkPDF').addEventListener('click',()=>exportRechnungPDF(autoId));
+  document.getElementById('btnRkXML').addEventListener('click',()=>exportRechnungXML(autoId));
+}
+
+function exportRechnungPDF(autoId){
+  const a=autos.find(x=>x.id===autoId);if(!a)return;
+  const gesamtStd=(a.arbeiten||[]).reduce((s,ar)=>s+(parseFloat(ar.stunden)||0),0);
   const html=`<!DOCTYPE html><html><head><meta charset="UTF-8"/>
-  <meta name="viewport" content="width=device-width,initial-scale=1"/>
   <style>
     body{font-family:Arial,sans-serif;margin:0;padding:20px;color:#000;font-size:13px;}
-    table{width:100%;border-collapse:collapse;margin-bottom:12px;}
+    table{width:100%;border-collapse:collapse;margin-bottom:14px;}
     th{background:#C0141C;color:#fff;padding:6px 8px;font-size:12px;text-align:left;}
     td{padding:5px 8px;border-bottom:1px solid #eee;vertical-align:top;font-size:12px;}
-    .box{border:1px solid #ddd;border-radius:4px;padding:8px 10px;margin-bottom:8px;}
-    .label{font-size:10px;color:#888;text-transform:uppercase;letter-spacing:.06em;}
+    .warn{color:#b45309;font-weight:600;}
+    .box{border:1px solid #ddd;border-radius:4px;padding:8px 10px;margin-bottom:10px;}
     .close-btn{position:fixed;top:12px;right:12px;background:#C0141C;color:#fff;border:none;
-      border-radius:6px;padding:8px 16px;font-size:14px;font-weight:700;cursor:pointer;
-      box-shadow:0 2px 8px rgba(0,0,0,0.3);z-index:999;}
-    @media print{.close-btn{display:none;}@page{margin:15mm;}}
-    @media(max-width:600px){body{padding:12px;padding-top:50px;}}
+      border-radius:6px;padding:8px 16px;font-size:14px;font-weight:700;cursor:pointer;z-index:999;}
+    @media print{.close-btn,.no-print{display:none;}@page{margin:15mm;}}
   </style></head><body>
   <button class="close-btn" onclick="window.close()">✕ Schließen</button>
   <div style="display:flex;justify-content:space-between;border-bottom:3px solid #C0141C;padding-bottom:10px;margin-bottom:14px">
-    <div><div style="font-size:16px;font-weight:700">Rechnungskontrolle</div>
-    <div style="color:#C0141C;font-size:12px;font-weight:700">AUTOPARTNER AMERICANCARS · Auf dem Lölfert 37 · 58119 Hagen</div></div>
+    <div>
+      <div style="font-size:16px;font-weight:700">Rechnungskontrolle</div>
+      <div style="color:#C0141C;font-size:11px;font-weight:700">AUTOPARTNER AMERICANCARS · Auf dem Lölfert 37 · 58119 Hagen</div>
+      <div style="font-size:11px;color:#666;margin-top:2px">Erstellt: ${new Date().toLocaleDateString('de-DE')} ${new Date().toLocaleTimeString('de-DE',{hour:'2-digit',minute:'2-digit'})}</div>
+    </div>
     <div style="text-align:right">
       <div style="font-weight:700;font-size:15px">${a.kennzeichen}</div>
       <div>${a.kunde||'—'}</div>
       <div style="color:#888">${a.fahrzeug||'—'}</div>
       ${a.auftragsnr?`<div style="color:#C0141C;font-weight:700">Auftrag Nr. ${a.auftragsnr}</div>`:''}
+      <div style="color:#888;font-size:11px">Eingang: ${a.datum||''} ${a.eingang||''}</div>
     </div>
   </div>
-
   <table><thead><tr><th>Mitarbeiter</th><th>Durchgeführte Arbeit</th><th>Std</th></tr></thead><tbody>
-    ${(a.arbeiten||[]).length>0
-      ? (a.arbeiten||[]).map(ar=>`<tr>
+    ${(a.arbeiten||[]).length
+      ?(a.arbeiten||[]).map(ar=>`<tr>
           <td>${ar.wer||'—'}</td>
           <td>${ar.beschreibung||'—'}</td>
-          <td style="text-align:center;font-weight:600">${ar.stunden||'—'}</td>
+          <td style="text-align:center;font-weight:600;${!ar.stunden?'color:#C0141C':''}">${ar.stunden||'⚠'}</td>
         </tr>`).join('')
-      : '<tr><td colspan="3" style="color:#aaa;font-style:italic;padding:12px 8px">Keine Arbeiten erfasst</td></tr>'}
+      :'<tr><td colspan="3" style="color:#aaa;font-style:italic;padding:12px 8px">Keine Arbeiten erfasst</td></tr>'}
     <tr style="background:#fff8f8;border-top:2px solid #C0141C">
-      <td colspan="2" style="font-weight:700;color:#C0141C;font-size:13px">Gesamt Arbeitsstunden</td>
-      <td style="font-weight:700;color:#C0141C;font-size:13px;text-align:center">${gesamtStd.toFixed(1)}</td>
+      <td colspan="2" style="font-weight:700;color:#C0141C">Gesamt Arbeitsstunden</td>
+      <td style="font-weight:700;color:#C0141C;text-align:center">${gesamtStd.toFixed(1)}</td>
     </tr>
   </tbody></table>
-
   <table><thead><tr><th>Verbrauchtes Material</th><th>Menge</th><th>Einheit</th></tr></thead><tbody>
-    ${(a.material||[]).length>0
-      ? (a.material||[]).map(m=>`<tr>
+    ${(a.material||[]).length
+      ?(a.material||[]).map(m=>`<tr>
           <td>${m.bezeichnung||'—'}</td>
-          <td style="text-align:center">${m.menge||'—'}</td>
-          <td>${m.einheit||'—'}</td>
+          <td style="text-align:center;${!m.menge?'color:#C0141C':''}">${m.menge||'⚠'}</td>
+          <td>${m.einheit||'Stk'}</td>
         </tr>`).join('')
-      : '<tr><td colspan="3" style="color:#aaa;font-style:italic;padding:12px 8px">Kein Material erfasst</td></tr>'}
+      :'<tr><td colspan="3" style="color:#aaa;font-style:italic;padding:12px 8px">Kein Material erfasst</td></tr>'}
   </tbody></table>
-
-  ${(a.lieferscheine||[]).length>0?`
-  <div class="box">
-    <div class="label" style="margin-bottom:6px">Lieferscheine (${a.lieferscheine.length})</div>
-    ${a.lieferscheine.map(ls=>`
-      <div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid #eee;font-size:12px">
-        <span>${ls.typ==='pdf'?'📄':'🖼'} ${ls.name}</span>
-        <span style="color:#888">${ls.datum||''}</span>
-      </div>`).join('')}
+  ${(a.lieferscheine||[]).length?`<div class="box">
+    <div style="font-size:10px;color:#888;text-transform:uppercase;margin-bottom:6px">Lieferscheine (${a.lieferscheine.length})</div>
+    ${a.lieferscheine.map(ls=>`<div style="display:flex;justify-content:space-between;padding:3px 0;border-bottom:1px solid #eee;font-size:11px">
+      <span>${ls.typ==='pdf'?'📄':'🖼'} ${ls.name}</span><span style="color:#888">${ls.datum||''}</span>
+    </div>`).join('')}
   </div>`:''}
-
   <div class="box" style="background:#fff8f8;border-color:#C0141C">
-    <div style="font-weight:700;color:#C0141C;margin-bottom:8px;font-size:13px">✓ Checkliste vor Rechnungserstellung in SFK</div>
+    <div style="font-weight:700;color:#C0141C;margin-bottom:8px;font-size:12px">✓ Checkliste vor Rechnungserstellung in SFK</div>
     ${['Alle Arbeitsstunden eingetragen?','Alle Materialien erfasst?','Alle Lieferscheine hochgeladen?','Diagnosezettel ausgefüllt?','Probefahrt durchgeführt?'].map(p=>`
-      <div style="display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid #fde8e8;font-size:12px">
-        <div style="width:16px;height:16px;border:1.5px solid #C0141C;border-radius:3px;flex-shrink:0"></div>
+      <div style="display:flex;align-items:center;gap:8px;padding:4px 0;border-bottom:1px solid #fde8e8;font-size:12px">
+        <div style="width:14px;height:14px;border:1.5px solid #C0141C;border-radius:3px;flex-shrink:0"></div>
         <span>${p}</span>
       </div>`).join('')}
   </div>
-
   <div style="margin-top:24px;display:grid;grid-template-columns:1fr 1fr;gap:40px">
     <div style="border-top:1px solid #000;padding-top:4px;font-size:11px;color:#666">Datum / Serviceberater</div>
     <div style="border-top:1px solid #000;padding-top:4px;font-size:11px;color:#666">Geprüft</div>
   </div>
-
-  <script>
-    // Auf Mobilgeräten kein auto-print
-    if(window.innerWidth > 768) window.onload=()=>window.print();
-  <\/script>
+  <script>if(window.innerWidth>768)window.onload=()=>window.print();<\/script>
   </body></html>`;
-
   const win=window.open('','_blank');
   if(win){win.document.write(html);win.document.close();}
+}
+
+function exportRechnungXML(autoId){
+  const a=autos.find(x=>x.id===autoId);if(!a)return;
+  const gesamtStd=(a.arbeiten||[]).reduce((s,ar)=>s+(parseFloat(ar.stunden)||0),0);
+  const esc=s=>(s||'').toString().replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  const xml=`<?xml version="1.0" encoding="UTF-8"?>
+<Rechnungskontrolle erstellt="${new Date().toISOString()}">
+  <Auftrag>
+    <Kennzeichen>${esc(a.kennzeichen)}</Kennzeichen>
+    <Kunde>${esc(a.kunde)}</Kunde>
+    <Fahrzeug>${esc(a.fahrzeug)}</Fahrzeug>
+    <Auftragsnr>${esc(a.auftragsnr)}</Auftragsnr>
+    <Eingang>${esc(a.datum)} ${esc(a.eingang)}</Eingang>
+  </Auftrag>
+  <Arbeiten gesamtStunden="${gesamtStd.toFixed(2)}">
+    ${(a.arbeiten||[]).map(ar=>`<Arbeit>
+      <Mitarbeiter>${esc(ar.wer)}</Mitarbeiter>
+      <Beschreibung>${esc(ar.beschreibung)}</Beschreibung>
+      <Stunden>${esc(ar.stunden)}</Stunden>
+    </Arbeit>`).join('\n    ')}
+  </Arbeiten>
+  <Material>
+    ${(a.material||[]).map(m=>`<Position>
+      <Bezeichnung>${esc(m.bezeichnung)}</Bezeichnung>
+      <Menge>${esc(m.menge)}</Menge>
+      <Einheit>${esc(m.einheit)}</Einheit>
+    </Position>`).join('\n    ')}
+  </Material>
+  <Lieferscheine>
+    ${(a.lieferscheine||[]).map(ls=>`<Lieferschein>
+      <Name>${esc(ls.name)}</Name>
+      <Datum>${esc(ls.datum)}</Datum>
+      <Typ>${esc(ls.typ)}</Typ>
+    </Lieferschein>`).join('\n    ')}
+  </Lieferscheine>
+</Rechnungskontrolle>`;
+  const blob=new Blob([xml],{type:'application/xml'});
+  const url=URL.createObjectURL(blob);
+  const link=document.createElement('a');
+  link.href=url;
+  link.download=`Rechnung_${(a.kennzeichen||'unbekannt').replace(/\s/g,'_')}_${new Date().toISOString().slice(0,10)}.xml`;
+  link.click();
+  URL.revokeObjectURL(url);
 }
 
 // ── DIKTIEREN ──
