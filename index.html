@@ -441,6 +441,7 @@ body.force-desktop .mobile-tabs{display:none !important;}
       </div>
     </div>
   </div>
+  <div class="hspace"></div>
   <span id="syncStatus" class="ok"><span class="sync-dot"></span><span id="syncText">Live</span></span>
   <div class="hactions">
     <div class="search-wrap">
@@ -1442,14 +1443,7 @@ function openArbeitenModal(autoId){
       <button class="btn-diktier" id="btnDiktierMaterial" style="margin-left:10px">🎤 Diktieren</button>
     </div>
     <div id="diktierPreview_material" class="diktier-preview" style="display:none;margin-bottom:8px"></div>
-    <div id="lsVorschlagBox" style="display:none;background:rgba(74,222,128,0.07);border:1px solid rgba(74,222,128,0.3);border-radius:8px;padding:12px;margin-bottom:10px">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
-        <span style="font-size:12px;font-weight:700;color:#4ade80">🤖 KI hat erkannt — bitte abhaken:</span>
-        <button id="btnVorschlagAlle" style="background:rgba(74,222,128,0.15);border:1px solid rgba(74,222,128,0.4);border-radius:4px;color:#4ade80;font-size:11px;font-weight:700;padding:3px 10px;cursor:pointer">✓ Alle übernehmen</button>
-      </div>
-      <div id="lsVorschlagListe"></div>
-      <button id="btnVorschlagUebernehmen" style="width:100%;margin-top:8px;background:rgba(74,222,128,0.2);border:1px solid rgba(74,222,128,0.5);border-radius:6px;color:#4ade80;font-size:13px;font-weight:700;padding:8px;cursor:pointer">✓ Ausgewählte übernehmen</button>
-    </div>
+    <div id="lsVorschlagBox" style="display:none;background:rgba(74,222,128,0.07);border:1px solid rgba(74,222,128,0.3);border-radius:8px;padding:12px;margin-bottom:10px"></div>
     <div id="materialList" style="margin-bottom:8px"></div>
     <button class="btn-secondary" id="btnAddMaterial" style="width:100%;margin-bottom:16px">+ Material manuell hinzufügen</button>
 
@@ -1593,7 +1587,6 @@ async function uploadLS(autoId,input){
 async function analysiereLieferscheinMitKI(autoId, file){
   const lsDrop=document.getElementById('ls_drop');
   const vorschlagBox=document.getElementById('lsVorschlagBox');
-  const vorschlagListe=document.getElementById('lsVorschlagListe');
   try{
     // Datei als Base64 lesen
     const base64=await new Promise((res,rej)=>{
@@ -1644,50 +1637,29 @@ Wenn du keine Positionen erkennst, antworte mit: {"positionen":[]}`}
 
     if(!positionen.length) throw new Error('Keine Positionen erkannt');
 
-    // Vorschläge anzeigen
-    if(vorschlagBox) vorschlagBox.style.display='block';
-    if(vorschlagListe){
-      vorschlagListe.innerHTML='';
-      positionen.forEach((p,i)=>{
-        const row=document.createElement('div');
-        row.style.cssText='display:flex;align-items:center;gap:10px;padding:6px 0;border-bottom:1px solid rgba(74,222,128,0.15)';
-        const cb=document.createElement('input');cb.type='checkbox';cb.checked=true;cb.id='lsv_'+i;
-        cb.style.cssText='width:18px;height:18px;accent-color:#4ade80;flex-shrink:0;cursor:pointer';
-        const lbl=document.createElement('label');lbl.htmlFor='lsv_'+i;
-        lbl.style.cssText='flex:1;font-size:13px;color:var(--text);cursor:pointer';
-        lbl.textContent=p.bezeichnung;
-        const menge=document.createElement('span');
-        menge.style.cssText='font-size:12px;color:#4ade80;font-weight:600;white-space:nowrap';
-        menge.textContent=(p.menge||'1')+' '+(p.einheit||'Stk');
-        row.appendChild(cb);row.appendChild(lbl);row.appendChild(menge);
-        row.dataset.bezeichnung=p.bezeichnung;
-        row.dataset.menge=p.menge||'1';
-        row.dataset.einheit=p.einheit||'Stk';
-        vorschlagListe.appendChild(row);
-      });
+    // Direkt in Materialliste übernehmen — kein Zwischenschritt
+    const a=autos.find(x=>x.id===autoId);if(!a)return;
+    if(!a.material)a.material=[];
+    positionen.forEach(p=>{
+      a.material.push({bezeichnung:p.bezeichnung.trim(),menge:p.menge||'1',einheit:p.einheit||'Stk'});
+    });
+    await saveAuto(a);
+    renderMaterialList(autoId);
+
+    // Kurze Bestätigung anzeigen
+    if(vorschlagBox){
+      vorschlagBox.style.display='block';
+      vorschlagBox.style.background='rgba(74,222,128,0.08)';
+      vorschlagBox.style.borderColor='rgba(74,222,128,0.3)';
+      vorschlagBox.innerHTML=`<div style="display:flex;align-items:center;gap:10px">
+        <span style="font-size:22px">✅</span>
+        <div>
+          <div style="font-size:13px;font-weight:700;color:#4ade80;margin-bottom:2px">${positionen.length} Position(en) aus Lieferschein übernommen</div>
+          <div style="font-size:12px;color:var(--text-dim)">${positionen.map(p=>`${p.bezeichnung} (${p.menge||'1'} ${p.einheit||'Stk'})`).join(' · ')}</div>
+        </div>
+      </div>`;
+      setTimeout(()=>{ if(vorschlagBox) vorschlagBox.style.display='none'; }, 5000);
     }
-
-    // "Alle übernehmen" Button
-    const btnAlle=document.getElementById('btnVorschlagAlle');
-    if(btnAlle) btnAlle.onclick=()=>{
-      vorschlagListe.querySelectorAll('input[type=checkbox]').forEach(cb=>cb.checked=true);
-    };
-
-    // "Ausgewählte übernehmen" Button
-    const btnUebernehmen=document.getElementById('btnVorschlagUebernehmen');
-    if(btnUebernehmen) btnUebernehmen.onclick=()=>{
-      const a=autos.find(x=>x.id===autoId);if(!a)return;
-      if(!a.material)a.material=[];
-      vorschlagListe.querySelectorAll('div[data-bezeichnung]').forEach(row=>{
-        const cb=row.querySelector('input[type=checkbox]');
-        if(cb&&cb.checked){
-          a.material.push({bezeichnung:row.dataset.bezeichnung,menge:row.dataset.menge,einheit:row.dataset.einheit});
-        }
-      });
-      saveAuto(a);renderMaterialList(autoId);
-      if(vorschlagBox) vorschlagBox.style.display='none';
-      showArbSaved();
-    };
 
     if(lsDrop){lsDrop.innerHTML='<div style="font-size:20px">📎</div><div style="color:var(--text-dim);font-size:12px">Weiteren Lieferschein ablegen oder klicken</div>';}
 
