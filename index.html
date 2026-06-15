@@ -301,12 +301,13 @@ input,select,textarea,button{font-family:var(--font-body);}
 ::-webkit-scrollbar-thumb{background:var(--border2);border-radius:3px;}
 ::-webkit-scrollbar-thumb:hover{background:var(--red);}
 
-/* FERTIGE AUFTRÄGE BUTTON + HOVER-DROPDOWN */
+/* FERTIGE AUFTRÄGE BUTTON – CSS HOVER ZUVERLÄSSIG */
 #fertigZone{
   position:relative;
   display:flex;align-items:center;
   padding:0 10px;
   flex-shrink:0;
+  cursor:pointer;
 }
 .fertig-btn-inner{
   display:flex;align-items:center;gap:7px;
@@ -314,22 +315,21 @@ input,select,textarea,button{font-family:var(--font-body);}
   border:1px solid rgba(74,222,128,0.35);
   border-radius:8px;
   padding:7px 14px;
-  cursor:pointer;
   transition:all .2s;
   white-space:nowrap;
   user-select:none;
+  pointer-events:none;
 }
-.fertig-btn-inner:hover,
-#fertigZone.hover-active .fertig-btn-inner{
+#fertigZone:hover .fertig-btn-inner,
+#fertigZone:focus-within .fertig-btn-inner,
+#fertigZone.dd-open .fertig-btn-inner{
   background:rgba(74,222,128,0.22);
   border-color:#4ade80;
-  box-shadow:0 0 14px rgba(74,222,128,0.25);
 }
 #fertigZone.drag-over .fertig-btn-inner{
   background:rgba(74,222,128,0.35);
   border-color:#4ade80;
   border-style:dashed;
-  box-shadow:0 0 20px rgba(74,222,128,0.4);
 }
 .fertig-btn-label{
   font-family:var(--font-head);font-size:12px;font-weight:600;
@@ -337,43 +337,43 @@ input,select,textarea,button{font-family:var(--font-body);}
 }
 .fertig-btn-count{
   font-family:var(--font-head);font-size:16px;font-weight:700;
-  color:#4ade80;
-  background:rgba(74,222,128,0.15);
-  border-radius:6px;
-  min-width:28px;height:28px;
-  display:flex;align-items:center;justify-content:center;
-  padding:0 6px;
+  color:#4ade80;background:rgba(74,222,128,0.15);
+  border-radius:6px;min-width:28px;height:28px;
+  display:flex;align-items:center;justify-content:center;padding:0 6px;
 }
+/* DROPDOWN: CSS-only hover öffnet es */
 #fertigDropdown{
-  position:absolute;top:calc(100% + 6px);
+  position:absolute;top:calc(100% + 4px);
   left:50%;transform:translateX(-50%);
-  min-width:400px;max-width:520px;max-height:540px;overflow-y:auto;
+  min-width:420px;max-width:540px;max-height:560px;overflow-y:auto;
   background:var(--bg2);
   border:1px solid rgba(74,222,128,0.4);
   border-top:3px solid #4ade80;
   border-radius:8px;
-  box-shadow:0 24px 48px rgba(0,0,0,.85);
-  z-index:150;display:none;
+  box-shadow:0 24px 48px rgba(0,0,0,.9);
+  z-index:500;
+  /* CSS HOVER: immer sichtbar wenn Elternelement gehovered */
+  display:none;
+  pointer-events:none;
 }
-#fertigDropdown.open{display:block;}
+/* Öffnen via CSS hover ODER via .dd-open Klasse (JS) */
+#fertigZone:hover #fertigDropdown,
+#fertigZone.dd-open #fertigDropdown{
+  display:block;
+  pointer-events:all;
+}
 .fertig-drop-header{
-  padding:10px 16px;
-  font-family:var(--font-head);font-size:12px;
+  padding:10px 16px;font-family:var(--font-head);font-size:12px;
   color:#4ade80;letter-spacing:.08em;text-transform:uppercase;
-  border-bottom:1px solid rgba(74,222,128,0.2);
-  background:rgba(74,222,128,0.06);
-  display:flex;align-items:center;justify-content:space-between;
+  border-bottom:1px solid rgba(74,222,128,0.2);background:rgba(74,222,128,0.06);
 }
 .fertig-item{
   display:flex;align-items:center;gap:10px;padding:10px 16px;
-  border-bottom:1px solid var(--border);cursor:pointer;transition:background .15s;
+  border-bottom:1px solid var(--border);cursor:default;transition:background .15s;
 }
 .fertig-item:hover{background:rgba(74,222,128,0.07);}
 .fertig-item:last-child{border-bottom:none;}
-.fertig-kz{
-  font-family:var(--font-head);font-size:15px;font-weight:700;
-  color:#4ade80;min-width:96px;
-}
+.fertig-kz{font-family:var(--font-head);font-size:15px;font-weight:700;color:#4ade80;min-width:96px;}
 .fertig-info{flex:1;min-width:0;}
 .fertig-kunde{font-size:13px;font-weight:600;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 .fertig-fz{font-size:11px;color:var(--text-dim);}
@@ -381,16 +381,14 @@ input,select,textarea,button{font-family:var(--font-body);}
 .fertig-item-btns{display:flex;gap:4px;flex-shrink:0;}
 .fertig-item-btn{
   background:var(--bg4);border:1px solid var(--border2);border-radius:4px;
-  color:var(--text-dim);padding:4px 9px;cursor:pointer;font-size:12px;font-weight:600;
-  transition:all .15s;
+  color:var(--text-dim);padding:4px 9px;cursor:pointer;font-size:12px;font-weight:600;transition:all .15s;
 }
 .fertig-item-btn:hover{border-color:#4ade80;color:#4ade80;}
 .fertig-item-btn.red:hover{border-color:var(--red);color:var(--red);}
 .fertig-empty{padding:24px;text-align:center;color:var(--text-muted);font-size:13px;}
 .fertig-drop-hint{
   padding:8px 16px;font-size:11px;color:rgba(74,222,128,0.45);
-  text-align:center;border-top:1px dashed rgba(74,222,128,0.2);
-  font-style:italic;
+  text-align:center;border-top:1px dashed rgba(74,222,128,0.2);font-style:italic;
 }
 
 
@@ -723,7 +721,7 @@ function pinErfolgreich(){
   document.getElementById('pinScreen').style.display='none';
   sessionStorage.setItem('werkstatt-auth','1');
   initMyName();loadAutos();startRealtime();
-  setTimeout(()=>{applyViewMode();if(window.initFertigZone)window.initFertigZone();},100);
+  setTimeout(applyViewMode,100);
 }
 document.addEventListener('keydown',e=>{
   if(document.getElementById('pinScreen').style.display==='none')return;
@@ -1984,129 +1982,6 @@ function importBackup(){
 }
 
 
-// ── FERTIGE AUFTRÄGE ZONE ──
-(function(){
-  let hoverTimer = null;
-
-  function renderFertigList(){
-    const list = document.getElementById('fertigList');
-    if(!list) return;
-    const fertige = autos.filter(a=>a.status==='fertig')
-      .sort((a,b)=>b.statusSeit?.localeCompare(a.statusSeit||'')||0);
-    const countEl = document.getElementById('statFertig');
-    if(countEl) countEl.textContent = fertige.length;
-
-    if(fertige.length===0){
-      list.innerHTML='<div class="fertig-empty">Keine fertigen Aufträge</div>';
-      return;
-    }
-    list.innerHTML='';
-    fertige.forEach(a=>{
-      const item=document.createElement('div');item.className='fertig-item';
-      item.innerHTML=`
-        <span class="fertig-kz">${a.kennzeichen||'—'}</span>
-        <div class="fertig-info">
-          <div class="fertig-kunde">${a.kunde||a.fahrzeug||'—'}</div>
-          <div class="fertig-fz">${a.fahrzeug||''}</div>
-        </div>
-        <span class="fertig-zeit">${a.statusSeit||a.datum||''}</span>
-      `;
-      // Buttons
-      const btns=document.createElement('div');btns.className='fertig-item-btns';
-
-      const btnEdit=document.createElement('button');btnEdit.className='fertig-item-btn';btnEdit.textContent='✎';btnEdit.title='Bearbeiten';
-      btnEdit.addEventListener('click',e=>{e.stopPropagation();closeFertigDropdown();openEdit(a.id);});
-
-      const btnArb=document.createElement('button');btnArb.className='fertig-item-btn';btnArb.textContent='📝';btnArb.title='Arbeiten';
-      btnArb.addEventListener('click',e=>{e.stopPropagation();closeFertigDropdown();openArbeitenModal(a.id);});
-
-      const btnRechnung=document.createElement('button');btnRechnung.className='fertig-item-btn';btnRechnung.textContent='🧾';btnRechnung.title='Rechnungskontrolle';
-      btnRechnung.addEventListener('click',e=>{e.stopPropagation();closeFertigDropdown();openRechnungskontrolle(a.id);});
-
-      const btnReopen=document.createElement('button');btnReopen.className='fertig-item-btn red';btnReopen.textContent='↩';btnReopen.title='Wieder öffnen';
-      btnReopen.addEventListener('click',e=>{
-        e.stopPropagation();
-        a.status='in_arbeit';a.statusSeit=uhrzeit();
-        saveAuto(a);renderFertigList();render();
-      });
-
-      btns.appendChild(btnEdit);btns.appendChild(btnArb);btns.appendChild(btnRechnung);btns.appendChild(btnReopen);
-      item.appendChild(btns);
-      list.appendChild(item);
-    });
-  }
-
-  function openFertigDropdown(){
-    const dd=document.getElementById('fertigDropdown');
-    if(dd){renderFertigList();dd.classList.add('open');}
-  }
-  function closeFertigDropdown(){
-    const dd=document.getElementById('fertigDropdown');
-    if(dd)dd.classList.remove('open');
-  }
-
-  window.renderFertigList = renderFertigList;
-
-  function initFertigZone(){
-    const zone=document.getElementById('fertigZone');
-    if(!zone)return;
-    if(zone._initialized)return; // bereits initialisiert
-    zone._initialized=true;
-
-    // Hover open/close + Click fallback
-    zone.addEventListener('mouseenter',()=>{
-      clearTimeout(hoverTimer);
-      zone.classList.add('hover-active');
-      openFertigDropdown();
-    });
-    zone.addEventListener('mouseleave',()=>{
-      zone.classList.remove('hover-active');
-      hoverTimer=setTimeout(closeFertigDropdown,300);
-    });
-    // Click: toggle dropdown (für Touch + falls Hover nicht feuert)
-    zone.addEventListener('click',e=>{
-      e.stopPropagation();
-      const dd=document.getElementById('fertigDropdown');
-      if(dd&&dd.classList.contains('open')){closeFertigDropdown();}
-      else{renderFertigList();openFertigDropdown();}
-    });
-    // Klick außerhalb schließt Dropdown
-    document.addEventListener('click',()=>closeFertigDropdown());
-    const dd=document.getElementById('fertigDropdown');
-    if(dd){
-      dd.addEventListener('mouseenter',()=>clearTimeout(hoverTimer));
-      dd.addEventListener('mouseleave',()=>{hoverTimer=setTimeout(closeFertigDropdown,300);});
-    }
-
-    // Drag & Drop – Karte reinziehen
-    zone.addEventListener('dragover',e=>{
-      e.preventDefault();
-      zone.classList.add('drag-over');
-    });
-    zone.addEventListener('dragleave',e=>{
-      if(!zone.contains(e.relatedTarget))zone.classList.remove('drag-over');
-    });
-    zone.addEventListener('drop',e=>{
-      e.preventDefault();
-      zone.classList.remove('drag-over');
-      if(dragId){
-        const a=autos.find(x=>x.id===dragId);
-        if(a){
-          a.status='fertig';a.statusSeit=uhrzeit();
-          saveAuto(a);render();renderFertigList();
-          // Kurz aufklappen um neuen Eintrag zu zeigen
-          openFertigDropdown();
-          setTimeout(closeFertigDropdown,3000);
-        }
-      }
-    });
-  }
-  window.initFertigZone = initFertigZone;
-  // Try immediately (if DOM ready) and also on DOMContentLoaded
-  if(document.readyState!=='loading'){initFertigZone();}
-  else{document.addEventListener('DOMContentLoaded',initFertigZone);}
-})();
-
 
 // ── VERSCHIEBEN (MOBILE BOTTOM SHEET) ──
 function openMoveSheet(autoId){
@@ -2209,11 +2084,71 @@ function toggleViewMode(){
 // Override updateMobileLanes to respect forceMobileView
 const _origUpdateMobileLanes = typeof updateMobileLanes === 'function' ? updateMobileLanes : null;
 
+
+// ── FERTIGE AUFTRÄGE ZONE ──
+// Hover: rein per CSS (#fertigZone:hover #fertigDropdown)
+// JS nur für: Inhalt, Drag&Drop, Buttons
+
+function renderFertigList(){
+  const list=document.getElementById('fertigList');
+  const countEl=document.getElementById('statFertig');
+  if(!list)return;
+  const fertige=autos.filter(a=>a.status==='fertig')
+    .sort((a,b)=>(b.statusSeit||'').localeCompare(a.statusSeit||''));
+  if(countEl)countEl.textContent=fertige.length;
+  if(fertige.length===0){
+    list.innerHTML='<div class="fertig-empty">Keine fertigen Aufträge</div>';
+    return;
+  }
+  list.innerHTML='';
+  fertige.forEach(a=>{
+    const item=document.createElement('div');
+    item.className='fertig-item';
+    const kz=document.createElement('span');kz.className='fertig-kz';kz.textContent=a.kennzeichen||'—';
+    const info=document.createElement('div');info.className='fertig-info';
+    const k=document.createElement('div');k.className='fertig-kunde';k.textContent=a.kunde||'—';
+    const fz=document.createElement('div');fz.className='fertig-fz';fz.textContent=a.fahrzeug||'';
+    info.appendChild(k);if(a.fahrzeug)info.appendChild(fz);
+    const zeit=document.createElement('span');zeit.className='fertig-zeit';zeit.textContent=a.statusSeit||a.datum||'';
+    const btns=document.createElement('div');btns.className='fertig-item-btns';
+    const mkBtn=(txt,title,fn,red)=>{
+      const b=document.createElement('button');b.className='fertig-item-btn'+(red?' red':'');
+      b.textContent=txt;b.title=title;
+      b.addEventListener('click',e=>{e.stopPropagation();fn();});
+      return b;
+    };
+    btns.appendChild(mkBtn('✎','Bearbeiten',()=>openEdit(a.id)));
+    btns.appendChild(mkBtn('📝','Arbeiten',()=>openArbeitenModal(a.id)));
+    btns.appendChild(mkBtn('🧾','Rechnungskontrolle',()=>openRechnungskontrolle(a.id)));
+    btns.appendChild(mkBtn('↩','Wieder öffnen',()=>{a.status='in_arbeit';a.statusSeit=uhrzeit();saveAuto(a);render();},true));
+    item.appendChild(kz);item.appendChild(info);item.appendChild(zeit);item.appendChild(btns);
+    list.appendChild(item);
+  });
+}
+
+// Drag & Drop auf fertigZone – direkt am Element, kein Init nötig
+document.addEventListener('DOMContentLoaded',()=>{
+  const zone=document.getElementById('fertigZone');
+  if(!zone)return;
+  zone.addEventListener('dragover',e=>{e.preventDefault();zone.classList.add('drag-over');});
+  zone.addEventListener('dragleave',e=>{if(!zone.contains(e.relatedTarget))zone.classList.remove('drag-over');});
+  zone.addEventListener('drop',e=>{
+    e.preventDefault();zone.classList.remove('drag-over');
+    if(dragId){
+      const a=autos.find(x=>x.id===dragId);
+      if(a){a.status='fertig';a.statusSeit=uhrzeit();saveAuto(a);render();}
+    }
+  });
+  // Inhalt füllen wenn Dropdown sichtbar wird (mouseenter auf Zone)
+  zone.addEventListener('mouseenter',()=>renderFertigList());
+  zone.addEventListener('click',()=>renderFertigList());
+});
+
 // ── START ──
 if(sessionStorage.getItem('werkstatt-auth')==='1'){
   document.getElementById('pinScreen').style.display='none';
   initMyName();loadAutos();startRealtime();
-  setTimeout(()=>{applyViewMode();if(window.initFertigZone)window.initFertigZone();},100);
+  setTimeout(applyViewMode,100);
 }else{
   initBio();
 }
