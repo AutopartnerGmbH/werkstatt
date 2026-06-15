@@ -1249,7 +1249,7 @@ function openDiagnose(autoId){
     const val=d[key]||'';
     return `<div class="diag-btns">
       <button class="diag-btn diag-btn-ok ${val==='ok'?'active':''}" data-key="${key}" data-val="ok">OK</button>
-      <button class="diag-btn diag-btn-nok ${val==='nok'?'active':''}" data-key="${key}" data-val="nok">!</button>
+      <button class="diag-btn diag-btn-nok ${val==='nok'?'active':''}" data-key="${key}" data-val="nok" style="font-weight:900;font-size:13px;">✕</button>
     </div>`;}
   function diagRow(label,key){
     return `<div class="diag-row"><span class="diag-row-label">${label}</span>${statusBtns(key)}</div>`;}
@@ -1260,10 +1260,10 @@ function openDiagnose(autoId){
       <button class="modal-close" onclick="closeModal()">✕</button>
     </div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:0 12px;margin-bottom:12px">
-      <div class="diag-input-row"><label>KM-Stand</label>
-        <input id="diag_km" value="${d.km||''}" placeholder="z.B. 125000"/></div>
-      <div class="diag-input-row"><label>TÜV</label>
-        <input id="diag_tuev" value="${d.tuev||''}" placeholder="z.B. 05/2026"/></div>
+      <div class="diag-input-row"><label>KM-Stand <span style="color:var(--red)">*</span></label>
+        <input id="diag_km" value="${d.km||''}" placeholder="z.B. 125000" style="border-color:${d.km?'var(--border2)':'var(--red)'}" required/></div>
+      <div class="diag-input-row"><label>TÜV <span style="color:var(--red)">*</span></label>
+        <input id="diag_tuev" value="${d.tuev||''}" placeholder="z.B. 05/2026" style="border-color:${d.tuev?'var(--border2)':'var(--red)'}" required/></div>
     </div>
     <div class="diag-section">
       <div class="diag-section-title">Allgemein</div>
@@ -1320,6 +1320,11 @@ function openDiagnose(autoId){
 }
 
 async function saveDiagNow(a){
+  // Pflichtfelder KM + TÜV visuell markieren
+  const kmEl=document.getElementById('diag_km');
+  const tuevEl=document.getElementById('diag_tuev');
+  if(kmEl)kmEl.style.borderColor=kmEl.value.trim()?'':'var(--red)';
+  if(tuevEl)tuevEl.style.borderColor=tuevEl.value.trim()?'':'var(--red)';
   await saveAuto(a);
   const el=document.getElementById('diagSaved');
   if(el){el.style.display='block';clearTimeout(el._t);el._t=setTimeout(()=>el.style.display='none',2000);}
@@ -1327,10 +1332,20 @@ async function saveDiagNow(a){
 
 function exportDiagnosePDF(autoId){
   const a=autos.find(x=>x.id===autoId);if(!a)return;
+  const d2=a.diagnose||{};
+  if(!d2.km||!d2.tuev){
+    // Felder rot markieren
+    const kmEl=document.getElementById('diag_km');
+    const tuevEl=document.getElementById('diag_tuev');
+    if(kmEl&&!kmEl.value.trim()){kmEl.style.borderColor='var(--red)';kmEl.focus();}
+    if(tuevEl&&!tuevEl.value.trim()){tuevEl.style.borderColor='var(--red)';}
+    alert('Bitte KM-Stand und TÜV-Datum eintragen (Pflichtfelder)!');
+    return;
+  }
   const d=a.diagnose||emptyDiagnose();
   function badge(key){const v=d[key]||'';
     if(v==='ok')return '<span style="background:#14532d;color:#4ade80;padding:2px 8px;border-radius:3px;font-size:11px;font-weight:700">OK</span>';
-    if(v==='nok')return '<span style="background:#7f1d1d;color:#fca5a5;padding:2px 8px;border-radius:3px;font-size:11px;font-weight:700">!</span>';
+    if(v==='nok')return '<span style="background:#7f1d1d;color:#fca5a5;padding:2px 8px;border-radius:3px;font-size:11px;font-weight:900">✕</span>';
     return '<span style="color:#aaa;font-size:11px">—</span>';}
   function tbl(items,title){return `<table style="width:100%;border-collapse:collapse;margin-bottom:10px">
     <thead><tr><th colspan="2" style="background:#C0141C;color:#fff;padding:5px 8px;font-size:12px;text-align:left">${title}</th></tr></thead>
@@ -1362,7 +1377,11 @@ function exportDiagnosePDF(autoId){
     <div style="border-top:1px solid #000;padding-top:4px;font-size:11px;color:#666">Datum / Unterschrift Mechaniker</div>
     <div style="border-top:1px solid #000;padding-top:4px;font-size:11px;color:#666">Datum / Unterschrift Kunde</div>
   </div>
-  <script>window.onload=()=>window.print();<\/script></body></html>`;
+  <div style="position:fixed;top:12px;right:12px;display:flex;gap:8px;z-index:999;">
+    <button onclick="window.print()" style="background:#C0141C;color:#fff;border:none;border-radius:6px;padding:9px 18px;font-size:14px;font-weight:700;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,0.3);">🖨 Drucken</button>
+    <button onclick="window.close()" style="background:#222;color:#fff;border:1px solid #444;border-radius:6px;padding:9px 14px;font-size:14px;font-weight:700;cursor:pointer;">✕</button>
+  </div>
+  <script>// Kein Auto-Print<\/script></body></html>`;
   const win=window.open('','_blank');if(win){win.document.write(html);win.document.close();}
 }
 
@@ -1502,13 +1521,13 @@ function openRechnungskontrolle(autoId){
     td{padding:5px 8px;border-bottom:1px solid #eee;vertical-align:top;font-size:12px;}
     .box{border:1px solid #ddd;border-radius:4px;padding:8px 10px;margin-bottom:8px;}
     .label{font-size:10px;color:#888;text-transform:uppercase;letter-spacing:.06em;}
-    .close-btn{position:fixed;top:12px;right:12px;background:#C0141C;color:#fff;border:none;
-      border-radius:6px;padding:8px 16px;font-size:14px;font-weight:700;cursor:pointer;
-      box-shadow:0 2px 8px rgba(0,0,0,0.3);z-index:999;}
-    @media print{.close-btn{display:none;}@page{margin:15mm;}}
-    @media(max-width:600px){body{padding:12px;padding-top:50px;}}
+    @media print{button{display:none!important;}@page{margin:15mm;}}
+    @media(max-width:600px){body{padding:12px;padding-top:60px;}}
   </style></head><body>
-  <button class="close-btn" onclick="window.close()">✕ Schließen</button>
+  <div style="position:fixed;top:12px;right:12px;display:flex;gap:8px;z-index:999;">
+    <button onclick="window.print()" style="background:#C0141C;color:#fff;border:none;border-radius:6px;padding:9px 18px;font-size:14px;font-weight:700;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,0.3);">🖨 Drucken</button>
+    <button onclick="window.close()" style="background:#222;color:#fff;border:1px solid #444;border-radius:6px;padding:9px 14px;font-size:14px;font-weight:700;cursor:pointer;">✕</button>
+  </div>
   <div style="display:flex;justify-content:space-between;border-bottom:3px solid #C0141C;padding-bottom:10px;margin-bottom:14px">
     <div><div style="font-size:16px;font-weight:700">Rechnungskontrolle</div>
     <div style="color:#C0141C;font-size:12px;font-weight:700">AUTOPARTNER AMERICANCARS · Auf dem Lölfert 37 · 58119 Hagen</div></div>
@@ -1547,7 +1566,7 @@ function openRechnungskontrolle(autoId){
     <div style="border-top:1px solid #000;padding-top:4px;font-size:11px;color:#666">Datum / Serviceberater</div>
     <div style="border-top:1px solid #000;padding-top:4px;font-size:11px;color:#666">Geprüft</div>
   </div>
-  <script>if(window.innerWidth>768)window.onload=()=>window.print();<\/script>
+  <script>// Kein Auto-Print<\/script>
   </body></html>`;
   const win=window.open('','_blank');if(win){win.document.write(html);win.document.close();}
 }
