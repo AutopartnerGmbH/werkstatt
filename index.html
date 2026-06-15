@@ -723,7 +723,7 @@ function pinErfolgreich(){
   document.getElementById('pinScreen').style.display='none';
   sessionStorage.setItem('werkstatt-auth','1');
   initMyName();loadAutos();startRealtime();
-  setTimeout(applyViewMode,100);
+  setTimeout(()=>{applyViewMode();if(window.initFertigZone)window.initFertigZone();},100);
 }
 document.addEventListener('keydown',e=>{
   if(document.getElementById('pinScreen').style.display==='none')return;
@@ -2049,10 +2049,11 @@ function importBackup(){
 
   function initFertigZone(){
     const zone=document.getElementById('fertigZone');
-    if(!zone||zone._initialized)return;
+    if(!zone)return;
+    if(zone._initialized)return; // bereits initialisiert
     zone._initialized=true;
 
-    // Hover open/close
+    // Hover open/close + Click fallback
     zone.addEventListener('mouseenter',()=>{
       clearTimeout(hoverTimer);
       zone.classList.add('hover-active');
@@ -2062,6 +2063,15 @@ function importBackup(){
       zone.classList.remove('hover-active');
       hoverTimer=setTimeout(closeFertigDropdown,300);
     });
+    // Click: toggle dropdown (für Touch + falls Hover nicht feuert)
+    zone.addEventListener('click',e=>{
+      e.stopPropagation();
+      const dd=document.getElementById('fertigDropdown');
+      if(dd&&dd.classList.contains('open')){closeFertigDropdown();}
+      else{renderFertigList();openFertigDropdown();}
+    });
+    // Klick außerhalb schließt Dropdown
+    document.addEventListener('click',()=>closeFertigDropdown());
     const dd=document.getElementById('fertigDropdown');
     if(dd){
       dd.addEventListener('mouseenter',()=>clearTimeout(hoverTimer));
@@ -2203,7 +2213,7 @@ const _origUpdateMobileLanes = typeof updateMobileLanes === 'function' ? updateM
 if(sessionStorage.getItem('werkstatt-auth')==='1'){
   document.getElementById('pinScreen').style.display='none';
   initMyName();loadAutos();startRealtime();
-  setTimeout(applyViewMode,100);
+  setTimeout(()=>{applyViewMode();if(window.initFertigZone)window.initFertigZone();},100);
 }else{
   initBio();
 }
