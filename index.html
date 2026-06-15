@@ -27,7 +27,7 @@ input,select,textarea,button{font-family:var(--font-body);}
 
 /* HEADER */
 #header{background:var(--bg2);border-bottom:2px solid var(--red);padding:0 16px;
-  display:flex;align-items:stretch;height:72px;gap:0;overflow-x:auto;flex-shrink:0;}
+  display:flex;align-items:stretch;height:88px;gap:0;overflow-x:auto;flex-shrink:0;}
 .hlogo{display:flex;align-items:center;gap:12px;padding-right:20px;border-right:1px solid var(--border);flex-shrink:0;}
 .hlogo-title{font-family:var(--font-head);font-weight:700;font-size:17px;color:var(--text);letter-spacing:.08em;text-transform:uppercase;line-height:1;}
 .hlogo-sub{font-family:var(--font-head);font-weight:400;font-size:11px;color:var(--red);letter-spacing:.12em;text-transform:uppercase;margin-top:2px;}
@@ -78,7 +78,7 @@ input,select,textarea,button{font-family:var(--font-body);}
 
 /* CARD */
 .card-wrap{margin-bottom:6px;border-radius:6px;overflow:hidden;}
-.card-top{display:flex;align-items:center;padding:10px 12px;cursor:pointer;user-select:none;transition:background .15s;}
+.card-top{display:flex;align-items:center;padding:10px 12px;cursor:pointer;user-select:none;transition:background .15s;min-height:48px;}
 .card-top:hover{background:rgba(255,255,255,0.04);}
 .card-top-prio{width:8px;height:8px;border-radius:50%;flex-shrink:0;margin-right:8px;}
 .card-top-kz{font-family:var(--font-head);font-weight:700;font-size:17px;letter-spacing:.1em;white-space:nowrap;flex-shrink:0;margin-right:10px;}
@@ -279,11 +279,15 @@ input,select,textarea,button{font-family:var(--font-body);}
 @media(max-width:768px){
   body{overflow:auto;}
   #header{height:auto;flex-wrap:wrap;padding:8px 12px;gap:6px;}
+  .view-toggle{margin-top:3px;font-size:9px;padding:2px 8px;}
   .hlogo{padding-right:12px;border-right:none;}
   .hstat{padding:0 8px;}
   .hstat-val{font-size:20px;}
   .hstat-lbl{font-size:9px;}
   .hactions{padding-left:0;width:100%;justify-content:flex-end;}
+  #fertigZone{padding:0 8px;}
+  .fertig-val{font-size:20px;}
+  #fertigDropdown{min-width:280px;left:0;transform:none;right:0;}
   .mobile-tabs{display:flex;}
   #board{padding:8px;overflow:visible;}
   .board-grid{display:block !important;min-width:unset !important;}
@@ -295,6 +299,116 @@ input,select,textarea,button{font-family:var(--font-body);}
 ::-webkit-scrollbar-track{background:var(--bg);}
 ::-webkit-scrollbar-thumb{background:var(--border2);border-radius:3px;}
 ::-webkit-scrollbar-thumb:hover{background:var(--red);}
+
+/* FERTIGE AUFTRÄGE HOVER-ZONE */
+#fertigZone{
+  position:relative;display:flex;align-items:center;gap:8px;
+  padding:0 14px;border-right:1px solid var(--border);border-left:1px solid var(--border);
+  flex-shrink:0;cursor:pointer;transition:background .2s;
+  background:rgba(74,222,128,0.06);
+}
+#fertigZone:hover{background:rgba(74,222,128,0.14);}
+#fertigZone.drag-over{background:rgba(74,222,128,0.25);border-color:#4ade80;box-shadow:0 0 16px rgba(74,222,128,0.3);}
+.fertig-val{font-family:var(--font-head);font-weight:700;font-size:28px;color:#4ade80;}
+.fertig-lbl{color:var(--text-dim);font-size:10px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;line-height:1.3;}
+.fertig-icon{font-size:18px;margin-right:2px;}
+#fertigDropdown{
+  position:absolute;top:100%;left:50%;transform:translateX(-50%);
+  min-width:360px;max-width:480px;max-height:520px;overflow-y:auto;
+  background:var(--bg2);border:1px solid #4ade8066;border-top:3px solid #4ade80;
+  border-radius:0 0 8px 8px;box-shadow:0 20px 40px rgba(0,0,0,.8);
+  z-index:150;display:none;
+}
+#fertigDropdown.open{display:block;}
+.fertig-drop-header{padding:10px 14px;font-family:var(--font-head);font-size:12px;
+  color:#4ade80;letter-spacing:.08em;text-transform:uppercase;
+  border-bottom:1px solid rgba(74,222,128,0.2);background:rgba(74,222,128,0.06);}
+.fertig-item{display:flex;align-items:center;gap:10px;padding:10px 14px;
+  border-bottom:1px solid var(--border);cursor:pointer;transition:background .15s;}
+.fertig-item:hover{background:rgba(74,222,128,0.08);}
+.fertig-item:last-child{border-bottom:none;}
+.fertig-kz{font-family:var(--font-head);font-size:15px;font-weight:700;color:#4ade80;min-width:90px;}
+.fertig-info{flex:1;min-width:0;}
+.fertig-kunde{font-size:13px;font-weight:600;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.fertig-fz{font-size:11px;color:var(--text-dim);}
+.fertig-zeit{font-size:11px;color:var(--text-muted);white-space:nowrap;}
+.fertig-item-btns{display:flex;gap:4px;flex-shrink:0;}
+.fertig-item-btn{background:var(--bg4);border:1px solid var(--border2);border-radius:4px;
+  color:var(--text-dim);padding:3px 8px;cursor:pointer;font-size:11px;font-weight:600;transition:all .15s;}
+.fertig-item-btn:hover{border-color:#4ade80;color:#4ade80;}
+.fertig-item-btn.red:hover{border-color:var(--red);color:var(--red);}
+.fertig-empty{padding:20px;text-align:center;color:var(--text-muted);font-size:13px;}
+.fertig-drop-hint{padding:8px 14px;font-size:11px;color:rgba(74,222,128,0.5);
+  text-align:center;border-top:1px solid rgba(74,222,128,0.15);
+  font-style:italic;}
+
+
+/* VERSCHIEBEN BUTTON (Mobile) */
+.btn-verschieben{
+  display:none; /* nur Mobile */
+  width:100%;background:var(--bg4);border:1px solid var(--border2);
+  border-radius:6px;color:var(--text-dim);padding:10px 14px;
+  cursor:pointer;font-size:13px;font-weight:600;text-align:left;
+  margin-top:4px;transition:all .15s;
+}
+.btn-verschieben:hover{border-color:var(--red);color:var(--text);}
+.move-sheet-overlay{
+  position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:250;
+  display:flex;align-items:flex-end;justify-content:center;
+}
+.move-sheet{
+  background:var(--bg2);border-top:3px solid var(--red);
+  border-radius:16px 16px 0 0;width:100%;max-width:500px;
+  padding:20px 16px 32px;
+}
+.move-sheet-title{
+  font-family:var(--font-head);font-size:14px;color:var(--text);
+  letter-spacing:.08em;text-transform:uppercase;margin-bottom:16px;
+  text-align:center;
+}
+.move-sheet-btn{
+  display:flex;align-items:center;gap:12px;width:100%;
+  background:var(--bg3);border:1px solid var(--border2);border-radius:8px;
+  color:var(--text);padding:14px 16px;cursor:pointer;font-size:14px;
+  font-weight:600;margin-bottom:8px;transition:all .15s;text-align:left;
+}
+.move-sheet-btn:hover,.move-sheet-btn:active{border-color:var(--red);background:var(--bg4);}
+.move-sheet-btn.current{border-color:#555;color:var(--text-muted);cursor:default;}
+.move-sheet-btn .move-icon{font-size:20px;flex-shrink:0;}
+.move-sheet-cancel{
+  width:100%;background:transparent;border:1px solid var(--border2);
+  border-radius:8px;color:var(--text-dim);padding:12px;
+  cursor:pointer;font-size:14px;font-weight:600;margin-top:4px;
+}
+@media(max-width:768px){
+  .btn-verschieben{display:block;}
+  /* Status-Dropdown auf Mobile ausblenden – Verschieben-Button übernimmt */
+  .status-select-wrap{display:none;}
+}
+
+
+/* VIEW TOGGLE BUTTON */
+.view-toggle{
+  display:inline-flex;align-items:center;gap:5px;
+  margin-top:5px;background:var(--bg3);border:1px solid var(--border2);
+  border-radius:20px;padding:3px 10px;cursor:pointer;
+  font-size:10px;font-weight:700;color:var(--text-dim);
+  letter-spacing:.06em;text-transform:uppercase;
+  transition:all .15s;white-space:nowrap;
+}
+.view-toggle:hover{border-color:var(--red);color:var(--red);}
+.view-toggle.mobile-mode{background:rgba(192,20,28,0.12);border-color:var(--red);color:var(--red);}
+.view-toggle-dot{width:6px;height:6px;border-radius:50%;background:currentColor;flex-shrink:0;}
+
+
+/* FORCE MOBILE VIEW ON DESKTOP */
+body.force-mobile #board .board-grid{display:block !important;min-width:unset !important;}
+body.force-mobile .lane{display:none;}
+body.force-mobile .lane.mobile-active{display:flex;}
+body.force-mobile .mobile-tabs{display:flex !important;}
+body.force-mobile .btn-verschieben{display:block !important;}
+body.force-mobile .status-select-wrap{display:none !important;}
+
 </style>
 </head>
 <body>
@@ -333,6 +447,7 @@ input,select,textarea,button{font-family:var(--font-body);}
       <div class="hlogo-title">Werkstatt</div>
       <div class="hlogo-sub">Autopartner GmbH</div>
       <div class="hlogo-date" id="clockEl"></div>
+      <button class="view-toggle" id="viewToggleBtn" onclick="toggleViewMode()" title="Zwischen Mobil- und Desktop-Ansicht wechseln"><span class="view-toggle-dot"></span><span id="viewToggleLabel">Desktop</span></button>
     </div>
   </div>
   <div id="myNameBadge" onclick="changeMyName()" title="Namen ändern">
@@ -346,6 +461,20 @@ input,select,textarea,button{font-family:var(--font-body);}
   <div class="hstat"><div class="hstat-val" id="statUnterbrochen" style="color:#FAC775">0</div><div class="hstat-lbl">Unterbrochen</div></div>
   <div class="hspace"></div>
   <span id="syncStatus" class="ok"><span class="sync-dot"></span><span id="syncText">Live</span></span>
+
+  <!-- FERTIGE AUFTRÄGE HOVER-ZONE -->
+  <div id="fertigZone" title="Fertige Aufträge – Auftrag hier ablegen zum Abschließen">
+    <span class="fertig-icon">🏁</span>
+    <div>
+      <div class="fertig-val" id="statFertig">0</div>
+      <div class="fertig-lbl">Fertig</div>
+    </div>
+    <div id="fertigDropdown">
+      <div class="fertig-drop-header">🏁 Fertige Aufträge</div>
+      <div id="fertigList"></div>
+      <div class="fertig-drop-hint">Auftrag hier reinziehen zum Abschließen</div>
+    </div>
+  </div>
   <div class="hactions">
     <div class="search-wrap">
       <input type="text" id="searchInput" placeholder="🔍 Suche …" oninput="handleSearch(this.value)" onkeydown="if(event.key==='Escape')clearSearch()"/>
@@ -542,6 +671,7 @@ function pinErfolgreich(){
   document.getElementById('pinScreen').style.display='none';
   sessionStorage.setItem('werkstatt-auth','1');
   initMyName();loadAutos();startRealtime();
+  setTimeout(applyViewMode,100);
 }
 document.addEventListener('keydown',e=>{
   if(document.getElementById('pinScreen').style.display==='none')return;
@@ -572,7 +702,14 @@ async function loadAutos(){
   try{
     setSync('syncing','↻ Laden …');
     const data=await sbFetch('/rest/v1/auftraege?order=erstellt_am.asc');
+    const prevIds=new Set(autos.map(a=>a.id));
     autos=data.map(dbToAuto);
+    // Neue Karten (noch nicht in expandedCards) → immer eingeklappt starten
+    autos.forEach(a=>{
+      if(!prevIds.has(a.id)&&!expandedCards.has(a.id)){
+        collapsedCards.add(a.id);
+      }
+    });
     setSync('ok','● Live');render();
   }catch(e){setSync('error','✕ Fehler');console.error(e);}
 }
@@ -666,10 +803,24 @@ function updateMobileLanes(){
 window.addEventListener('resize',updateMobileLanes);
 
 // ── COLLAPSE ──
-function isCollapsed(id,autoCollapse){return autoCollapse?!expandedCards.has(id):collapsedCards.has(id);}
-function toggleCard(id,autoCollapse){
-  if(autoCollapse){if(expandedCards.has(id))expandedCards.delete(id);else expandedCards.add(id);}
-  else{if(collapsedCards.has(id))collapsedCards.delete(id);else collapsedCards.add(id);}
+// FIX: Einheitliche Logik – collapsedCards ist die einzige Quelle der Wahrheit.
+// Karten mit >= COLLAPSE_AT in der Spalte starten zugeklappt (wenn noch nie manuell geöffnet).
+// expandedCards merkt sich explizit geöffnete Karten – diese bleiben offen, egal wie viele Karten in der Spalte sind.
+function isCollapsed(id, wasAutoCollapse){
+  if(expandedCards.has(id)) return false;   // explizit geöffnet → immer offen
+  if(collapsedCards.has(id)) return true;   // explizit geschlossen → immer zu
+  return wasAutoCollapse;                    // neu erschienene Karte: Standard je nach Spalten-Größe
+}
+function toggleCard(id, wasAutoCollapse){
+  if(expandedCards.has(id)){
+    // war offen → schließen
+    expandedCards.delete(id);
+    collapsedCards.add(id);
+  } else {
+    // war zu → öffnen
+    collapsedCards.delete(id);
+    expandedCards.add(id);
+  }
   render();
 }
 
@@ -694,12 +845,18 @@ function render(){
     hdr.innerHTML=`<span style="font-size:18px">${s.icon}</span>
       <span class="lane-title" style="color:${s.accent}">${s.label}</span>
       ${cards.length>0?`<span class="lane-count" style="background:rgba(0,0,0,0.4);color:${s.accent}">${cards.length}</span>`:''}`;
-    if(cards.length>0&&autoCollapse){
+    // FIX: Alle-auf/zu immer anzeigen, Collapse-State in beiden Sets speichern
+    if(cards.length>0){
       const btn=document.createElement('button');btn.className='lane-toggle-btn';
       btn.style.cssText=`border:1px solid ${s.accent}66;color:${s.accent}`;
       const allOpen=cards.every(c=>expandedCards.has(c.id));
       btn.textContent=allOpen?'▲ Alle zu':'▼ Alle auf';
-      btn.addEventListener('click',e=>{e.stopPropagation();if(allOpen)cards.forEach(c=>expandedCards.delete(c.id));else cards.forEach(c=>expandedCards.add(c.id));render();});
+      btn.addEventListener('click',e=>{
+        e.stopPropagation();
+        if(allOpen){cards.forEach(c=>{expandedCards.delete(c.id);collapsedCards.add(c.id);});}
+        else{cards.forEach(c=>{collapsedCards.delete(c.id);expandedCards.add(c.id);});}
+        render();
+      });
       hdr.appendChild(btn);
     }
     lane.appendChild(hdr);
@@ -718,6 +875,7 @@ function render(){
   });
 
   renderMobileTabs();updateMobileLanes();
+  if(window.renderFertigList)window.renderFertigList();
 }
 
 // ── KARTE ──
@@ -735,9 +893,13 @@ function makeCard(a,s,autoCollapse,collapsed){
   const prio=document.createElement('div');prio.className='card-top-prio';
   prio.style.cssText=`background:${PRIO_DOT[a.prioritaet]};${a.prioritaet!=='Normal'?`box-shadow:0 0 5px ${PRIO_DOT[a.prioritaet]}`:''}`;
   const kz=document.createElement('span');kz.className='card-top-kz';kz.style.color=s.accent;kz.textContent=a.kennzeichen||'—';
-  const kunde=document.createElement('span');kunde.className='card-top-kunde';kunde.textContent=a.kunde||a.fahrzeug||'';
+  // Eine Zeile: "Max Mustermann · Ford Mustang"
+  const kundeEl=document.createElement('span');kundeEl.className='card-top-kunde';
+  const namePart=a.kunde||'—';
+  const fzPart=a.fahrzeug?(' · '+a.fahrzeug):'';
+  kundeEl.innerHTML=namePart+'<span style="color:var(--text-muted);font-weight:400">'+fzPart+'</span>';
   const chev=document.createElement('span');chev.className='card-top-chevron'+(collapsed?'':' open');chev.textContent='▾';
-  top.appendChild(prio);top.appendChild(kz);top.appendChild(kunde);top.appendChild(chev);
+  top.appendChild(prio);top.appendChild(kz);top.appendChild(kundeEl);top.appendChild(chev);
   wrap.appendChild(top);
 
   if(!collapsed){
@@ -791,11 +953,41 @@ function makeCard(a,s,autoCollapse,collapsed){
     btnMa.addEventListener('click',e=>{e.stopPropagation();toggleMitarbeiter(a.id);});
     maDiv.appendChild(btnMa);wrap.appendChild(maDiv);
 
+    // Status-Dropdown in Kopfzeile der Karte
+    const statusWrap=document.createElement('div');
+    statusWrap.className='status-select-wrap';
+    statusWrap.style.cssText='padding:6px 12px;border-top:1px solid var(--border);display:flex;align-items:center;gap:8px;';
+    const statusLbl=document.createElement('span');statusLbl.style.cssText='font-size:11px;color:var(--text-muted);font-weight:600;text-transform:uppercase;letter-spacing:.06em;flex-shrink:0;';
+    statusLbl.textContent='Status:';
+    const statusSel=document.createElement('select');
+    statusSel.style.cssText='flex:1;background:var(--bg4);border:1px solid var(--border2);border-radius:4px;color:var(--text);padding:5px 8px;font-size:12px;font-weight:600;outline:none;cursor:pointer;';
+    STATI.forEach(st=>{
+      const opt=document.createElement('option');
+      opt.value=st.id;opt.textContent=st.icon+' '+st.label;
+      if(st.id===a.status)opt.selected=true;
+      statusSel.appendChild(opt);
+    });
+    statusSel.addEventListener('change',e=>{
+      e.stopPropagation();
+      const newStatus=statusSel.value;
+      if(newStatus!==a.status){a.status=newStatus;a.statusSeit=uhrzeit();saveAuto(a);render();}
+    });
+    statusSel.addEventListener('click',e=>e.stopPropagation());
+    statusWrap.appendChild(statusLbl);statusWrap.appendChild(statusSel);wrap.appendChild(statusWrap);
+
     const actions=document.createElement('div');actions.className='card-actions';
     const btnEdit=document.createElement('button');btnEdit.textContent='✎ Bearbeiten';btnEdit.addEventListener('click',e=>{e.stopPropagation();openEdit(a.id);});
     const btnDiag=document.createElement('button');btnDiag.textContent='📋 Diagnose';btnDiag.style.color='#fbbf24';btnDiag.addEventListener('click',e=>{e.stopPropagation();openDiagnose(a.id);});
     const btnArb=document.createElement('button');btnArb.textContent='📝 Arbeiten';btnArb.style.color='#AFA9EC';btnArb.addEventListener('click',e=>{e.stopPropagation();openArbeitenModal(a.id);});
     actions.appendChild(btnEdit);actions.appendChild(btnDiag);actions.appendChild(btnArb);wrap.appendChild(actions);
+
+    // VERSCHIEBEN BUTTON (nur Mobile sichtbar)
+    const btnVerschieben=document.createElement('button');
+    btnVerschieben.className='btn-verschieben';
+    const currentStati=STATI.find(x=>x.id===a.status);
+    btnVerschieben.innerHTML=`<span style="margin-right:8px">↕</span>Verschieben <span style="color:var(--text-muted);font-size:12px;margin-left:4px">(${currentStati?.icon||''} ${currentStati?.label||a.status})</span>`;
+    btnVerschieben.addEventListener('click',e=>{e.stopPropagation();openMoveSheet(a.id);});
+    wrap.appendChild(btnVerschieben);
   }
   return wrap;
 }
@@ -977,7 +1169,7 @@ async function saveForm(id,isEdit){
     fahrzeug:document.getElementById('f_fz').value,prioritaet:document.getElementById('f_prio').value,
     platz:document.getElementById('f_platz').value,hinweise:[...editHinweise]};
   if(isEdit){const a=autos.find(x=>x.id===id);if(a)Object.assign(a,data);await saveAuto(autos.find(x=>x.id===id));}
-  else{const a={id,...data,status:'parkplatz',auftragsnr:'',arbeiten:[],material:[],lieferscheine:[],dateien:[],eingang:uhrzeit(),datum:datumKurz(),statusSeit:uhrzeit()};autos.push(a);await saveAuto(a);}
+  else{const a={id,...data,status:'parkplatz',auftragsnr:'',arbeiten:[],material:[],lieferscheine:[],dateien:[],eingang:uhrzeit(),datum:datumKurz(),statusSeit:uhrzeit()};collapsedCards.add(id);expandedCards.delete(id);autos.push(a);await saveAuto(a);}
   closeModal();render();
 }
 async function uploadFahrzeugschein(autoId,input){
@@ -1524,6 +1716,8 @@ async function doImportSFK(){
   if(sfkParsed._pdfFile){
     try{const url=await uploadFile(sfkParsed._pdfFile,`auftraege/${id}/sfk_${sfkParsed._pdfFile.name}`);a.dateien.push({name:sfkParsed._pdfFile.name,url,typ:'sfk_auftrag',datum:datumKurz()});}catch(e){console.error(e);}
   }
+  collapsedCards.add(id); // Neue Karte startet eingeklappt
+  expandedCards.delete(id);
   autos.push(a);await saveAuto(a);closeModal();render();sfkParsed=null;
 }
 
@@ -1737,10 +1931,225 @@ function importBackup(){
   });
 }
 
+
+// ── FERTIGE AUFTRÄGE ZONE ──
+(function(){
+  let hoverTimer = null;
+
+  function renderFertigList(){
+    const list = document.getElementById('fertigList');
+    if(!list) return;
+    const fertige = autos.filter(a=>a.status==='fertig')
+      .sort((a,b)=>b.statusSeit?.localeCompare(a.statusSeit||'')||0);
+    const countEl = document.getElementById('statFertig');
+    if(countEl) countEl.textContent = fertige.length;
+
+    if(fertige.length===0){
+      list.innerHTML='<div class="fertig-empty">Keine fertigen Aufträge</div>';
+      return;
+    }
+    list.innerHTML='';
+    fertige.forEach(a=>{
+      const item=document.createElement('div');item.className='fertig-item';
+      item.innerHTML=`
+        <span class="fertig-kz">${a.kennzeichen||'—'}</span>
+        <div class="fertig-info">
+          <div class="fertig-kunde">${a.kunde||a.fahrzeug||'—'}</div>
+          <div class="fertig-fz">${a.fahrzeug||''}</div>
+        </div>
+        <span class="fertig-zeit">${a.statusSeit||a.datum||''}</span>
+      `;
+      // Buttons
+      const btns=document.createElement('div');btns.className='fertig-item-btns';
+
+      const btnEdit=document.createElement('button');btnEdit.className='fertig-item-btn';btnEdit.textContent='✎';btnEdit.title='Bearbeiten';
+      btnEdit.addEventListener('click',e=>{e.stopPropagation();closeFertigDropdown();openEdit(a.id);});
+
+      const btnArb=document.createElement('button');btnArb.className='fertig-item-btn';btnArb.textContent='📝';btnArb.title='Arbeiten';
+      btnArb.addEventListener('click',e=>{e.stopPropagation();closeFertigDropdown();openArbeitenModal(a.id);});
+
+      const btnRechnung=document.createElement('button');btnRechnung.className='fertig-item-btn';btnRechnung.textContent='🧾';btnRechnung.title='Rechnungskontrolle';
+      btnRechnung.addEventListener('click',e=>{e.stopPropagation();closeFertigDropdown();openRechnungskontrolle(a.id);});
+
+      const btnReopen=document.createElement('button');btnReopen.className='fertig-item-btn red';btnReopen.textContent='↩';btnReopen.title='Wieder öffnen';
+      btnReopen.addEventListener('click',e=>{
+        e.stopPropagation();
+        a.status='in_arbeit';a.statusSeit=uhrzeit();
+        saveAuto(a);renderFertigList();render();
+      });
+
+      btns.appendChild(btnEdit);btns.appendChild(btnArb);btns.appendChild(btnRechnung);btns.appendChild(btnReopen);
+      item.appendChild(btns);
+      list.appendChild(item);
+    });
+  }
+
+  function openFertigDropdown(){
+    const dd=document.getElementById('fertigDropdown');
+    if(dd){renderFertigList();dd.classList.add('open');}
+  }
+  function closeFertigDropdown(){
+    const dd=document.getElementById('fertigDropdown');
+    if(dd)dd.classList.remove('open');
+  }
+
+  window.renderFertigList = renderFertigList;
+
+  function initFertigZone(){
+    const zone=document.getElementById('fertigZone');
+    if(!zone||zone._initialized)return;
+    zone._initialized=true;
+
+    // Hover open/close
+    zone.addEventListener('mouseenter',()=>{
+      clearTimeout(hoverTimer);
+      openFertigDropdown();
+    });
+    zone.addEventListener('mouseleave',()=>{
+      hoverTimer=setTimeout(closeFertigDropdown,300);
+    });
+    const dd=document.getElementById('fertigDropdown');
+    if(dd){
+      dd.addEventListener('mouseenter',()=>clearTimeout(hoverTimer));
+      dd.addEventListener('mouseleave',()=>{hoverTimer=setTimeout(closeFertigDropdown,300);});
+    }
+
+    // Drag & Drop – Karte reinziehen
+    zone.addEventListener('dragover',e=>{
+      e.preventDefault();
+      zone.classList.add('drag-over');
+    });
+    zone.addEventListener('dragleave',e=>{
+      if(!zone.contains(e.relatedTarget))zone.classList.remove('drag-over');
+    });
+    zone.addEventListener('drop',e=>{
+      e.preventDefault();
+      zone.classList.remove('drag-over');
+      if(dragId){
+        const a=autos.find(x=>x.id===dragId);
+        if(a){
+          a.status='fertig';a.statusSeit=uhrzeit();
+          saveAuto(a);render();renderFertigList();
+          // Kurz aufklappen um neuen Eintrag zu zeigen
+          openFertigDropdown();
+          setTimeout(closeFertigDropdown,3000);
+        }
+      }
+    });
+  }
+  window.initFertigZone = initFertigZone;
+  // Try immediately (if DOM ready) and also on DOMContentLoaded
+  if(document.readyState!=='loading'){initFertigZone();}
+  else{document.addEventListener('DOMContentLoaded',initFertigZone);}
+})();
+
+
+// ── VERSCHIEBEN (MOBILE BOTTOM SHEET) ──
+function openMoveSheet(autoId){
+  const a=autos.find(x=>x.id===autoId);if(!a)return;
+
+  const overlay=document.createElement('div');
+  overlay.className='move-sheet-overlay';
+
+  const sheet=document.createElement('div');
+  sheet.className='move-sheet';
+
+  const title=document.createElement('div');
+  title.className='move-sheet-title';
+  title.textContent='↕ ' + (a.kennzeichen||'Auftrag') + ' verschieben';
+  sheet.appendChild(title);
+
+  STATI.forEach(s=>{
+    const btn=document.createElement('button');
+    btn.className='move-sheet-btn'+(s.id===a.status?' current':'');
+    btn.innerHTML=`<span class="move-icon">${s.icon}</span><span style="flex:1">${s.label}</span>${s.id===a.status?'<span style="font-size:12px;color:var(--text-muted)">← Aktuell</span>':''}`;
+    if(s.id!==a.status){
+      btn.style.borderLeftColor=s.accent;
+      btn.style.borderLeftWidth='3px';
+      btn.addEventListener('click',()=>{
+        a.status=s.id;a.statusSeit=uhrzeit();
+        saveAuto(a);
+        // Mobile Tab auf neue Spalte wechseln
+        activeMobileTab=s.id;
+        document.body.removeChild(overlay);
+        render();
+        // Kurz zur neuen Spalte scrollen
+        setTimeout(()=>{
+          const lane=document.querySelector('.lane.mobile-active');
+          if(lane)lane.scrollIntoView({behavior:'smooth',block:'start'});
+        },150);
+      });
+    }
+    sheet.appendChild(btn);
+  });
+
+  // Fertig-Button extra
+  const btnFertig=document.createElement('button');
+  btnFertig.className='move-sheet-btn'+(a.status==='fertig'?' current':'');
+  btnFertig.innerHTML=`<span class="move-icon">🏁</span><span style="flex:1">Fertige Aufträge</span>${a.status==='fertig'?'<span style="font-size:12px;color:var(--text-muted)">← Aktuell</span>':''}`;
+  btnFertig.style.borderLeftColor='#4ade80';
+  btnFertig.style.borderLeftWidth='3px';
+  if(a.status!=='fertig'){
+    btnFertig.addEventListener('click',()=>{
+      a.status='fertig';a.statusSeit=uhrzeit();
+      saveAuto(a);
+      document.body.removeChild(overlay);
+      render();
+    });
+  }
+  sheet.appendChild(btnFertig);
+
+  const cancelBtn=document.createElement('button');
+  cancelBtn.className='move-sheet-cancel';
+  cancelBtn.textContent='Abbrechen';
+  cancelBtn.addEventListener('click',()=>document.body.removeChild(overlay));
+  sheet.appendChild(cancelBtn);
+
+  overlay.appendChild(sheet);
+  document.body.appendChild(overlay);
+  overlay.addEventListener('click',e=>{if(e.target===overlay)document.body.removeChild(overlay);});
+}
+
+
+// ── VIEW MODE TOGGLE (Mobil / Desktop) ──
+let forceMobileView = localStorage.getItem('werkstatt-view') === 'mobile';
+
+function applyViewMode(){
+  const btn = document.getElementById('viewToggleBtn');
+  const lbl = document.getElementById('viewToggleLabel');
+  const mobileTabs = document.getElementById('mobileTabs');
+  const boardGrid = document.getElementById('boardGrid');
+
+  if(forceMobileView){
+    // Force mobile layout
+    document.body.classList.add('force-mobile');
+    if(btn) btn.classList.add('mobile-mode');
+    if(lbl) lbl.textContent = '📱 Mobil';
+  } else {
+    // Auto / Desktop layout
+    document.body.classList.remove('force-mobile');
+    if(btn) btn.classList.remove('mobile-mode');
+    if(lbl) lbl.textContent = '🖥 Desktop';
+  }
+  // Re-render lanes
+  updateMobileLanes();
+}
+
+function toggleViewMode(){
+  forceMobileView = !forceMobileView;
+  localStorage.setItem('werkstatt-view', forceMobileView ? 'mobile' : 'desktop');
+  applyViewMode();
+  render();
+}
+
+// Override updateMobileLanes to respect forceMobileView
+const _origUpdateMobileLanes = typeof updateMobileLanes === 'function' ? updateMobileLanes : null;
+
 // ── START ──
 if(sessionStorage.getItem('werkstatt-auth')==='1'){
   document.getElementById('pinScreen').style.display='none';
   initMyName();loadAutos();startRealtime();
+  setTimeout(applyViewMode,100);
 }else{
   initBio();
 }
