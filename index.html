@@ -320,8 +320,6 @@ input,select,textarea,button{font-family:var(--font-body);}
   user-select:none;
   pointer-events:none;
 }
-#fertigZone:hover .fertig-btn-inner,
-#fertigZone:focus-within .fertig-btn-inner,
 #fertigZone.dd-open .fertig-btn-inner{
   background:rgba(74,222,128,0.22);
   border-color:#4ade80;
@@ -355,8 +353,7 @@ input,select,textarea,button{font-family:var(--font-body);}
   display:none;
   pointer-events:none;
 }
-/* Öffnen via CSS hover ODER via .dd-open Klasse (JS) */
-#fertigZone:hover #fertigDropdown,
+/* Öffnen NUR via .dd-open Klasse (JS steuert alles) */
 #fertigZone.dd-open #fertigDropdown{
   display:block;
   pointer-events:all;
@@ -915,7 +912,7 @@ function render(){
     body.addEventListener('dragleave',()=>{body.style.background='';body.style.borderColor='';body.style.boxShadow='';});
     body.addEventListener('drop',e=>{
       e.preventDefault();body.style.background='';body.style.borderColor='';body.style.boxShadow='';
-      if(dragId&&dragFrom!==s.id){const a=autos.find(x=>x.id===dragId);if(a){a.status=s.id;a.statusSeit=uhrzeit();saveAuto(a);}render();}
+      if(dragId&&dragFrom!==s.id){const a=autos.find(x=>x.id===dragId);if(a){a.status=s.id;a.statusSeit=uhrzeit();collapsedCards.add(a.id);saveAuto(a);}fertigDragFromFertig=null;if(typeof closeFertigDD==='function')closeFertigDD();render();}
     });
 
     if(cards.length===0){body.innerHTML='<div class="lane-empty">Leer</div>';}
@@ -2093,14 +2090,10 @@ function positionFertigDropdown(){
   const dd=document.getElementById('fertigDropdown');
   if(!zone||!dd)return;
   const rect=zone.getBoundingClientRect();
-  const ddW=Math.min(440,window.innerWidth-20);
+  const ddW=Math.min(460,window.innerWidth-20);
   let left=rect.left+(rect.width/2)-(ddW/2);
-  // Sicherstellen dass nicht aus dem Bildschirm ragt
   left=Math.max(10,Math.min(left,window.innerWidth-ddW-10));
-  dd.style.left=left+'px';
-  dd.style.top=(rect.bottom+4)+'px';
-  dd.style.width=ddW+'px';
-  dd.style.transform='none';
+  dd.style.cssText=`position:fixed;display:block;pointer-events:all;z-index:9000;top:${rect.bottom+4}px;left:${left}px;width:${ddW}px;transform:none;min-width:unset;max-height:60vh;overflow-y:auto;`;
 }
 
 function renderFertigList(){
@@ -2118,6 +2111,32 @@ function renderFertigList(){
   fertige.forEach(a=>{
     const item=document.createElement('div');
     item.className='fertig-item';
+    // DRAGGABLE aus fertig-Liste zurück auf Board
+    item.draggable=true;
+    item.style.cursor='grab';
+    item.title='Ziehen zum Verschieben in eine Spalte';
+    item.addEventListener('dragstart',e=>{
+      fertigDragFromFertig=a.id;
+      dragId=a.id;
+      dragFrom='fertig';
+      e.dataTransfer.effectAllowed='move';
+      item.style.opacity='0.5';
+      // Trash anzeigen
+      const tr=document.getElementById('trash');
+      if(tr)tr.classList.add('drag-active');
+    });
+    item.addEventListener('dragend',()=>{
+      fertigDragFromFertig=null;
+      dragId=null;dragFrom=null;
+      item.style.opacity='1';
+      const tr=document.getElementById('trash');
+      if(tr)tr.classList.remove('drag-active');
+    });
+
+    const dragHandle=document.createElement('span');
+    dragHandle.textContent='⠿';
+    dragHandle.style.cssText='color:var(--text-muted);font-size:16px;cursor:grab;flex-shrink:0;margin-right:2px;';
+
     const kz=document.createElement('span');kz.className='fertig-kz';kz.textContent=a.kennzeichen||'—';
     const info=document.createElement('div');info.className='fertig-info';
     const k=document.createElement('div');k.className='fertig-kunde';k.textContent=a.kunde||'—';
@@ -2131,36 +2150,90 @@ function renderFertigList(){
       b.addEventListener('click',e=>{e.stopPropagation();fn();});
       return b;
     };
-    btns.appendChild(mkBtn('✎','Bearbeiten',()=>openEdit(a.id)));
-    btns.appendChild(mkBtn('📝','Arbeiten',()=>openArbeitenModal(a.id)));
-    btns.appendChild(mkBtn('🧾','Rechnungskontrolle',()=>openRechnungskontrolle(a.id)));
-    btns.appendChild(mkBtn('↩','Wieder öffnen',()=>{a.status='in_arbeit';a.statusSeit=uhrzeit();saveAuto(a);render();},true));
+    btns.appendChild(mkBtn('✎','Bearbeiten',()=>{closeFertigDD();openEdit(a.id);}));
+    btns.appendChild(mkBtn('📝','Arbeiten',()=>{closeFertigDD();openArbeitenModal(a.id);}));
+    btns.appendChild(mkBtn('🧾','Rechnung',()=>{closeFertigDD();openRechnungskontrolle(a.id);}));
+    btns.appendChild(mkBtn('↩','Wieder öffnen → In Arbeit',()=>{
+      a.status='in_arbeit';a.statusSeit=uhrzeit();
+      collapsedCards.add(a.id);
+      saveAuto(a);render();closeFertigDD();
+    },true));
+    item.appendChild(dragHandle);
     item.appendChild(kz);item.appendChild(info);item.appendChild(zeit);item.appendChild(btns);
     list.appendChild(item);
   });
 }
 
-// Drag & Drop auf fertigZone – direkt am Element, kein Init nötig
+// ── FERTIG ZONE: vollständig JS-gesteuert (Chrome-kompatibel) ──
+let fertigHoverTimer=null;
+let fertigDragFromFertig=null; // ID wenn Drag AUS fertig-Liste
+
+function openFertigDD(){
+  const zone=document.getElementById('fertigZone');
+  const dd=document.getElementById('fertigDropdown');
+  if(!zone||!dd)return;
+  renderFertigList();
+  positionFertigDropdown();
+  zone.classList.add('dd-open');
+  dd.style.display='block';
+  dd.style.pointerEvents='all';
+}
+function closeFertigDD(){
+  const zone=document.getElementById('fertigZone');
+  const dd=document.getElementById('fertigDropdown');
+  if(zone)zone.classList.remove('dd-open');
+  if(dd){dd.style.display='none';dd.style.pointerEvents='none';}
+}
+function scheduleFertigClose(){
+  fertigHoverTimer=setTimeout(closeFertigDD,350);
+}
+function cancelFertigClose(){
+  clearTimeout(fertigHoverTimer);
+}
+
 document.addEventListener('DOMContentLoaded',()=>{
   const zone=document.getElementById('fertigZone');
-  if(!zone)return;
-  zone.addEventListener('dragover',e=>{e.preventDefault();zone.classList.add('drag-over');});
-  zone.addEventListener('dragleave',e=>{if(!zone.contains(e.relatedTarget))zone.classList.remove('drag-over');});
+  const dd=document.getElementById('fertigDropdown');
+  if(!zone||!dd)return;
+
+  // Hover: Zone
+  zone.addEventListener('mouseenter',()=>{cancelFertigClose();openFertigDD();});
+  zone.addEventListener('mouseleave',()=>scheduleFertigClose());
+
+  // Hover: Dropdown selbst (hält es offen wenn Maus reingeht)
+  dd.addEventListener('mouseenter',()=>cancelFertigClose());
+  dd.addEventListener('mouseleave',()=>scheduleFertigClose());
+
+  // Click toggle (für Touch + Tastatur)
+  zone.querySelector('.fertig-btn-inner').addEventListener('click',e=>{
+    e.stopPropagation();
+    if(zone.classList.contains('dd-open'))closeFertigDD();
+    else openFertigDD();
+  });
+
+  // Außen-Klick schließt
+  document.addEventListener('click',e=>{
+    if(!zone.contains(e.target)&&!dd.contains(e.target))closeFertigDD();
+  });
+
+  // Drag IN: Karte auf FertigZone ziehen
+  zone.addEventListener('dragover',e=>{
+    e.preventDefault();
+    if(!fertigDragFromFertig)zone.classList.add('drag-over');
+  });
+  zone.addEventListener('dragleave',e=>{
+    if(!zone.contains(e.relatedTarget))zone.classList.remove('drag-over');
+  });
   zone.addEventListener('drop',e=>{
     e.preventDefault();zone.classList.remove('drag-over');
-    if(dragId){
+    if(dragId&&!fertigDragFromFertig){
       const a=autos.find(x=>x.id===dragId);
-      if(a){a.status='fertig';a.statusSeit=uhrzeit();saveAuto(a);render();}
+      if(a){
+        a.status='fertig';a.statusSeit=uhrzeit();
+        saveAuto(a);render();
+        openFertigDD();
+      }
     }
-  });
-  // Inhalt füllen wenn Dropdown sichtbar wird (mouseenter auf Zone)
-  zone.addEventListener('mouseenter',()=>{
-    renderFertigList();
-    positionFertigDropdown();
-  });
-  zone.addEventListener('click',()=>{
-    renderFertigList();
-    positionFertigDropdown();
   });
 });
 
