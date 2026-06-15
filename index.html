@@ -288,7 +288,7 @@ input,select,textarea,button{font-family:var(--font-body);}
   #fertigZone{padding:0 4px;}
   .fertig-btn-label{display:none;}
   .fertig-btn-inner{padding:5px 10px;}
-  #fertigDropdown{min-width:280px;left:50%;transform:translateX(-50%);}
+  #fertigDropdown{min-width:92vw;left:50%;transform:translateX(-50%);top:auto;}
   .mobile-tabs{display:flex;}
   #board{padding:8px;overflow:visible;}
   .board-grid{display:block !important;min-width:unset !important;}
@@ -343,7 +343,7 @@ input,select,textarea,button{font-family:var(--font-body);}
 }
 /* DROPDOWN: CSS-only hover öffnet es */
 #fertigDropdown{
-  position:absolute;top:calc(100% + 4px);
+  position:fixed;top:92px;
   left:50%;transform:translateX(-50%);
   min-width:420px;max-width:540px;max-height:560px;overflow-y:auto;
   background:var(--bg2);
@@ -351,8 +351,7 @@ input,select,textarea,button{font-family:var(--font-body);}
   border-top:3px solid #4ade80;
   border-radius:8px;
   box-shadow:0 24px 48px rgba(0,0,0,.9);
-  z-index:500;
-  /* CSS HOVER: immer sichtbar wenn Elternelement gehovered */
+  z-index:9000;
   display:none;
   pointer-events:none;
 }
@@ -2089,6 +2088,21 @@ const _origUpdateMobileLanes = typeof updateMobileLanes === 'function' ? updateM
 // Hover: rein per CSS (#fertigZone:hover #fertigDropdown)
 // JS nur für: Inhalt, Drag&Drop, Buttons
 
+function positionFertigDropdown(){
+  const zone=document.getElementById('fertigZone');
+  const dd=document.getElementById('fertigDropdown');
+  if(!zone||!dd)return;
+  const rect=zone.getBoundingClientRect();
+  const ddW=Math.min(440,window.innerWidth-20);
+  let left=rect.left+(rect.width/2)-(ddW/2);
+  // Sicherstellen dass nicht aus dem Bildschirm ragt
+  left=Math.max(10,Math.min(left,window.innerWidth-ddW-10));
+  dd.style.left=left+'px';
+  dd.style.top=(rect.bottom+4)+'px';
+  dd.style.width=ddW+'px';
+  dd.style.transform='none';
+}
+
 function renderFertigList(){
   const list=document.getElementById('fertigList');
   const countEl=document.getElementById('statFertig');
@@ -2140,8 +2154,14 @@ document.addEventListener('DOMContentLoaded',()=>{
     }
   });
   // Inhalt füllen wenn Dropdown sichtbar wird (mouseenter auf Zone)
-  zone.addEventListener('mouseenter',()=>renderFertigList());
-  zone.addEventListener('click',()=>renderFertigList());
+  zone.addEventListener('mouseenter',()=>{
+    renderFertigList();
+    positionFertigDropdown();
+  });
+  zone.addEventListener('click',()=>{
+    renderFertigList();
+    positionFertigDropdown();
+  });
 });
 
 // ── START ──
