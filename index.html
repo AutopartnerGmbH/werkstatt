@@ -285,9 +285,10 @@ input,select,textarea,button{font-family:var(--font-body);}
   .hstat-val{font-size:20px;}
   .hstat-lbl{font-size:9px;}
   .hactions{padding-left:0;width:100%;justify-content:flex-end;}
-  #fertigZone{padding:0 8px;}
-  .fertig-val{font-size:20px;}
-  #fertigDropdown{min-width:280px;left:0;transform:none;right:0;}
+  #fertigZone{padding:0 4px;}
+  .fertig-btn-label{display:none;}
+  .fertig-btn-inner{padding:5px 10px;}
+  #fertigDropdown{min-width:280px;left:50%;transform:translateX(-50%);}
   .mobile-tabs{display:flex;}
   #board{padding:8px;overflow:visible;}
   .board-grid{display:block !important;min-width:unset !important;}
@@ -300,47 +301,97 @@ input,select,textarea,button{font-family:var(--font-body);}
 ::-webkit-scrollbar-thumb{background:var(--border2);border-radius:3px;}
 ::-webkit-scrollbar-thumb:hover{background:var(--red);}
 
-/* FERTIGE AUFTRÄGE HOVER-ZONE */
+/* FERTIGE AUFTRÄGE BUTTON + HOVER-DROPDOWN */
 #fertigZone{
-  position:relative;display:flex;align-items:center;gap:8px;
-  padding:0 14px;border-right:1px solid var(--border);border-left:1px solid var(--border);
-  flex-shrink:0;cursor:pointer;transition:background .2s;
-  background:rgba(74,222,128,0.06);
+  position:relative;
+  display:flex;align-items:center;
+  padding:0 10px;
+  flex-shrink:0;
 }
-#fertigZone:hover{background:rgba(74,222,128,0.14);}
-#fertigZone.drag-over{background:rgba(74,222,128,0.25);border-color:#4ade80;box-shadow:0 0 16px rgba(74,222,128,0.3);}
-.fertig-val{font-family:var(--font-head);font-weight:700;font-size:28px;color:#4ade80;}
-.fertig-lbl{color:var(--text-dim);font-size:10px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;line-height:1.3;}
-.fertig-icon{font-size:18px;margin-right:2px;}
+.fertig-btn-inner{
+  display:flex;align-items:center;gap:7px;
+  background:rgba(74,222,128,0.10);
+  border:1px solid rgba(74,222,128,0.35);
+  border-radius:8px;
+  padding:7px 14px;
+  cursor:pointer;
+  transition:all .2s;
+  white-space:nowrap;
+  user-select:none;
+}
+.fertig-btn-inner:hover,
+#fertigZone.hover-active .fertig-btn-inner{
+  background:rgba(74,222,128,0.22);
+  border-color:#4ade80;
+  box-shadow:0 0 14px rgba(74,222,128,0.25);
+}
+#fertigZone.drag-over .fertig-btn-inner{
+  background:rgba(74,222,128,0.35);
+  border-color:#4ade80;
+  border-style:dashed;
+  box-shadow:0 0 20px rgba(74,222,128,0.4);
+}
+.fertig-btn-label{
+  font-family:var(--font-head);font-size:12px;font-weight:600;
+  color:#4ade80;letter-spacing:.08em;text-transform:uppercase;
+}
+.fertig-btn-count{
+  font-family:var(--font-head);font-size:16px;font-weight:700;
+  color:#4ade80;
+  background:rgba(74,222,128,0.15);
+  border-radius:6px;
+  min-width:28px;height:28px;
+  display:flex;align-items:center;justify-content:center;
+  padding:0 6px;
+}
 #fertigDropdown{
-  position:absolute;top:100%;left:50%;transform:translateX(-50%);
-  min-width:360px;max-width:480px;max-height:520px;overflow-y:auto;
-  background:var(--bg2);border:1px solid #4ade8066;border-top:3px solid #4ade80;
-  border-radius:0 0 8px 8px;box-shadow:0 20px 40px rgba(0,0,0,.8);
+  position:absolute;top:calc(100% + 6px);
+  left:50%;transform:translateX(-50%);
+  min-width:400px;max-width:520px;max-height:540px;overflow-y:auto;
+  background:var(--bg2);
+  border:1px solid rgba(74,222,128,0.4);
+  border-top:3px solid #4ade80;
+  border-radius:8px;
+  box-shadow:0 24px 48px rgba(0,0,0,.85);
   z-index:150;display:none;
 }
 #fertigDropdown.open{display:block;}
-.fertig-drop-header{padding:10px 14px;font-family:var(--font-head);font-size:12px;
+.fertig-drop-header{
+  padding:10px 16px;
+  font-family:var(--font-head);font-size:12px;
   color:#4ade80;letter-spacing:.08em;text-transform:uppercase;
-  border-bottom:1px solid rgba(74,222,128,0.2);background:rgba(74,222,128,0.06);}
-.fertig-item{display:flex;align-items:center;gap:10px;padding:10px 14px;
-  border-bottom:1px solid var(--border);cursor:pointer;transition:background .15s;}
-.fertig-item:hover{background:rgba(74,222,128,0.08);}
+  border-bottom:1px solid rgba(74,222,128,0.2);
+  background:rgba(74,222,128,0.06);
+  display:flex;align-items:center;justify-content:space-between;
+}
+.fertig-item{
+  display:flex;align-items:center;gap:10px;padding:10px 16px;
+  border-bottom:1px solid var(--border);cursor:pointer;transition:background .15s;
+}
+.fertig-item:hover{background:rgba(74,222,128,0.07);}
 .fertig-item:last-child{border-bottom:none;}
-.fertig-kz{font-family:var(--font-head);font-size:15px;font-weight:700;color:#4ade80;min-width:90px;}
+.fertig-kz{
+  font-family:var(--font-head);font-size:15px;font-weight:700;
+  color:#4ade80;min-width:96px;
+}
 .fertig-info{flex:1;min-width:0;}
 .fertig-kunde{font-size:13px;font-weight:600;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 .fertig-fz{font-size:11px;color:var(--text-dim);}
-.fertig-zeit{font-size:11px;color:var(--text-muted);white-space:nowrap;}
+.fertig-zeit{font-size:11px;color:var(--text-muted);white-space:nowrap;flex-shrink:0;}
 .fertig-item-btns{display:flex;gap:4px;flex-shrink:0;}
-.fertig-item-btn{background:var(--bg4);border:1px solid var(--border2);border-radius:4px;
-  color:var(--text-dim);padding:3px 8px;cursor:pointer;font-size:11px;font-weight:600;transition:all .15s;}
+.fertig-item-btn{
+  background:var(--bg4);border:1px solid var(--border2);border-radius:4px;
+  color:var(--text-dim);padding:4px 9px;cursor:pointer;font-size:12px;font-weight:600;
+  transition:all .15s;
+}
 .fertig-item-btn:hover{border-color:#4ade80;color:#4ade80;}
 .fertig-item-btn.red:hover{border-color:var(--red);color:var(--red);}
-.fertig-empty{padding:20px;text-align:center;color:var(--text-muted);font-size:13px;}
-.fertig-drop-hint{padding:8px 14px;font-size:11px;color:rgba(74,222,128,0.5);
-  text-align:center;border-top:1px solid rgba(74,222,128,0.15);
-  font-style:italic;}
+.fertig-empty{padding:24px;text-align:center;color:var(--text-muted);font-size:13px;}
+.fertig-drop-hint{
+  padding:8px 16px;font-size:11px;color:rgba(74,222,128,0.45);
+  text-align:center;border-top:1px dashed rgba(74,222,128,0.2);
+  font-style:italic;
+}
 
 
 /* VERSCHIEBEN BUTTON (Mobile) */
@@ -460,14 +511,13 @@ body.force-mobile .status-select-wrap{display:none !important;}
   <div class="hstat"><div class="hstat-val" id="statAllesDa" style="color:#C0DD97">0</div><div class="hstat-lbl">Bereit</div></div>
   <div class="hstat"><div class="hstat-val" id="statUnterbrochen" style="color:#FAC775">0</div><div class="hstat-lbl">Unterbrochen</div></div>
   <div class="hspace"></div>
-  <span id="syncStatus" class="ok"><span class="sync-dot"></span><span id="syncText">Live</span></span>
 
-  <!-- FERTIGE AUFTRÄGE HOVER-ZONE -->
+  <!-- FERTIGE AUFTRÄGE HOVER-BUTTON (links neben Live) -->
   <div id="fertigZone" title="Fertige Aufträge – Auftrag hier ablegen zum Abschließen">
-    <span class="fertig-icon">🏁</span>
-    <div>
-      <div class="fertig-val" id="statFertig">0</div>
-      <div class="fertig-lbl">Fertig</div>
+    <div class="fertig-btn-inner">
+      <span>🏁</span>
+      <span class="fertig-btn-label">Fertig</span>
+      <span class="fertig-btn-count" id="statFertig">0</span>
     </div>
     <div id="fertigDropdown">
       <div class="fertig-drop-header">🏁 Fertige Aufträge</div>
@@ -475,6 +525,8 @@ body.force-mobile .status-select-wrap{display:none !important;}
       <div class="fertig-drop-hint">Auftrag hier reinziehen zum Abschließen</div>
     </div>
   </div>
+
+  <span id="syncStatus" class="ok"><span class="sync-dot"></span><span id="syncText">Live</span></span>
   <div class="hactions">
     <div class="search-wrap">
       <input type="text" id="searchInput" placeholder="🔍 Suche …" oninput="handleSearch(this.value)" onkeydown="if(event.key==='Escape')clearSearch()"/>
@@ -2003,9 +2055,11 @@ function importBackup(){
     // Hover open/close
     zone.addEventListener('mouseenter',()=>{
       clearTimeout(hoverTimer);
+      zone.classList.add('hover-active');
       openFertigDropdown();
     });
     zone.addEventListener('mouseleave',()=>{
+      zone.classList.remove('hover-active');
       hoverTimer=setTimeout(closeFertigDropdown,300);
     });
     const dd=document.getElementById('fertigDropdown');
