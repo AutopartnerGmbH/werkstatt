@@ -92,7 +92,7 @@ input,select,textarea,button{font-family:var(--font-body);}
 .card-top-chevron{font-size:18px;color:var(--text-muted);flex-shrink:0;margin-left:6px;transition:transform .2s;line-height:1;}
 .card-top-chevron.open{transform:rotate(180deg);}
 .card-body{padding:4px 12px 8px;}
-.card-fz{font-size:12px;color:var(--text);margin-bottom:6px;}
+.card-fz{font-size:13px;color:var(--text);font-weight:700;margin-bottom:6px;}
 .card-hints{background:rgba(0,0,0,0.3);border-radius:4px;padding:6px 10px;margin-bottom:4px;}
 .hint-done-label{color:#4ade80;font-size:11px;font-weight:700;margin-bottom:4px;}
 .card-hint{display:flex;align-items:center;gap:8px;padding:4px 0;}
@@ -296,10 +296,20 @@ input,select,textarea,button{font-family:var(--font-body);}
   .hactions{padding-left:0;width:100%;justify-content:flex-end;}
   #fertigZone{padding:0 4px;}
   #aufbereitungZone{padding:0 4px;}
+  #neuZone{padding:0 4px;}
+  #langeweileZone{padding:0 4px;}
   .fertig-btn-label{display:none;}
+  .aufb-btn-label{display:none;}
+  .neu-btn-label{display:none;}
+  .lw-btn-label{display:none;}
   .fertig-btn-inner{padding:5px 10px;}
+  .aufb-btn-inner{padding:5px 10px;}
+  .neu-btn-inner{padding:5px 10px;}
+  .lw-btn-inner{padding:5px 10px;}
   #fertigDropdown{min-width:92vw;left:50%;transform:translateX(-50%);top:auto;}
   #aufbereitungDropdown{min-width:92vw;left:50%;transform:translateX(-50%);top:auto;}
+  #neuDropdown{min-width:92vw;left:50%;transform:translateX(-50%);top:auto;}
+  #langeweileDropdown{min-width:92vw;left:50%;transform:translateX(-50%);top:auto;}
   .mobile-tabs{display:flex;}
   #board{padding:8px;overflow:visible;}
   .board-grid{display:block !important;min-width:unset !important;}
@@ -482,6 +492,72 @@ input,select,textarea,button{font-family:var(--font-body);}
   text-align:center;border-top:1px dashed rgba(103,232,249,0.2);font-style:italic;
 }
 
+/* NEUE AUFTRÄGE BUTTON — exakt wie Fertig/Aufbereitung, in Gold */
+#neuZone{position:relative;display:flex;align-items:center;padding:0 10px;flex-shrink:0;cursor:pointer;}
+.neu-btn-inner{display:flex;align-items:center;gap:7px;background:rgba(251,191,36,0.10);
+  border:1px solid rgba(251,191,36,0.35);border-radius:8px;padding:7px 14px;transition:all .2s;
+  white-space:nowrap;user-select:none;pointer-events:none;}
+#neuZone.dd-open .neu-btn-inner{background:rgba(251,191,36,0.22);border-color:#fbbf24;}
+#neuZone.drag-over .neu-btn-inner{background:rgba(251,191,36,0.35);border-color:#fbbf24;border-style:dashed;}
+.neu-btn-label{font-family:var(--font-head);font-size:12px;font-weight:600;color:#fbbf24;letter-spacing:.08em;text-transform:uppercase;}
+.neu-btn-count{font-family:var(--font-head);font-size:16px;font-weight:700;color:#fbbf24;background:rgba(251,191,36,0.15);
+  border-radius:6px;min-width:28px;height:28px;display:flex;align-items:center;justify-content:center;padding:0 6px;}
+#neuDropdown{position:fixed;top:92px;left:50%;transform:translateX(-50%);min-width:640px;max-width:720px;max-height:560px;overflow-y:auto;
+  background:var(--bg2);border:1px solid rgba(251,191,36,0.4);border-top:3px solid #fbbf24;border-radius:8px;
+  box-shadow:0 24px 48px rgba(0,0,0,.9);z-index:9000;display:none;pointer-events:none;}
+#neuZone.dd-open #neuDropdown{display:block;pointer-events:all;}
+.neu-drop-header{padding:10px 16px;font-family:var(--font-head);font-size:12px;color:#fbbf24;letter-spacing:.08em;text-transform:uppercase;
+  border-bottom:1px solid rgba(251,191,36,0.2);background:rgba(251,191,36,0.06);}
+.neu-item{display:flex;align-items:center;gap:10px;padding:10px 16px;border-bottom:1px solid var(--border);cursor:default;transition:background .15s;}
+.neu-item:hover{background:rgba(251,191,36,0.07);}
+.neu-item:last-child{border-bottom:none;}
+.neu-kz{font-family:var(--font-head);font-size:15px;font-weight:700;color:#fbbf24;min-width:110px;flex-shrink:0;}
+.neu-info{flex:1;min-width:0;}
+.neu-kunde{font-size:13px;font-weight:600;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0;}
+.neu-fz{font-size:11px;color:var(--text-dim);}
+.neu-zeit{font-size:11px;color:var(--text-muted);white-space:nowrap;flex-shrink:0;}
+.neu-item-btns{display:flex;gap:4px;flex-shrink:0;}
+.neu-item-btn{background:var(--bg4);border:1px solid var(--border2);border-radius:4px;color:var(--text-dim);
+  padding:4px 9px;cursor:pointer;font-size:12px;font-weight:600;transition:all .15s;}
+.neu-item-btn:hover{border-color:#fbbf24;color:#fbbf24;}
+.neu-item-btn.red:hover{border-color:var(--red);color:var(--red);}
+.neu-empty{padding:24px;text-align:center;color:var(--text-muted);font-size:13px;}
+.neu-drop-hint{padding:8px 16px;font-size:11px;color:rgba(251,191,36,0.45);text-align:center;
+  border-top:1px dashed rgba(251,191,36,0.2);font-style:italic;}
+
+/* LANGEWEILE BUTTON — exakt wie Fertig/Aufbereitung, in Violett */
+#langeweileZone{position:relative;display:flex;align-items:center;padding:0 10px;flex-shrink:0;cursor:pointer;}
+.lw-btn-inner{display:flex;align-items:center;gap:7px;background:rgba(196,181,253,0.10);
+  border:1px solid rgba(196,181,253,0.35);border-radius:8px;padding:7px 14px;transition:all .2s;
+  white-space:nowrap;user-select:none;pointer-events:none;}
+#langeweileZone.dd-open .lw-btn-inner{background:rgba(196,181,253,0.22);border-color:#c4b5fd;}
+#langeweileZone.drag-over .lw-btn-inner{background:rgba(196,181,253,0.35);border-color:#c4b5fd;border-style:dashed;}
+.lw-btn-label{font-family:var(--font-head);font-size:12px;font-weight:600;color:#c4b5fd;letter-spacing:.08em;text-transform:uppercase;}
+.lw-btn-count{font-family:var(--font-head);font-size:16px;font-weight:700;color:#c4b5fd;background:rgba(196,181,253,0.15);
+  border-radius:6px;min-width:28px;height:28px;display:flex;align-items:center;justify-content:center;padding:0 6px;}
+#langeweileDropdown{position:fixed;top:92px;left:50%;transform:translateX(-50%);min-width:640px;max-width:720px;max-height:560px;overflow-y:auto;
+  background:var(--bg2);border:1px solid rgba(196,181,253,0.4);border-top:3px solid #c4b5fd;border-radius:8px;
+  box-shadow:0 24px 48px rgba(0,0,0,.9);z-index:9000;display:none;pointer-events:none;}
+#langeweileZone.dd-open #langeweileDropdown{display:block;pointer-events:all;}
+.lw-drop-header{padding:10px 16px;font-family:var(--font-head);font-size:12px;color:#c4b5fd;letter-spacing:.08em;text-transform:uppercase;
+  border-bottom:1px solid rgba(196,181,253,0.2);background:rgba(196,181,253,0.06);}
+.lw-item{display:flex;align-items:center;gap:10px;padding:10px 16px;border-bottom:1px solid var(--border);cursor:default;transition:background .15s;}
+.lw-item:hover{background:rgba(196,181,253,0.07);}
+.lw-item:last-child{border-bottom:none;}
+.lw-kz{font-family:var(--font-head);font-size:15px;font-weight:700;color:#c4b5fd;min-width:110px;flex-shrink:0;}
+.lw-info{flex:1;min-width:0;}
+.lw-kunde{font-size:13px;font-weight:600;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0;}
+.lw-fz{font-size:11px;color:var(--text-dim);}
+.lw-zeit{font-size:11px;color:var(--text-muted);white-space:nowrap;flex-shrink:0;}
+.lw-item-btns{display:flex;gap:4px;flex-shrink:0;}
+.lw-item-btn{background:var(--bg4);border:1px solid var(--border2);border-radius:4px;color:var(--text-dim);
+  padding:4px 9px;cursor:pointer;font-size:12px;font-weight:600;transition:all .15s;}
+.lw-item-btn:hover{border-color:#c4b5fd;color:#c4b5fd;}
+.lw-item-btn.red:hover{border-color:var(--red);color:var(--red);}
+.lw-empty{padding:24px;text-align:center;color:var(--text-muted);font-size:13px;}
+.lw-drop-hint{padding:8px 16px;font-size:11px;color:rgba(196,181,253,0.45);text-align:center;
+  border-top:1px dashed rgba(196,181,253,0.2);font-style:italic;}
+
 
 /* VERSCHIEBEN BUTTON (Mobile) */
 .btn-verschieben{
@@ -598,6 +674,34 @@ body.force-mobile .status-select-wrap{display:none !important;}
   <div class="hstat"><div class="hstat-val" id="statUnterbrochen" style="color:#FAC775">0</div><div class="hstat-lbl">Unterbrochen</div></div>
   <div class="hspace"></div>
 
+  <!-- NEUE AUFTRÄGE HOVER-BUTTON (ganz links von den 4 Zonen) -->
+  <div id="neuZone" title="Neue Aufträge – hier landen alle neu angelegten/importierten Aufträge">
+    <div class="neu-btn-inner">
+      <span>🆕</span>
+      <span class="neu-btn-label">Neue Aufträge</span>
+      <span class="neu-btn-count" id="statNeu">0</span>
+    </div>
+    <div id="neuDropdown">
+      <div class="neu-drop-header">🆕 Neue Aufträge</div>
+      <div id="neuList"></div>
+      <div class="neu-drop-hint">Auftrag hier reinziehen</div>
+    </div>
+  </div>
+
+  <!-- LANGEWEILE HOVER-BUTTON -->
+  <div id="langeweileZone" title="Langeweile – Auftrag hier ablegen">
+    <div class="lw-btn-inner">
+      <span>😴</span>
+      <span class="lw-btn-label">Langeweile</span>
+      <span class="lw-btn-count" id="statLangeweile">0</span>
+    </div>
+    <div id="langeweileDropdown">
+      <div class="lw-drop-header">😴 Langeweile</div>
+      <div id="langeweileList"></div>
+      <div class="lw-drop-hint">Auftrag hier reinziehen</div>
+    </div>
+  </div>
+
   <!-- AUFBEREITUNG HOVER-BUTTON (links neben Fertig) -->
   <div id="aufbereitungZone" title="Aufbereitung – Auftrag hier ablegen">
     <div class="aufb-btn-inner">
@@ -626,6 +730,9 @@ body.force-mobile .status-select-wrap{display:none !important;}
     </div>
   </div>
 
+  <button id="hiddenSpaltenHint" style="display:none;background:rgba(251,191,36,0.12);border:1px solid rgba(251,191,36,0.4);
+    border-radius:20px;padding:5px 12px;color:#fbbf24;font-size:11px;font-weight:700;cursor:pointer;margin-right:8px;
+    white-space:nowrap;flex-shrink:0;" title="Klicken zum Einblenden"></button>
   <span id="syncStatus" class="ok"><span class="sync-dot"></span><span id="syncText">Live</span></span>
   <div class="hactions">
     <div class="search-wrap">
@@ -661,7 +768,7 @@ const DEFAULT_PIN  = '808140';
 const ADMIN_PW     = 'admin';
 
 // ── SPALTEN ──
-const STATI = [
+let STATI = [
   {id:'in_arbeit',   label:'In Arbeit',                icon:'🔧', color:'#8B0E13', accent:'#E8454D', glow:'rgba(192,20,28,0.22)'},
   {id:'teile',       label:'Warten auf Teile',         icon:'📦', color:'#534AB7', accent:'#AFA9EC', glow:'rgba(175,169,236,0.18)'},
   {id:'alles_da',    label:'Alles da – kann losgehen', icon:'✅', color:'#3B6D11', accent:'#C0DD97', glow:'rgba(192,221,151,0.18)'},
@@ -669,12 +776,54 @@ const STATI = [
   {id:'parkplatz',   label:'Parkplatz / Vorlauf',      icon:'🅿', color:'#2a2a2a', accent:'#888888', glow:'rgba(136,136,136,0.12)'},
 ];
 
-(function(){ const s=localStorage.getItem('werkstatt-spalten'); if(s){try{const c=JSON.parse(s);STATI.forEach(st=>{if(c[st.id])st.label=c[st.id];});}catch(e){}}})();
-
-// Spalten-Sichtbarkeit (z.B. Parkplatz/Vorlauf ausblenden, nicht entfernen) — im Admin umschaltbar
-let SPALTEN_HIDDEN = JSON.parse(localStorage.getItem('werkstatt-spalten-hidden')||'{"parkplatz":true}');
-function saveSpaltenHidden(){localStorage.setItem('werkstatt-spalten-hidden',JSON.stringify(SPALTEN_HIDDEN));}
-function sichtbareStati(){return STATI.filter(s=>!SPALTEN_HIDDEN[s.id]);}
+// Spalten-Konfiguration laden: Reihenfolge, eigene Spalten, Namen, Sichtbarkeit
+(function loadSpaltenConfig(){
+  const saved=localStorage.getItem('werkstatt-spalten-config');
+  if(saved){
+    try{
+      const cfg=JSON.parse(saved);
+      if(cfg.custom)cfg.custom.forEach(c=>{if(!STATI.find(s=>s.id===c.id))STATI.push(c);});
+      if(cfg.labels)STATI.forEach(s=>{if(cfg.labels[s.id])s.label=cfg.labels[s.id];});
+      if(cfg.hidden)STATI.forEach(s=>{s.hidden=!!cfg.hidden[s.id];});
+      if(cfg.order){
+        STATI.sort((a,b)=>{
+          const ia=cfg.order.indexOf(a.id),ib=cfg.order.indexOf(b.id);
+          return (ia===-1?999:ia)-(ib===-1?999:ib);
+        });
+      }
+    }catch(e){}
+  }else{
+    // Erststart: Parkplatz/Vorlauf ausgeblendet, aber nicht entfernt
+    const pp=STATI.find(s=>s.id==='parkplatz');if(pp)pp.hidden=true;
+  }
+})();
+function saveSpaltenConfig(){
+  const cfg={order:STATI.map(s=>s.id),labels:{},hidden:{},custom:[]};
+  STATI.forEach(s=>{
+    cfg.labels[s.id]=s.label;
+    if(s.hidden)cfg.hidden[s.id]=true;
+    if(s.custom)cfg.custom.push({id:s.id,label:s.label,icon:s.icon,color:s.color,accent:s.accent,glow:s.glow,custom:true});
+  });
+  localStorage.setItem('werkstatt-spalten-config',JSON.stringify(cfg));
+}
+function sichtbareStati(){return STATI.filter(s=>!s.hidden);}
+function updateHiddenSpaltenHint(){
+  const btn=document.getElementById('hiddenSpaltenHint');
+  if(!btn)return;
+  const versteckt=STATI.filter(s=>s.hidden);
+  const teile=versteckt.map(s=>{
+    const anzahl=autos.filter(a=>a.status===s.id).length;
+    return{spalte:s,anzahl};
+  }).filter(t=>t.anzahl>0);
+  if(teile.length===0){btn.style.display='none';return;}
+  btn.style.display='inline-block';
+  btn.textContent='⚠ '+teile.map(t=>`${t.anzahl}× ${t.spalte.icon} versteckt`).join(' · ');
+  btn.onclick=()=>{
+    teile.forEach(t=>{t.spalte.hidden=false;});
+    saveSpaltenConfig();
+    render();renderMobileTabs();
+  };
+}
 
 const PRIORITAET = ['Normal','Dringend','Express'];
 const PRIO_DOT   = {Normal:'#555',Dringend:'#ea580c',Express:'#C0141C'};
@@ -867,17 +1016,43 @@ function setSync(s,m){
   if(el)el.className=s;
   if(tx)tx.textContent=m;
 }
+// Schutz gegen Race-Condition mit der Live-Aktualisierung (alle 5 Sek.):
+// Wenn eine Karte gerade lokal geändert oder gelöscht wurde, aber die Antwort
+// vom Server noch nicht "angekommen" ist, würde die nächste Live-Aktualisierung
+// sonst wieder den alten Stand zurückholen. Für ein paar Sekunden nach einer
+// lokalen Änderung/Löschung wird der lokale Stand bevorzugt behandelt.
+const GRACE_MS = 8000;
+let recentSaves = {};   // id -> Zeitpunkt der letzten lokalen Speicherung
+let recentDeletes = {}; // id -> Zeitpunkt der Löschung
+
 async function loadAutos(){
   try{
     setSync('syncing','↻ Laden …');
     const data=await sbFetch('/rest/v1/auftraege?order=erstellt_am.asc');
     const prevIds=new Set(autos.map(a=>a.id));
-    autos=data.map(dbToAuto);
+    const prevById={};autos.forEach(a=>{prevById[a.id]=a;});
+    const now=Date.now();
+    // Kürzlich gelöschte IDs ausfiltern, falls der Server sie (durch Verzögerung) noch mitliefert
+    const gefiltert=data.filter(row=>{
+      const delTs=recentDeletes[row.id];
+      return !(delTs&&(now-delTs)<GRACE_MS);
+    });
+    autos=gefiltert.map(row=>{
+      const saveTs=recentSaves[row.id];
+      if(saveTs&&(now-saveTs)<GRACE_MS&&prevById[row.id]){
+        // Kürzlich lokal geändert — lokalen Stand behalten statt zu überschreiben
+        return prevById[row.id];
+      }
+      return dbToAuto(row);
+    });
     autos.forEach(a=>{
       if(!prevIds.has(a.id)&&!expandedCards.has(a.id)){
         collapsedCards.add(a.id);
       }
     });
+    // alte Einträge aus den Schutzlisten aufräumen
+    Object.keys(recentSaves).forEach(id=>{if(now-recentSaves[id]>GRACE_MS)delete recentSaves[id];});
+    Object.keys(recentDeletes).forEach(id=>{if(now-recentDeletes[id]>GRACE_MS)delete recentDeletes[id];});
     setSync('ok','● Live');render();
   }catch(e){setSync('error','✕ Fehler');console.error(e);}
 }
@@ -896,6 +1071,7 @@ function dbToAuto(row){
     sfkMaterial:row.sfk_material||[],
     lieferscheine:row.lieferscheine||[],
     eingang:row.eingang||uhrzeit(),datum:row.datum||datumKurz(),statusSeit:row.status_seit||uhrzeit(),
+    geaendertAm:row.geaendert_am||'',
   };
 }
 function autoToDb(a){
@@ -909,14 +1085,102 @@ function autoToDb(a){
     eingang:a.eingang,datum:a.datum,status_seit:a.statusSeit,
     geaendert_am:new Date().toISOString()};
 }
+let spaltenFehlerGezeigt=false;
+let rechteFehlerGezeigt=false;
 async function saveAuto(a){
+  recentSaves[a.id]=Date.now();
+  const payload=autoToDb(a);
   try{
     setSync('syncing','↻ …');
-    await sbFetch('/rest/v1/auftraege',{method:'POST',headers:{'Prefer':'resolution=merge-duplicates,return=representation'},body:JSON.stringify(autoToDb(a))});
+    const result=await sbFetch('/rest/v1/auftraege',{method:'POST',headers:{'Prefer':'resolution=merge-duplicates,return=representation'},body:JSON.stringify(payload)});
+    const gespeichert=Array.isArray(result)?result.find(r=>r.id===a.id):null;
+    if(!gespeichert){
+      throw new Error('KEINE_BESTAETIGUNG: Server hat die Zeile nicht zurückgegeben — vermutlich fehlende Schreibrechte (RLS) in Supabase.');
+    }
+    if(gespeichert.status!==a.status){
+      throw new Error('STATUS_NICHT_UEBERNOMMEN: Server-Status weicht ab — Änderung wurde nicht wirklich gespeichert.');
+    }
     setSync('ok','● Live');
-  }catch(e){setSync('error','✕ Fehler');console.error(e);}
+  }catch(e){
+    console.error('Speichern fehlgeschlagen:',e);
+    const meldung=String(e.message||e);
+    if(meldung.startsWith('KEINE_BESTAETIGUNG')||meldung.startsWith('STATUS_NICHT_UEBERNOMMEN')){
+      // Spalten existieren, aber Update wurde vom Server nicht wirklich übernommen —
+      // klassisches Anzeichen für fehlende Schreib-/Update-Rechte (Row Level Security) in Supabase.
+      setSync('error','✕ Nicht gespeichert');
+      zeigeRechteFehlerHinweis();
+      return;
+    }
+    // Fallback: ohne nummer/arbeiter/sfk_material speichern, falls diese Spalten
+    // in der Datenbank-Tabelle "auftraege" noch nicht existieren.
+    try{
+      const {nummer,arbeiter,sfk_material,...kern}=payload;
+      const result2=await sbFetch('/rest/v1/auftraege',{method:'POST',headers:{'Prefer':'resolution=merge-duplicates,return=representation'},body:JSON.stringify(kern)});
+      const gespeichert2=Array.isArray(result2)?result2.find(r=>r.id===a.id):null;
+      if(gespeichert2&&gespeichert2.status===a.status){
+        setSync('error','⚠ Spalten fehlen in DB');
+        zeigeSpaltenFehlerHinweis();
+      }else{
+        setSync('error','✕ Nicht gespeichert');
+        zeigeRechteFehlerHinweis();
+      }
+    }catch(e2){
+      setSync('error','✕ Fehler');console.error(e2);
+      zeigeRechteFehlerHinweis();
+    }
+  }
+}
+function zeigeRechteFehlerHinweis(){
+  if(rechteFehlerGezeigt)return;
+  rechteFehlerGezeigt=true;
+  const o=document.createElement('div');
+  o.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.9);z-index:400;display:flex;align-items:center;justify-content:center;padding:24px';
+  o.innerHTML=`<div style="background:var(--bg2);border:1px solid var(--border2);border-top:3px solid var(--red);border-radius:6px;padding:26px;max-width:560px;width:100%">
+    <div style="font-family:var(--font-head);font-size:15px;color:var(--red);margin-bottom:14px;text-transform:uppercase;letter-spacing:.06em">⚠ Änderungen werden nicht gespeichert</div>
+    <div style="font-size:13px;color:var(--text);line-height:1.7;margin-bottom:14px">
+      Der Server (Supabase) hat die Änderung angenommen, aber <b>nicht wirklich übernommen</b>. Das ist typischerweise der Fall,
+      wenn in Supabase „Row Level Security" (RLS) aktiv ist, aber keine Regel für <b>Ändern (UPDATE)</b> bestehender Zeilen erlaubt ist —
+      nur Lesen und Neuanlegen funktioniert dann, Verschieben/Bearbeiten aber nicht.<br><br>
+      Um das dauerhaft zu beheben: Im Supabase-Dashboard → SQL-Editor → folgendes einfügen und ausführen:
+    </div>
+    <textarea readonly onclick="this.select()" style="width:100%;height:90px;background:var(--bg4);border:1px solid var(--border2);border-radius:4px;color:#4ade80;font-size:12px;padding:10px;outline:none;resize:none;font-family:monospace">create policy if not exists "Anon kann Auftraege aendern"
+on auftraege for update
+using (true) with check (true);</textarea>
+    <div style="font-size:11px;color:var(--text-dim);margin-top:8px;line-height:1.5">
+      Falls das nicht klappt: Supabase-Dashboard → Table Editor → Tabelle „auftraege" → Reiter „RLS" bzw. „Policies" →
+      dort prüfen, ob eine Regel für UPDATE existiert, die für alle Nutzer (bzw. die anon-Rolle) erlaubt ist.
+    </div>
+    <div style="display:flex;justify-content:flex-end;margin-top:14px">
+      <button class="btn-primary" id="rfhClose">Verstanden</button>
+    </div>
+  </div>`;
+  document.body.appendChild(o);
+  o.querySelector('#rfhClose').addEventListener('click',()=>document.body.removeChild(o));
+}
+function zeigeSpaltenFehlerHinweis(){
+  if(spaltenFehlerGezeigt)return;
+  spaltenFehlerGezeigt=true;
+  const o=document.createElement('div');
+  o.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.9);z-index:400;display:flex;align-items:center;justify-content:center;padding:24px';
+  o.innerHTML=`<div style="background:var(--bg2);border:1px solid var(--border2);border-top:3px solid var(--red);border-radius:6px;padding:26px;max-width:520px;width:100%">
+    <div style="font-family:var(--font-head);font-size:15px;color:var(--red);margin-bottom:14px;text-transform:uppercase;letter-spacing:.06em">⚠ Fehlende Datenbank-Spalten</div>
+    <div style="font-size:13px;color:var(--text);line-height:1.7;margin-bottom:14px">
+      Kartennummer, Mitarbeiterzuweisung oder SFK-Material konnten nicht gespeichert werden — die passenden Spalten fehlen
+      in der Supabase-Tabelle „auftraege". Der Status/die Spalten-Zuordnung wurde trotzdem gerettet.<br><br>
+      Um das dauerhaft zu beheben: Im Supabase-Dashboard → SQL-Editor → folgendes einfügen und ausführen:
+    </div>
+    <textarea readonly onclick="this.select()" style="width:100%;height:110px;background:var(--bg4);border:1px solid var(--border2);border-radius:4px;color:#4ade80;font-size:12px;padding:10px;outline:none;resize:none;font-family:monospace">alter table auftraege add column if not exists nummer text;
+alter table auftraege add column if not exists arbeiter text;
+alter table auftraege add column if not exists sfk_material jsonb default '[]'::jsonb;</textarea>
+    <div style="display:flex;justify-content:flex-end;margin-top:14px">
+      <button class="btn-primary" id="sfhClose">Verstanden</button>
+    </div>
+  </div>`;
+  document.body.appendChild(o);
+  o.querySelector('#sfhClose').addEventListener('click',()=>document.body.removeChild(o));
 }
 async function deleteAuto(id){
+  recentDeletes[id]=Date.now();
   try{await sbFetch('/rest/v1/auftraege?id=eq.'+id,{method:'DELETE'});}catch(e){console.error(e);}
 }
 async function uploadFile(file,pfad){
@@ -931,7 +1195,10 @@ function startRealtime(){
   setInterval(async()=>{
     try{
       const data=await sbFetch('/rest/v1/auftraege?select=id,geaendert_am&order=erstellt_am.asc');
-      const changed=data.some(r=>{const l=autos.find(a=>a.id===r.id);return !l||r.geaendert_am>=(l.geaendert_am||'');})|| data.length!==autos.length;
+      const changed=data.length!==autos.length||data.some(r=>{
+        const l=autos.find(a=>a.id===r.id);
+        return !l||(r.geaendert_am||'')!==(l.geaendertAm||'');
+      });
       if(changed)loadAutos();
     }catch{}
   },5000);
@@ -998,6 +1265,7 @@ function render(){
   document.getElementById('statTeile').textContent      = autos.filter(a=>a.status==='teile').length;
   document.getElementById('statAllesDa').textContent    = autos.filter(a=>a.status==='alles_da').length;
   document.getElementById('statUnterbrochen').textContent = autos.filter(a=>a.status==='unterbrochen').length;
+  updateHiddenSpaltenHint();
 
   const grid=document.getElementById('boardGrid');grid.innerHTML='';
   const stati=sichtbareStati();
@@ -1034,7 +1302,7 @@ function render(){
     body.addEventListener('dragleave',()=>{body.style.background='';body.style.borderColor='';body.style.boxShadow='';});
     body.addEventListener('drop',e=>{
       e.preventDefault();body.style.background='';body.style.borderColor='';body.style.boxShadow='';
-      if(dragId&&dragFrom!==s.id){const a=autos.find(x=>x.id===dragId);if(a){a.status=s.id;a.statusSeit=uhrzeit();collapsedCards.add(a.id);saveAuto(a);}fertigDragFromFertig=null;aufbDragFromAufb=null;if(typeof closeFertigDD==='function')closeFertigDD();if(typeof closeAufbDD==='function')closeAufbDD();render();}
+      if(dragId&&dragFrom!==s.id){const a=autos.find(x=>x.id===dragId);if(a){a.status=s.id;a.statusSeit=uhrzeit();collapsedCards.add(a.id);saveAuto(a);}fertigDragFromFertig=null;aufbDragFromAufb=null;neuDragFromNeu=null;langeweileDragFromLw=null;if(typeof closeFertigDD==='function')closeFertigDD();if(typeof closeAufbDD==='function')closeAufbDD();if(typeof closeNeuDD==='function')closeNeuDD();if(typeof closeLangeweileDD==='function')closeLangeweileDD();render();}
     });
 
     if(cards.length===0){body.innerHTML='<div class="lane-empty">Leer</div>';}
@@ -1045,6 +1313,8 @@ function render(){
   renderMobileTabs();updateMobileLanes();
   if(window.renderFertigList)window.renderFertigList();
   if(window.renderAufbereitungList)window.renderAufbereitungList();
+  if(window.renderNeuList)window.renderNeuList();
+  if(window.renderLangeweileList)window.renderLangeweileList();
 }
 
 // ── KARTE ──
@@ -1356,7 +1626,7 @@ function formHTML(a,isEdit){
   </div>`;}
 
 function openNeu(){
-  const a={id:genId(),kennzeichen:'',fahrzeug:'',kunde:'',prioritaet:'Normal',hinweise:[],platz:'',status:'parkplatz',auftragsnr:'',nummer:nextKartenNummer(),arbeiter:'',arbeiten:[],material:[],sfkMaterial:[],lieferscheine:[],dateien:[],eingang:uhrzeit(),datum:datumKurz(),statusSeit:uhrzeit()};
+  const a={id:genId(),kennzeichen:'',fahrzeug:'',kunde:'',prioritaet:'Normal',hinweise:[],platz:'',status:'neu',auftragsnr:'',nummer:nextKartenNummer(),arbeiter:'',arbeiten:[],material:[],sfkMaterial:[],lieferscheine:[],dateien:[],eingang:uhrzeit(),datum:datumKurz(),statusSeit:uhrzeit()};
   openModal(formHTML(a,false));
   setupFormListeners(a,false);
 }
@@ -1411,7 +1681,7 @@ async function saveForm(id,isEdit){
     nummer:document.getElementById('f_nummer').value.trim(),
     arbeiter:document.getElementById('f_arbeiter').value};
   if(isEdit){const a=autos.find(x=>x.id===id);if(a)Object.assign(a,data);await saveAuto(autos.find(x=>x.id===id));}
-  else{const a={id,...data,status:'parkplatz',auftragsnr:'',arbeiten:[],material:[],sfkMaterial:[],lieferscheine:[],dateien:[],eingang:uhrzeit(),datum:datumKurz(),statusSeit:uhrzeit()};collapsedCards.add(id);expandedCards.delete(id);autos.push(a);await saveAuto(a);}
+  else{const a={id,...data,status:'neu',auftragsnr:'',arbeiten:[],material:[],sfkMaterial:[],lieferscheine:[],dateien:[],eingang:uhrzeit(),datum:datumKurz(),statusSeit:uhrzeit()};collapsedCards.add(id);expandedCards.delete(id);autos.push(a);await saveAuto(a);}
   closeModal();render();
 }
 async function uploadFahrzeugschein(autoId,input){
@@ -1661,6 +1931,17 @@ function openArbeitenModal(autoId){
     <div id="materialList" style="margin-bottom:8px"></div>
     <button class="btn-secondary" id="btnAddMaterial" style="width:100%;margin-bottom:16px">+ Material hinzufügen</button>
 
+    <div id="materialKostenZeile" style="display:flex;align-items:center;gap:10px;background:var(--bg3);
+      border:1px solid var(--border2);border-radius:6px;padding:10px 14px;margin-bottom:8px;">
+      <span style="font-size:12px;color:var(--text-dim);flex-shrink:0">Bisherige Material-Kosten (EK netto):</span>
+      <span id="materialKostenSumme" style="font-family:var(--font-head);font-size:16px;color:var(--red);font-weight:700">0,00 €</span>
+      <div style="flex:1"></div>
+      <select id="lieferscheinDropdown" style="background:var(--bg4);border:1px solid var(--border2);border-radius:4px;
+        color:var(--text);padding:5px 8px;font-size:12px;outline:none;max-width:260px">
+        <option value="">📋 Lieferscheine ansehen</option>
+      </select>
+    </div>
+
     <div class="section-label">Lieferscheine</div>
     <div id="lsList" style="margin-bottom:8px"></div>
     <div id="ls_drop" style="border:2px dashed var(--border2);border-radius:8px;padding:18px;text-align:center;cursor:pointer;background:var(--bg3);margin-bottom:8px">
@@ -1678,6 +1959,7 @@ function openArbeitenModal(autoId){
   renderArbeitenList(autoId);
   renderMaterialList(autoId);
   renderLSList(autoId);
+  renderMaterialKosten(autoId);
 
   document.getElementById('btnAddArbeit').addEventListener('click',()=>addArbeit(autoId));
   document.getElementById('btnAddMaterial').addEventListener('click',()=>addMaterial(autoId));
@@ -1739,13 +2021,58 @@ function renderLSList(autoId){
   el.innerHTML='';
   (a.lieferscheine||[]).forEach((ls,i)=>{
     const row=document.createElement('div');
-    row.style.cssText='display:flex;align-items:center;gap:8px;margin-bottom:6px;background:var(--bg3);border-radius:4px;padding:8px 10px';
-    row.innerHTML=`<span style="font-size:16px">${ls.typ==='pdf'?'📄':'🖼'}</span><span style="flex:1;font-size:13px;color:var(--text)">${ls.name}</span>`;
-    const link=document.createElement('a');link.href=ls.url;link.target='_blank';link.textContent='Öffnen';link.style.cssText='color:var(--red);font-size:12px;font-weight:600;text-decoration:none';
-    const del=document.createElement('button');del.style.cssText='background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:14px;padding:0 4px';del.textContent='✕';
-    del.addEventListener('click',()=>{a.lieferscheine.splice(i,1);saveAuto(a);renderLSList(autoId);});
-    row.appendChild(link);row.appendChild(del);el.appendChild(row);
+    row.style.cssText='margin-bottom:8px;background:var(--bg3);border-radius:6px;padding:10px';
+
+    const top=document.createElement('div');
+    top.style.cssText='display:flex;align-items:center;gap:8px;margin-bottom:6px';
+    const icon=document.createElement('span');icon.style.fontSize='16px';icon.textContent=ls.typ==='pdf'?'📄':'🖼';
+    const name=document.createElement('span');name.style.cssText='flex:1;font-size:13px;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap';name.textContent=ls.name;
+    const link=document.createElement('a');link.href=ls.url;link.target='_blank';link.textContent='Öffnen';link.style.cssText='color:var(--red);font-size:12px;font-weight:600;text-decoration:none;flex-shrink:0';
+    const del=document.createElement('button');del.style.cssText='background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:14px;padding:0 4px;flex-shrink:0';del.textContent='✕';
+    del.addEventListener('click',()=>{a.lieferscheine.splice(i,1);saveAuto(a);renderLSList(autoId);renderMaterialKosten(autoId);});
+    top.appendChild(icon);top.appendChild(name);top.appendChild(link);top.appendChild(del);
+    row.appendChild(top);
+
+    const grid=document.createElement('div');
+    grid.style.cssText='display:grid;grid-template-columns:1.3fr 1fr 1fr 0.9fr 0.7fr;gap:6px';
+    const s='background:var(--bg4);border:1px solid var(--border2);border-radius:4px;color:var(--text);padding:6px 8px;font-size:12px;outline:none;width:100%';
+    const iLief=document.createElement('input');iLief.value=ls.lieferant||'';iLief.placeholder='Lieferant';iLief.style.cssText=s;
+    iLief.addEventListener('input',()=>{ls.lieferant=iLief.value;saveAuto(a);});
+    const iNr=document.createElement('input');iNr.value=ls.nummer||'';iNr.placeholder='Nr.';iNr.style.cssText=s;
+    iNr.addEventListener('input',()=>{ls.nummer=iNr.value;saveAuto(a);});
+    const iDat=document.createElement('input');iDat.value=ls.datumLs||'';iDat.placeholder='TT.MM.JJJJ';iDat.style.cssText=s;
+    iDat.addEventListener('input',()=>{ls.datumLs=iDat.value;saveAuto(a);});
+    const iBetrag=document.createElement('input');iBetrag.type='number';iBetrag.step='0.01';iBetrag.value=ls.betrag||'';iBetrag.placeholder='Betrag netto';iBetrag.style.cssText=s;
+    iBetrag.addEventListener('input',()=>{ls.betrag=parseFloat(iBetrag.value)||0;saveAuto(a);renderMaterialKosten(autoId);});
+    const selWaehr=document.createElement('select');selWaehr.style.cssText=s;
+    selWaehr.innerHTML='<option value="EUR">EUR €</option><option value="USD">USD $</option>';
+    selWaehr.value=ls.waehrung||'EUR';
+    selWaehr.addEventListener('change',()=>{ls.waehrung=selWaehr.value;saveAuto(a);renderMaterialKosten(autoId);});
+    grid.appendChild(iLief);grid.appendChild(iNr);grid.appendChild(iDat);grid.appendChild(iBetrag);grid.appendChild(selWaehr);
+    row.appendChild(grid);
+    el.appendChild(row);
   });
+}
+
+// Kostenübersicht-Zeile: Summe aller EUR-Lieferscheine (netto) + Dropdown mit Einzelübersicht.
+// USD-Beträge werden im Dropdown mit $-Zeichen angezeigt, nicht in die EUR-Summe umgerechnet.
+function renderMaterialKosten(autoId){
+  const a=autos.find(x=>x.id===autoId);if(!a)return;
+  const summeEl=document.getElementById('materialKostenSumme');
+  const dropdown=document.getElementById('lieferscheinDropdown');
+  if(!summeEl||!dropdown)return;
+  const ls=a.lieferscheine||[];
+  const summeEur=ls.filter(l=>l.waehrung!=='USD').reduce((s,l)=>s+(parseFloat(l.betrag)||0),0);
+  summeEl.textContent=summeEur.toLocaleString('de-DE',{minimumFractionDigits:2,maximumFractionDigits:2})+' €';
+  dropdown.innerHTML='<option value="">📋 Lieferscheine ansehen</option>'+
+    ls.map((l)=>{
+      const betrag=parseFloat(l.betrag)||0;
+      const betragTxt=l.waehrung==='USD'
+        ?betrag.toLocaleString('de-DE',{minimumFractionDigits:2,maximumFractionDigits:2})+' $'
+        :betrag.toLocaleString('de-DE',{minimumFractionDigits:2,maximumFractionDigits:2})+' €';
+      const label=`${l.lieferant||'—'} · Nr. ${l.nummer||'—'} · ${l.datumLs||'—'} · ${betragTxt}`;
+      return `<option value="">${label}</option>`;
+    }).join('');
 }
 
 function addArbeit(autoId){const a=autos.find(x=>x.id===autoId);if(!a)return;a.arbeiten.push({beschreibung:'',stunden:'',wer:myName||''});saveAuto(a);renderArbeitenList(autoId);}
@@ -1753,12 +2080,45 @@ function addMaterial(autoId){const a=autos.find(x=>x.id===autoId);if(!a)return;a
 async function uploadLS(autoId,input){
   const file=input.files[0];if(!file)return;
   const a=autos.find(x=>x.id===autoId);if(!a)return;
+  const ls={name:file.name,url:'',typ:file.type.includes('pdf')?'pdf':'bild',datum:datumKurz(),
+    lieferant:'',nummer:'',datumLs:'',betrag:0,waehrung:'EUR'};
   try{
     setSync('syncing','↻ Hochladen …');
-    const url=await uploadFile(file,`auftraege/${autoId}/ls_${Date.now()}_${file.name}`);
-    a.lieferscheine.push({name:file.name,url,typ:file.type.includes('pdf')?'pdf':'bild',datum:datumKurz()});
-    await saveAuto(a);setSync('ok','● Live');renderLSList(autoId);
-  }catch(e){setSync('error','✕ Upload-Fehler');}
+    ls.url=await uploadFile(file,`auftraege/${autoId}/ls_${Date.now()}_${file.name}`);
+    a.lieferscheine.push(ls);
+    await saveAuto(a);setSync('ok','● Live');renderLSList(autoId);renderMaterialKosten(autoId);
+  }catch(e){setSync('error','✕ Upload-Fehler');return;}
+
+  // KI liest Lieferant, Nummer, Datum und Netto-Betrag automatisch aus
+  try{
+    setSync('syncing','KI analysiert');
+    const key=localStorage.getItem('werkstatt-api-key');
+    if(!key)throw new Error('Kein API-Key gesetzt');
+    const b64=await new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(r.result.split(',')[1]);r.onerror=rej;r.readAsDataURL(file);});
+    const mediaType=file.type.includes('pdf')?'application/pdf':(file.type||'image/jpeg');
+    const docType=file.type.includes('pdf')?'document':'image';
+    const system=`Analysiere diesen Lieferschein/diese Rechnung. Antworte NUR mit JSON ohne Markdown:
+{"lieferant":"Firmenname","nummer":"Lieferschein- oder Bestellnummer","datum":"TT.MM.JJJJ","betrag":Zahl,"waehrung":"EUR oder USD"}
+Wichtig: betrag ist immer der NETTO-Betrag (ohne MwSt). Falls nur Brutto sichtbar ist, schätze den Netto-Betrag (Brutto / 1.19). Erkenne die Währung am Symbol (€ = EUR, $ = USD).`;
+    const response=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',
+      headers:{'Content-Type':'application/json','x-api-key':key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
+      body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:500,system,
+        messages:[{role:'user',content:[
+          {type:docType,source:{type:'base64',media_type:mediaType,data:b64}},
+          {type:'text',text:'Analysiere diesen Lieferschein.'}
+        ]}]})});
+    if(!response.ok)throw new Error('API Fehler '+response.status);
+    const data=await response.json();
+    const parsed=JSON.parse(data.content.map(i=>i.text||'').join('').trim().replace(/^```json\s*/,'').replace(/\s*```$/,''));
+    ls.lieferant=parsed.lieferant||'';
+    ls.nummer=parsed.nummer||'';
+    ls.datumLs=parsed.datum||'';
+    ls.betrag=parseFloat(parsed.betrag)||0;
+    ls.waehrung=parsed.waehrung==='USD'?'USD':'EUR';
+    await saveAuto(a);
+    renderLSList(autoId);renderMaterialKosten(autoId);
+    setSync('ok','● Live');
+  }catch(e){setSync('ok','● Live');/* KI-Erkennung fehlgeschlagen — Datei ist trotzdem gespeichert, Felder bleiben manuell editierbar */}
 }
 
 // ── RECHNUNGSKONTROLLE ──
@@ -2028,7 +2388,7 @@ async function doImportSFK(){
   const id=genId();
   const a={id,kennzeichen:sfkParsed.kennzeichen||'',fahrzeug:sfkParsed.fahrzeug||'',
     kunde:sfkParsed.kunde||'',auftragsnr:sfkParsed.auftragsnr||'',
-    platz:'',prioritaet:'Normal',status:'parkplatz',nummer:nextKartenNummer(),arbeiter:'',
+    platz:'',prioritaet:'Normal',status:'neu',nummer:nextKartenNummer(),arbeiter:'',
     hinweise:(sfkParsed.arbeiten||[]).map(t=>({text:t,done:false})),
     arbeiten:[],material:[],
     sfkMaterial:(sfkParsed.material||[]).map(m=>({bezeichnung:m.bezeichnung||'',menge:m.menge||'',einheit:m.einheit||'Stk'})),
@@ -2142,13 +2502,8 @@ function showAdminPanel(){
     </div>
     <div class="admin-section">
       <div class="admin-section-title">📋 Spaltenverwaltung</div>
-      ${STATI.map(s=>`<div class="admin-row">
-        <span style="font-size:18px;flex-shrink:0">${s.icon}</span>
-        <input id="spalte_${s.id}" value="${s.label}" style="flex:1;background:var(--bg4);border:1px solid var(--border2);border-radius:4px;color:var(--text);padding:6px 10px;font-size:13px;outline:none"/>
-        <button class="spalte-toggle-btn" data-id="${s.id}" title="${SPALTEN_HIDDEN[s.id]?'Einblenden':'Ausblenden'}"
-          style="background:none;border:1px solid var(--border2);border-radius:4px;color:${SPALTEN_HIDDEN[s.id]?'#4ade80':'var(--text-dim)'};cursor:pointer;padding:5px 9px;font-size:12px;flex-shrink:0">${SPALTEN_HIDDEN[s.id]?'👁 Einblenden':'🚫 Ausblenden'}</button>
-      </div>`).join('')}
-      <button class="btn-primary" id="btnSaveSpalten" style="width:100%;margin-top:10px">✓ Spalten speichern</button>
+      <div id="spaltenManager">${renderSpaltenManagerHTML()}</div>
+      <button class="btn-secondary" id="btnAddSpalte" style="width:100%;margin-top:10px">+ Neue Spalte hinzufügen</button>
     </div>
     <div class="admin-section">
       <div class="admin-section-title">👤 Mitarbeiterverwaltung</div>
@@ -2190,23 +2545,95 @@ function showAdminPanel(){
   });
 
   document.getElementById('btnAdminPin').addEventListener('click',()=>{closeModal();openPinAendern();});
-  document.getElementById('btnSaveSpalten').addEventListener('click',()=>{
-    const c={};STATI.forEach(s=>{const el=document.getElementById('spalte_'+s.id);if(el&&el.value.trim()){c[s.id]=el.value.trim();s.label=el.value.trim();}});
-    localStorage.setItem('werkstatt-spalten',JSON.stringify(c));closeModal();render();renderMobileTabs();
-  });
-  document.querySelectorAll('.spalte-toggle-btn').forEach(btn=>{
-    btn.addEventListener('click',()=>{
-      const id=btn.dataset.id;
-      SPALTEN_HIDDEN[id]=!SPALTEN_HIDDEN[id];
-      saveSpaltenHidden();
-      showAdminPanel();
-      render();renderMobileTabs();
-    });
-  });
+  setupSpaltenManagerListeners();
   document.getElementById('btnDiagAdmin').addEventListener('click',openDiagAdmin);
   document.getElementById('btnBackupEx').addEventListener('click',exportBackup);
   document.getElementById('btnBackupIm').addEventListener('click',importBackup);
   setupMitarbeiterManagerListeners();
+}
+
+function renderSpaltenManagerHTML(){
+  return STATI.map((s,i)=>`
+    <div class="admin-row" data-spalte-id="${s.id}" style="${s.hidden?'opacity:0.45':''}">
+      <span style="font-size:18px;flex-shrink:0">${s.icon}</span>
+      <input class="spalte-name-input" data-id="${s.id}" value="${s.label}"
+        style="flex:1;background:var(--bg4);border:1px solid var(--border2);border-radius:4px;color:var(--text);padding:6px 10px;font-size:13px;outline:none;min-width:100px"/>
+      <button class="spalte-up" data-id="${s.id}" title="Nach oben" ${i===0?'disabled style="opacity:0.3"':''}
+        style="background:none;border:1px solid var(--border2);border-radius:4px;color:var(--text-dim);cursor:pointer;padding:4px 7px;font-size:12px;flex-shrink:0">▲</button>
+      <button class="spalte-down" data-id="${s.id}" title="Nach unten" ${i===STATI.length-1?'disabled style="opacity:0.3"':''}
+        style="background:none;border:1px solid var(--border2);border-radius:4px;color:var(--text-dim);cursor:pointer;padding:4px 7px;font-size:12px;flex-shrink:0">▼</button>
+      <button class="spalte-toggle" data-id="${s.id}" title="${s.hidden?'Einblenden':'Ausblenden'}"
+        style="background:none;border:1px solid var(--border2);border-radius:4px;color:${s.hidden?'#4ade80':'var(--text-dim)'};cursor:pointer;padding:4px 7px;font-size:12px;flex-shrink:0">${s.hidden?'👁':'🚫'}</button>
+      ${s.custom?`<button class="spalte-del" data-id="${s.id}" title="Löschen"
+        style="background:none;border:1px solid var(--red);border-radius:4px;color:var(--red);cursor:pointer;padding:4px 7px;font-size:12px;flex-shrink:0">✕</button>`
+        :`<span style="width:26px;flex-shrink:0"></span>`}
+    </div>`).join('');
+}
+function setupSpaltenManagerListeners(){
+  const container=document.getElementById('spaltenManager');
+  if(!container)return;
+
+  container.querySelectorAll('.spalte-name-input').forEach(inp=>{
+    inp.addEventListener('input',()=>{
+      const s=STATI.find(x=>x.id===inp.dataset.id);
+      if(s){s.label=inp.value;saveSpaltenConfig();render();renderMobileTabs();}
+    });
+  });
+  container.querySelectorAll('.spalte-up').forEach(btn=>{
+    btn.addEventListener('click',()=>{
+      const idx=STATI.findIndex(s=>s.id===btn.dataset.id);
+      if(idx>0){[STATI[idx-1],STATI[idx]]=[STATI[idx],STATI[idx-1]];saveSpaltenConfig();refreshSpaltenManager();render();renderMobileTabs();}
+    });
+  });
+  container.querySelectorAll('.spalte-down').forEach(btn=>{
+    btn.addEventListener('click',()=>{
+      const idx=STATI.findIndex(s=>s.id===btn.dataset.id);
+      if(idx<STATI.length-1){[STATI[idx+1],STATI[idx]]=[STATI[idx],STATI[idx+1]];saveSpaltenConfig();refreshSpaltenManager();render();renderMobileTabs();}
+    });
+  });
+  container.querySelectorAll('.spalte-toggle').forEach(btn=>{
+    btn.addEventListener('click',()=>{
+      const s=STATI.find(x=>x.id===btn.dataset.id);
+      if(s){s.hidden=!s.hidden;saveSpaltenConfig();refreshSpaltenManager();render();renderMobileTabs();}
+    });
+  });
+  container.querySelectorAll('.spalte-del').forEach(btn=>{
+    btn.addEventListener('click',()=>{
+      const s=STATI.find(x=>x.id===btn.dataset.id);
+      const anzahlAutos=autos.filter(a=>a.status===btn.dataset.id).length;
+      const warnung=anzahlAutos>0?` Achtung: ${anzahlAutos} Fahrzeuge sind aktuell in dieser Spalte und werden nach "Parkplatz / Vorlauf" verschoben.`:'';
+      openConfirm(`Spalte "${s.label}" wirklich löschen?${warnung}`,()=>{
+        autos.forEach(a=>{if(a.status===btn.dataset.id){a.status='parkplatz';saveAuto(a);}});
+        const idx=STATI.findIndex(x=>x.id===btn.dataset.id);
+        STATI.splice(idx,1);
+        saveSpaltenConfig();
+        refreshSpaltenManager();
+        render();renderMobileTabs();
+      });
+    });
+  });
+
+  const addBtn=document.getElementById('btnAddSpalte');
+  if(addBtn){
+    addBtn.addEventListener('click',()=>{
+      const farben=[
+        {color:'#1d4ed8',accent:'#60a5fa',glow:'rgba(96,165,250,0.18)'},
+        {color:'#0f6e56',accent:'#9fe1cb',glow:'rgba(74,222,128,0.18)'},
+        {color:'#7c2d12',accent:'#fb923c',glow:'rgba(251,146,36,0.18)'},
+        {color:'#0e7490',accent:'#67e8f9',glow:'rgba(103,232,249,0.18)'},
+      ];
+      const f=farben[STATI.length%farben.length];
+      const id='custom_'+genId();
+      STATI.push({id,label:'Neue Spalte',icon:'📌',color:f.color,accent:f.accent,glow:f.glow,custom:true});
+      saveSpaltenConfig();
+      refreshSpaltenManager();
+      render();renderMobileTabs();
+    });
+  }
+}
+function refreshSpaltenManager(){
+  const c=document.getElementById('spaltenManager');
+  if(c){c.innerHTML=renderSpaltenManagerHTML();setupSpaltenManagerListeners();}
 }
 
 function renderMitarbeiterManagerHTML(){
@@ -2339,6 +2766,36 @@ function openMoveSheet(autoId){
     }
     sheet.appendChild(btn);
   });
+
+  const btnNeu=document.createElement('button');
+  btnNeu.className='move-sheet-btn'+(a.status==='neu'?' current':'');
+  btnNeu.innerHTML=`<span class="move-icon">🆕</span><span style="flex:1">Neue Aufträge</span>${a.status==='neu'?'<span style="font-size:12px;color:var(--text-muted)">← Aktuell</span>':''}`;
+  btnNeu.style.borderLeftColor='#fbbf24';
+  btnNeu.style.borderLeftWidth='3px';
+  if(a.status!=='neu'){
+    btnNeu.addEventListener('click',()=>{
+      a.status='neu';a.statusSeit=uhrzeit();
+      saveAuto(a);
+      document.body.removeChild(overlay);
+      render();
+    });
+  }
+  sheet.appendChild(btnNeu);
+
+  const btnLw=document.createElement('button');
+  btnLw.className='move-sheet-btn'+(a.status==='langeweile'?' current':'');
+  btnLw.innerHTML=`<span class="move-icon">😴</span><span style="flex:1">Langeweile</span>${a.status==='langeweile'?'<span style="font-size:12px;color:var(--text-muted)">← Aktuell</span>':''}`;
+  btnLw.style.borderLeftColor='#c4b5fd';
+  btnLw.style.borderLeftWidth='3px';
+  if(a.status!=='langeweile'){
+    btnLw.addEventListener('click',()=>{
+      a.status='langeweile';a.statusSeit=uhrzeit();
+      saveAuto(a);
+      document.body.removeChild(overlay);
+      render();
+    });
+  }
+  sheet.appendChild(btnLw);
 
   const btnAufb=document.createElement('button');
   btnAufb.className='move-sheet-btn'+(a.status==='aufbereitung'?' current':'');
@@ -2494,7 +2951,7 @@ function openFertigDD(){
   const zone=document.getElementById('fertigZone');
   const dd=document.getElementById('fertigDropdown');
   if(!zone||!dd)return;
-  closeAufbDD();
+  closeAufbDD();closeNeuDD();closeLangeweileDD();
   renderFertigList();
   positionFertigDropdown();
   zone.classList.add('dd-open');
@@ -2603,7 +3060,7 @@ function openAufbDD(){
   const zone=document.getElementById('aufbereitungZone');
   const dd=document.getElementById('aufbereitungDropdown');
   if(!zone||!dd)return;
-  closeFertigDD();
+  closeFertigDD();closeNeuDD();closeLangeweileDD();
   renderAufbereitungList();
   positionAufbDropdown();
   zone.classList.add('dd-open');
@@ -2622,6 +3079,209 @@ function scheduleAufbClose(){
 function cancelAufbClose(){
   clearTimeout(aufbHoverTimer);
 }
+
+// ── NEUE AUFTRÄGE ZONE — hier landen alle neu angelegten/importierten Aufträge ──
+function positionNeuDropdown(){
+  const zone=document.getElementById('neuZone');
+  const dd=document.getElementById('neuDropdown');
+  if(!zone||!dd)return;
+  const rect=zone.getBoundingClientRect();
+  const ddW=Math.min(680,window.innerWidth-20);
+  let left=rect.left+(rect.width/2)-(ddW/2);
+  left=Math.max(10,Math.min(left,window.innerWidth-ddW-10));
+  dd.style.cssText=`position:fixed;display:block;pointer-events:all;z-index:9000;top:${rect.bottom+4}px;left:${left}px;width:${ddW}px;transform:none;min-width:unset;max-height:60vh;overflow-y:auto;`;
+}
+function renderNeuList(){
+  const list=document.getElementById('neuList');
+  const countEl=document.getElementById('statNeu');
+  if(!list)return;
+  const neu=autos.filter(a=>a.status==='neu')
+    .sort((a,b)=>(b.statusSeit||'').localeCompare(a.statusSeit||''));
+  if(countEl)countEl.textContent=neu.length;
+  if(neu.length===0){
+    list.innerHTML='<div class="neu-empty">Keine neuen Aufträge</div>';
+    return;
+  }
+  list.innerHTML='';
+  neu.forEach(a=>{
+    const item=document.createElement('div');
+    item.className='neu-item';
+    item.draggable=true;
+    item.style.cursor='grab';
+    item.title='Ziehen zum Verschieben in eine Spalte';
+    item.addEventListener('dragstart',e=>{
+      neuDragFromNeu=a.id;
+      dragId=a.id;
+      dragFrom='neu';
+      e.dataTransfer.effectAllowed='move';
+      item.style.opacity='0.5';
+      const tr=document.getElementById('trash');
+      if(tr)tr.classList.add('drag-active');
+    });
+    item.addEventListener('dragend',()=>{
+      neuDragFromNeu=null;
+      dragId=null;dragFrom=null;
+      item.style.opacity='1';
+      const tr=document.getElementById('trash');
+      if(tr)tr.classList.remove('drag-active');
+    });
+
+    const dragHandle=document.createElement('span');
+    dragHandle.textContent='⠿';
+    dragHandle.style.cssText='color:var(--text-muted);font-size:16px;cursor:grab;flex-shrink:0;margin-right:2px;';
+
+    const kz=document.createElement('span');kz.className='neu-kz';kz.textContent=a.kennzeichen||'—';
+    const info=document.createElement('div');info.className='neu-info';
+    const k=document.createElement('div');k.className='neu-kunde';k.textContent=a.kunde||'—';
+    const fz=document.createElement('div');fz.className='neu-fz';fz.textContent=a.fahrzeug||'';
+    info.appendChild(k);if(a.fahrzeug)info.appendChild(fz);
+    const zeit=document.createElement('span');zeit.className='neu-zeit';zeit.textContent=a.statusSeit||a.datum||'';
+    const btns=document.createElement('div');btns.className='neu-item-btns';
+    const mkBtn=(txt,title,fn,red)=>{
+      const b=document.createElement('button');b.className='neu-item-btn'+(red?' red':'');
+      b.textContent=txt;b.title=title;
+      b.addEventListener('click',e=>{e.stopPropagation();fn();});
+      return b;
+    };
+    btns.appendChild(mkBtn('✎','Bearbeiten',()=>{closeNeuDD();openEdit(a.id);}));
+    btns.appendChild(mkBtn('📝','Arbeiten',()=>{closeNeuDD();openArbeitenModal(a.id);}));
+    btns.appendChild(mkBtn('🔧','In Arbeit',()=>{
+      a.status='in_arbeit';a.statusSeit=uhrzeit();
+      collapsedCards.add(a.id);
+      saveAuto(a);render();closeNeuDD();
+    }));
+    btns.appendChild(mkBtn('🗑','Löschen',()=>{
+      closeNeuDD();
+      openConfirm(`Auftrag "${a.kennzeichen||a.id}" endgültig löschen?`,async()=>{autos=autos.filter(x=>x.id!==a.id);await deleteAuto(a.id);render();});
+    },true));
+    item.appendChild(dragHandle);
+    item.appendChild(kz);item.appendChild(info);item.appendChild(zeit);item.appendChild(btns);
+    list.appendChild(item);
+  });
+}
+let neuHoverTimer=null;
+let neuDragFromNeu=null;
+function openNeuDD(){
+  const zone=document.getElementById('neuZone');
+  const dd=document.getElementById('neuDropdown');
+  if(!zone||!dd)return;
+  closeFertigDD();closeAufbDD();closeLangeweileDD();
+  renderNeuList();
+  positionNeuDropdown();
+  zone.classList.add('dd-open');
+  dd.style.display='block';
+  dd.style.pointerEvents='all';
+}
+function closeNeuDD(){
+  const zone=document.getElementById('neuZone');
+  const dd=document.getElementById('neuDropdown');
+  if(zone)zone.classList.remove('dd-open');
+  if(dd){dd.style.display='none';dd.style.pointerEvents='none';}
+}
+function scheduleNeuClose(){neuHoverTimer=setTimeout(closeNeuDD,350);}
+function cancelNeuClose(){clearTimeout(neuHoverTimer);}
+
+// ── LANGEWEILE ZONE ──
+function positionLangeweileDropdown(){
+  const zone=document.getElementById('langeweileZone');
+  const dd=document.getElementById('langeweileDropdown');
+  if(!zone||!dd)return;
+  const rect=zone.getBoundingClientRect();
+  const ddW=Math.min(680,window.innerWidth-20);
+  let left=rect.left+(rect.width/2)-(ddW/2);
+  left=Math.max(10,Math.min(left,window.innerWidth-ddW-10));
+  dd.style.cssText=`position:fixed;display:block;pointer-events:all;z-index:9000;top:${rect.bottom+4}px;left:${left}px;width:${ddW}px;transform:none;min-width:unset;max-height:60vh;overflow-y:auto;`;
+}
+function renderLangeweileList(){
+  const list=document.getElementById('langeweileList');
+  const countEl=document.getElementById('statLangeweile');
+  if(!list)return;
+  const lw=autos.filter(a=>a.status==='langeweile')
+    .sort((a,b)=>(b.statusSeit||'').localeCompare(a.statusSeit||''));
+  if(countEl)countEl.textContent=lw.length;
+  if(lw.length===0){
+    list.innerHTML='<div class="lw-empty">Keine Aufträge in Langeweile</div>';
+    return;
+  }
+  list.innerHTML='';
+  lw.forEach(a=>{
+    const item=document.createElement('div');
+    item.className='lw-item';
+    item.draggable=true;
+    item.style.cursor='grab';
+    item.title='Ziehen zum Verschieben in eine Spalte';
+    item.addEventListener('dragstart',e=>{
+      langeweileDragFromLw=a.id;
+      dragId=a.id;
+      dragFrom='langeweile';
+      e.dataTransfer.effectAllowed='move';
+      item.style.opacity='0.5';
+      const tr=document.getElementById('trash');
+      if(tr)tr.classList.add('drag-active');
+    });
+    item.addEventListener('dragend',()=>{
+      langeweileDragFromLw=null;
+      dragId=null;dragFrom=null;
+      item.style.opacity='1';
+      const tr=document.getElementById('trash');
+      if(tr)tr.classList.remove('drag-active');
+    });
+
+    const dragHandle=document.createElement('span');
+    dragHandle.textContent='⠿';
+    dragHandle.style.cssText='color:var(--text-muted);font-size:16px;cursor:grab;flex-shrink:0;margin-right:2px;';
+
+    const kz=document.createElement('span');kz.className='lw-kz';kz.textContent=a.kennzeichen||'—';
+    const info=document.createElement('div');info.className='lw-info';
+    const k=document.createElement('div');k.className='lw-kunde';k.textContent=a.kunde||'—';
+    const fz=document.createElement('div');fz.className='lw-fz';fz.textContent=a.fahrzeug||'';
+    info.appendChild(k);if(a.fahrzeug)info.appendChild(fz);
+    const zeit=document.createElement('span');zeit.className='lw-zeit';zeit.textContent=a.statusSeit||a.datum||'';
+    const btns=document.createElement('div');btns.className='lw-item-btns';
+    const mkBtn=(txt,title,fn,red)=>{
+      const b=document.createElement('button');b.className='lw-item-btn'+(red?' red':'');
+      b.textContent=txt;b.title=title;
+      b.addEventListener('click',e=>{e.stopPropagation();fn();});
+      return b;
+    };
+    btns.appendChild(mkBtn('✎','Bearbeiten',()=>{closeLangeweileDD();openEdit(a.id);}));
+    btns.appendChild(mkBtn('📝','Arbeiten',()=>{closeLangeweileDD();openArbeitenModal(a.id);}));
+    btns.appendChild(mkBtn('🔧','In Arbeit',()=>{
+      a.status='in_arbeit';a.statusSeit=uhrzeit();
+      collapsedCards.add(a.id);
+      saveAuto(a);render();closeLangeweileDD();
+    }));
+    btns.appendChild(mkBtn('↩','Wieder öffnen → In Arbeit',()=>{
+      a.status='in_arbeit';a.statusSeit=uhrzeit();
+      collapsedCards.add(a.id);
+      saveAuto(a);render();closeLangeweileDD();
+    },true));
+    item.appendChild(dragHandle);
+    item.appendChild(kz);item.appendChild(info);item.appendChild(zeit);item.appendChild(btns);
+    list.appendChild(item);
+  });
+}
+let langeweileHoverTimer=null;
+let langeweileDragFromLw=null;
+function openLangeweileDD(){
+  const zone=document.getElementById('langeweileZone');
+  const dd=document.getElementById('langeweileDropdown');
+  if(!zone||!dd)return;
+  closeFertigDD();closeAufbDD();closeNeuDD();
+  renderLangeweileList();
+  positionLangeweileDropdown();
+  zone.classList.add('dd-open');
+  dd.style.display='block';
+  dd.style.pointerEvents='all';
+}
+function closeLangeweileDD(){
+  const zone=document.getElementById('langeweileZone');
+  const dd=document.getElementById('langeweileDropdown');
+  if(zone)zone.classList.remove('dd-open');
+  if(dd){dd.style.display='none';dd.style.pointerEvents='none';}
+}
+function scheduleLangeweileClose(){langeweileHoverTimer=setTimeout(closeLangeweileDD,350);}
+function cancelLangeweileClose(){clearTimeout(langeweileHoverTimer);}
 
 document.addEventListener('DOMContentLoaded',()=>{
   const zone=document.getElementById('fertigZone');
@@ -2689,6 +3349,76 @@ document.addEventListener('DOMContentLoaded',()=>{
           a.status='aufbereitung';a.statusSeit=uhrzeit();
           saveAuto(a);render();
           openAufbDD();
+        }
+      }
+    });
+  }
+
+  const nzone=document.getElementById('neuZone');
+  const ndd=document.getElementById('neuDropdown');
+  if(nzone&&ndd){
+    nzone.addEventListener('mouseenter',()=>{cancelNeuClose();openNeuDD();});
+    nzone.addEventListener('mouseleave',()=>scheduleNeuClose());
+    ndd.addEventListener('mouseenter',()=>cancelNeuClose());
+    ndd.addEventListener('mouseleave',()=>scheduleNeuClose());
+    nzone.querySelector('.neu-btn-inner').addEventListener('click',e=>{
+      e.stopPropagation();
+      if(nzone.classList.contains('dd-open'))closeNeuDD();
+      else openNeuDD();
+    });
+    document.addEventListener('click',e=>{
+      if(!nzone.contains(e.target)&&!ndd.contains(e.target))closeNeuDD();
+    });
+    nzone.addEventListener('dragover',e=>{
+      e.preventDefault();
+      if(!neuDragFromNeu)nzone.classList.add('drag-over');
+    });
+    nzone.addEventListener('dragleave',e=>{
+      if(!nzone.contains(e.relatedTarget))nzone.classList.remove('drag-over');
+    });
+    nzone.addEventListener('drop',e=>{
+      e.preventDefault();nzone.classList.remove('drag-over');
+      if(dragId&&!neuDragFromNeu){
+        const a=autos.find(x=>x.id===dragId);
+        if(a){
+          a.status='neu';a.statusSeit=uhrzeit();
+          saveAuto(a);render();
+          openNeuDD();
+        }
+      }
+    });
+  }
+
+  const lwzone=document.getElementById('langeweileZone');
+  const lwdd=document.getElementById('langeweileDropdown');
+  if(lwzone&&lwdd){
+    lwzone.addEventListener('mouseenter',()=>{cancelLangeweileClose();openLangeweileDD();});
+    lwzone.addEventListener('mouseleave',()=>scheduleLangeweileClose());
+    lwdd.addEventListener('mouseenter',()=>cancelLangeweileClose());
+    lwdd.addEventListener('mouseleave',()=>scheduleLangeweileClose());
+    lwzone.querySelector('.lw-btn-inner').addEventListener('click',e=>{
+      e.stopPropagation();
+      if(lwzone.classList.contains('dd-open'))closeLangeweileDD();
+      else openLangeweileDD();
+    });
+    document.addEventListener('click',e=>{
+      if(!lwzone.contains(e.target)&&!lwdd.contains(e.target))closeLangeweileDD();
+    });
+    lwzone.addEventListener('dragover',e=>{
+      e.preventDefault();
+      if(!langeweileDragFromLw)lwzone.classList.add('drag-over');
+    });
+    lwzone.addEventListener('dragleave',e=>{
+      if(!lwzone.contains(e.relatedTarget))lwzone.classList.remove('drag-over');
+    });
+    lwzone.addEventListener('drop',e=>{
+      e.preventDefault();lwzone.classList.remove('drag-over');
+      if(dragId&&!langeweileDragFromLw){
+        const a=autos.find(x=>x.id===dragId);
+        if(a){
+          a.status='langeweile';a.statusSeit=uhrzeit();
+          saveAuto(a);render();
+          openLangeweileDD();
         }
       }
     });
