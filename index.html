@@ -20,6 +20,12 @@
   --text:#f0f0f0;--text-dim:#888888;--text-muted:#444444;
   --font-head:'Oswald',sans-serif;--font-body:'Open Sans',sans-serif;
 }
+[data-theme="light"]{
+  --bg:#f4f4f4;--bg2:#ffffff;--bg3:#f0f0f0;--bg4:#e6e6e6;
+  --border:#dcdcdc;--border2:#cccccc;
+  --text:#1a1a1a;--text-dim:#666666;--text-muted:#999999;
+  --silver:#444444;--silver-dim:#888888;
+}
 *{box-sizing:border-box;margin:0;padding:0;}
 html,body{height:100%;}
 body{background:var(--bg);color:var(--text);font-family:var(--font-body);display:flex;flex-direction:column;overflow:hidden;}
@@ -86,7 +92,7 @@ input,select,textarea,button{font-family:var(--font-body);}
 .card-top-chevron{font-size:18px;color:var(--text-muted);flex-shrink:0;margin-left:6px;transition:transform .2s;line-height:1;}
 .card-top-chevron.open{transform:rotate(180deg);}
 .card-body{padding:4px 12px 8px;}
-.card-fz{font-size:12px;color:var(--text-dim);margin-bottom:6px;}
+.card-fz{font-size:12px;color:var(--text);margin-bottom:6px;}
 .card-hints{background:rgba(0,0,0,0.3);border-radius:4px;padding:6px 10px;margin-bottom:4px;}
 .hint-done-label{color:#4ade80;font-size:11px;font-weight:700;margin-bottom:4px;}
 .card-hint{display:flex;align-items:center;gap:8px;padding:4px 0;}
@@ -161,16 +167,23 @@ input,select,textarea,button{font-family:var(--font-body);}
   letter-spacing:.1em;text-transform:uppercase;color:var(--red);
   padding-bottom:6px;border-bottom:1px solid var(--border);margin-bottom:8px;}
 .diag-grid{display:grid;grid-template-columns:1fr 1fr;gap:4px 12px;}
+@media(max-width:600px){.diag-grid{grid-template-columns:1fr;}}
 .diag-row{display:flex;align-items:center;justify-content:space-between;
   padding:5px 8px;background:var(--bg3);border-radius:4px;gap:8px;}
 .diag-row-label{font-size:13px;color:var(--text);flex:1;}
 .diag-btns{display:flex;gap:4px;flex-shrink:0;}
-.diag-btn{border:none;border-radius:3px;padding:3px 10px;cursor:pointer;
+.diag-btn{border:none;border-radius:3px;padding:5px 10px;cursor:pointer;min-height:30px;
   font-size:11px;font-weight:700;transition:all .15s;font-family:var(--font-body);}
 .diag-btn-ok{background:var(--bg4);color:var(--text-dim);}
 .diag-btn-ok.active{background:#14532d;color:#4ade80;}
 .diag-btn-nok{background:var(--bg4);color:var(--text-dim);}
 .diag-btn-nok.active{background:#7f1d1d;color:#fca5a5;}
+.diag-btn-na{background:var(--bg4);color:var(--text-dim);}
+.diag-btn-na.active{background:#78350f;color:#fdba74;}
+@media(max-width:600px){
+  .diag-row{flex-wrap:wrap;padding:8px;}
+  .diag-btn{padding:7px 10px;font-size:12px;}
+}
 .diag-input-row{display:flex;flex-direction:column;gap:4px;margin-bottom:8px;}
 .diag-input-row label{font-size:11px;color:var(--text-dim);font-weight:700;letter-spacing:.08em;text-transform:uppercase;}
 .diag-input-row input,.diag-input-row textarea{
@@ -210,10 +223,6 @@ input,select,textarea,button{font-family:var(--font-body);}
 .pin-key:hover{background:var(--bg4);border-color:var(--red);}
 .pin-key:active{transform:scale(0.92);}
 .pin-hint{font-size:12px;color:var(--text-muted);margin-top:4px;}
-.btn-bio{background:rgba(192,20,28,0.15);border:1px solid var(--red);border-radius:8px;
-  color:var(--red);padding:10px 20px;cursor:pointer;font-size:14px;font-weight:600;
-  font-family:var(--font-head);letter-spacing:.06em;text-transform:uppercase;
-  display:flex;align-items:center;gap:8px;}
 
 /* BUTTONS */
 .btn-primary{background:var(--red);border:none;border-radius:4px;color:#fff;padding:7px 14px;
@@ -286,9 +295,11 @@ input,select,textarea,button{font-family:var(--font-body);}
   .hstat-lbl{font-size:9px;}
   .hactions{padding-left:0;width:100%;justify-content:flex-end;}
   #fertigZone{padding:0 4px;}
+  #aufbereitungZone{padding:0 4px;}
   .fertig-btn-label{display:none;}
   .fertig-btn-inner{padding:5px 10px;}
   #fertigDropdown{min-width:92vw;left:50%;transform:translateX(-50%);top:auto;}
+  #aufbereitungDropdown{min-width:92vw;left:50%;transform:translateX(-50%);top:auto;}
   .mobile-tabs{display:flex;}
   #board{padding:8px;overflow:visible;}
   .board-grid{display:block !important;min-width:unset !important;}
@@ -387,6 +398,90 @@ input,select,textarea,button{font-family:var(--font-body);}
   text-align:center;border-top:1px dashed rgba(74,222,128,0.2);font-style:italic;
 }
 
+/* AUFBEREITUNG BUTTON — exakt wie Fertig, nur in Blau/Türkis eingefärbt und links daneben */
+#aufbereitungZone{
+  position:relative;
+  display:flex;align-items:center;
+  padding:0 10px;
+  flex-shrink:0;
+  cursor:pointer;
+}
+.aufb-btn-inner{
+  display:flex;align-items:center;gap:7px;
+  background:rgba(103,232,249,0.10);
+  border:1px solid rgba(103,232,249,0.35);
+  border-radius:8px;
+  padding:7px 14px;
+  transition:all .2s;
+  white-space:nowrap;
+  user-select:none;
+  pointer-events:none;
+}
+#aufbereitungZone.dd-open .aufb-btn-inner{
+  background:rgba(103,232,249,0.22);
+  border-color:#67E8F9;
+}
+#aufbereitungZone.drag-over .aufb-btn-inner{
+  background:rgba(103,232,249,0.35);
+  border-color:#67E8F9;
+  border-style:dashed;
+}
+.aufb-btn-label{
+  font-family:var(--font-head);font-size:12px;font-weight:600;
+  color:#67E8F9;letter-spacing:.08em;text-transform:uppercase;
+}
+.aufb-btn-count{
+  font-family:var(--font-head);font-size:16px;font-weight:700;
+  color:#67E8F9;background:rgba(103,232,249,0.15);
+  border-radius:6px;min-width:28px;height:28px;
+  display:flex;align-items:center;justify-content:center;padding:0 6px;
+}
+#aufbereitungDropdown{
+  position:fixed;top:92px;
+  left:50%;transform:translateX(-50%);
+  min-width:640px;max-width:720px;max-height:560px;overflow-y:auto;
+  background:var(--bg2);
+  border:1px solid rgba(103,232,249,0.4);
+  border-top:3px solid #67E8F9;
+  border-radius:8px;
+  box-shadow:0 24px 48px rgba(0,0,0,.9);
+  z-index:9000;
+  display:none;
+  pointer-events:none;
+}
+#aufbereitungZone.dd-open #aufbereitungDropdown{
+  display:block;
+  pointer-events:all;
+}
+.aufb-drop-header{
+  padding:10px 16px;font-family:var(--font-head);font-size:12px;
+  color:#67E8F9;letter-spacing:.08em;text-transform:uppercase;
+  border-bottom:1px solid rgba(103,232,249,0.2);background:rgba(103,232,249,0.06);
+}
+.aufb-item{
+  display:flex;align-items:center;gap:10px;padding:10px 16px;
+  border-bottom:1px solid var(--border);cursor:default;transition:background .15s;
+}
+.aufb-item:hover{background:rgba(103,232,249,0.07);}
+.aufb-item:last-child{border-bottom:none;}
+.aufb-kz{font-family:var(--font-head);font-size:15px;font-weight:700;color:#67E8F9;min-width:110px;flex-shrink:0;}
+.aufb-info{flex:1;min-width:0;}
+.aufb-kunde{font-size:13px;font-weight:600;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0;}
+.aufb-fz{font-size:11px;color:var(--text-dim);}
+.aufb-zeit{font-size:11px;color:var(--text-muted);white-space:nowrap;flex-shrink:0;}
+.aufb-item-btns{display:flex;gap:4px;flex-shrink:0;}
+.aufb-item-btn{
+  background:var(--bg4);border:1px solid var(--border2);border-radius:4px;
+  color:var(--text-dim);padding:4px 9px;cursor:pointer;font-size:12px;font-weight:600;transition:all .15s;
+}
+.aufb-item-btn:hover{border-color:#67E8F9;color:#67E8F9;}
+.aufb-item-btn.red:hover{border-color:var(--red);color:var(--red);}
+.aufb-empty{padding:24px;text-align:center;color:var(--text-muted);font-size:13px;}
+.aufb-drop-hint{
+  padding:8px 16px;font-size:11px;color:rgba(103,232,249,0.45);
+  text-align:center;border-top:1px dashed rgba(103,232,249,0.2);font-style:italic;
+}
+
 
 /* VERSCHIEBEN BUTTON (Mobile) */
 .btn-verschieben{
@@ -481,9 +576,6 @@ body.force-mobile .status-select-wrap{display:none !important;}
     <button class="pin-key" onclick="pinPress('⌫')">⌫</button>
   </div>
   <div class="pin-hint" id="pinHint">Code eingeben</div>
-  <button class="btn-bio" id="bioBtn" style="display:none" onclick="bioLogin()">
-    <span id="bioIcon">👆</span><span id="bioLabel">Entsperren</span>
-  </button>
 </div>
 
 <div id="header">
@@ -506,6 +598,20 @@ body.force-mobile .status-select-wrap{display:none !important;}
   <div class="hstat"><div class="hstat-val" id="statUnterbrochen" style="color:#FAC775">0</div><div class="hstat-lbl">Unterbrochen</div></div>
   <div class="hspace"></div>
 
+  <!-- AUFBEREITUNG HOVER-BUTTON (links neben Fertig) -->
+  <div id="aufbereitungZone" title="Aufbereitung – Auftrag hier ablegen">
+    <div class="aufb-btn-inner">
+      <span>🧽</span>
+      <span class="aufb-btn-label">Aufbereitung</span>
+      <span class="aufb-btn-count" id="statAufbereitung">0</span>
+    </div>
+    <div id="aufbereitungDropdown">
+      <div class="aufb-drop-header">🧽 Aufbereitung</div>
+      <div id="aufbereitungList"></div>
+      <div class="aufb-drop-hint">Auftrag hier reinziehen zur Aufbereitung</div>
+    </div>
+  </div>
+
   <!-- FERTIGE AUFTRÄGE HOVER-BUTTON (links neben Live) -->
   <div id="fertigZone" title="Fertige Aufträge – Auftrag hier ablegen zum Abschließen">
     <div class="fertig-btn-inner">
@@ -526,6 +632,7 @@ body.force-mobile .status-select-wrap{display:none !important;}
       <input type="text" id="searchInput" placeholder="🔍 Suche …" oninput="handleSearch(this.value)" onkeydown="if(event.key==='Escape')clearSearch()"/>
       <button class="search-clear" id="searchClear" onclick="clearSearch()">✕</button>
     </div>
+    <button class="theme-toggle btn-secondary" id="themeToggle" title="Hell/Dunkel wechseln" style="padding:7px 10px"><span id="themeIcon">🌙</span></button>
     <button class="btn-secondary" onclick="openAdmin()" style="padding:7px 10px">⚙️</button>
     <button class="btn-secondary" onclick="openBarcodeScanner()" style="padding:7px 10px">⬛ Scan</button>
     <button class="btn-secondary" onclick="openSFKImport()">↑ SFK</button>
@@ -564,6 +671,11 @@ const STATI = [
 
 (function(){ const s=localStorage.getItem('werkstatt-spalten'); if(s){try{const c=JSON.parse(s);STATI.forEach(st=>{if(c[st.id])st.label=c[st.id];});}catch(e){}}})();
 
+// Spalten-Sichtbarkeit (z.B. Parkplatz/Vorlauf ausblenden, nicht entfernen) — im Admin umschaltbar
+let SPALTEN_HIDDEN = JSON.parse(localStorage.getItem('werkstatt-spalten-hidden')||'{"parkplatz":true}');
+function saveSpaltenHidden(){localStorage.setItem('werkstatt-spalten-hidden',JSON.stringify(SPALTEN_HIDDEN));}
+function sichtbareStati(){return STATI.filter(s=>!SPALTEN_HIDDEN[s.id]);}
+
 const PRIORITAET = ['Normal','Dringend','Express'];
 const PRIO_DOT   = {Normal:'#555',Dringend:'#ea580c',Express:'#C0141C'};
 
@@ -581,13 +693,17 @@ let activeMobileTab = STATI[0].id;
 let myName = localStorage.getItem('werkstatt-name')||'';
 let adminUnlocked = false;
 
+// Vorab hinterlegte Mitarbeiternamen (editierbar im Admin) — für Kartenzuweisung
+let MITARBEITER = JSON.parse(localStorage.getItem('werkstatt-mitarbeiter-liste')||'[]');
+function saveMitarbeiterListe(){localStorage.setItem('werkstatt-mitarbeiter-liste',JSON.stringify(MITARBEITER));}
+
 function genId()    {return Date.now().toString(36)+Math.random().toString(36).slice(2,5);}
 function uhrzeit()  {return new Date().toLocaleTimeString('de-DE',{hour:'2-digit',minute:'2-digit'});}
 function datumKurz(){return new Date().toLocaleDateString('de-DE',{day:'2-digit',month:'2-digit'});}
 function getPin()   {return localStorage.getItem('werkstatt-pin')||DEFAULT_PIN;}
+function nextKartenNummer(){return autos.reduce((m,a)=>Math.max(m,parseInt(a.nummer)||0),0)+1;}
 
 // ── CLAUDE API (zentral) ──
-// FIX: Zentraler Claude-Call mit korrektem Header + Key aus localStorage
 async function callClaude(system, userText) {
   const key = localStorage.getItem('werkstatt-api-key');
   if (!key) throw new Error('Kein API-Key gesetzt – bitte im Admin-Bereich unter 🔑 eintragen');
@@ -626,70 +742,78 @@ async function callClaude(system, userText) {
   }
 })();
 
-// ── BIOMETRIE ──
-const BIO_KEY='werkstatt-bio-cred';
-function str2ab(s){return new TextEncoder().encode(s).buffer;}
-function ab2b64(b){return btoa(String.fromCharCode(...new Uint8Array(b)));}
-function b642ab(b){const bin=atob(b);const buf=new Uint8Array(bin.length);for(let i=0;i<bin.length;i++)buf[i]=bin.charCodeAt(i);return buf.buffer;}
-async function bioVerfuegbar(){if(!window.PublicKeyCredential)return false;try{return await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable();}catch{return false;}}
-async function bioRegistrieren(){
-  try{
-    const cred=await navigator.credentials.create({publicKey:{
-      challenge:str2ab('werkstatt-reg-'+Date.now()),
-      rp:{name:'Autopartner Werkstatt',id:location.hostname},
-      user:{id:str2ab('werkstatt-user'),name:'Werkstatt',displayName:'Werkstatt'},
-      pubKeyCredParams:[{alg:-7,type:'public-key'},{alg:-257,type:'public-key'}],
-      authenticatorSelection:{authenticatorAttachment:'platform',userVerification:'required'},
-      timeout:60000
-    }});
-    localStorage.setItem(BIO_KEY,ab2b64(cred.rawId));
-    return true;
-  }catch{return false;}
+// ── THEME (HELL/DUNKEL) ──
+function initTheme(){
+  const saved = localStorage.getItem('werkstatt-theme') || 'dark';
+  applyTheme(saved);
+  const btn = document.getElementById('themeToggle');
+  if(btn) btn.addEventListener('click', toggleTheme);
 }
-async function bioLogin(){
-  const credId=localStorage.getItem(BIO_KEY); if(!credId)return;
-  const hint=document.getElementById('pinHint');
-  if(hint){hint.textContent='⏳ Warte …';}
-  try{
-    await navigator.credentials.get({publicKey:{
-      challenge:str2ab('werkstatt-'+Date.now()),
-      allowCredentials:[{id:b642ab(credId),type:'public-key'}],
-      userVerification:'required',timeout:60000
-    }});
-    pinErfolgreich();
-  }catch{
-    if(hint){hint.textContent='❌ Nicht erkannt'; hint.style.color='var(--red)';}
-    setTimeout(()=>{if(hint){hint.textContent='Code eingeben';hint.style.color='';}},2000);
-  }
+function applyTheme(theme){
+  if(theme==='light') document.documentElement.setAttribute('data-theme','light');
+  else document.documentElement.removeAttribute('data-theme');
+  const icon = document.getElementById('themeIcon');
+  if(icon) icon.textContent = theme==='light' ? '☀️' : '🌙';
 }
-async function initBio(){
-  const ok=await bioVerfuegbar(); if(!ok)return;
-  const credId=localStorage.getItem(BIO_KEY);
-  const btn=document.getElementById('bioBtn');
-  const isIOS=/iPhone|iPad/.test(navigator.userAgent);
-  if(btn){
-    document.getElementById('bioIcon').textContent=isIOS?'':'👆';
-    document.getElementById('bioLabel').textContent=isIOS?'Face ID / Touch ID':'Fingerabdruck';
-    if(credId){btn.style.display='flex';setTimeout(()=>bioLogin(),500);}
-  }
+function toggleTheme(){
+  const current = localStorage.getItem('werkstatt-theme') || 'dark';
+  const next = current==='light' ? 'dark' : 'light';
+  localStorage.setItem('werkstatt-theme', next);
+  applyTheme(next);
 }
-async function angebotBioRegistrieren(){
-  if(!(await bioVerfuegbar())||localStorage.getItem(BIO_KEY))return;
-  const isIOS=/iPhone|iPad/.test(navigator.userAgent);
-  const bioName=isIOS?'Face ID / Touch ID':'Fingerabdruck';
-  const o=document.createElement('div');
-  o.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:300;display:flex;align-items:center;justify-content:center;padding:24px';
-  o.innerHTML=`<div style="background:var(--bg2);border:1px solid var(--border2);border-top:3px solid var(--red);border-radius:6px;padding:28px;max-width:360px;width:100%;text-align:center">
-    <div style="font-size:36px;margin-bottom:12px">${isIOS?'':'👆'}</div>
-    <div style="font-family:var(--font-head);font-size:14px;color:var(--text);margin-bottom:8px;text-transform:uppercase;letter-spacing:.06em">${bioName} aktivieren?</div>
-    <div style="font-size:13px;color:var(--text-dim);margin-bottom:20px;line-height:1.6">Beim nächsten Öffnen ohne Code entsperren.</div>
-    <div style="display:flex;gap:10px;justify-content:center">
-      <button class="btn-secondary" id="bioNein">Später</button>
-      <button class="btn-primary" id="bioJa">${bioName} aktivieren</button>
-    </div></div>`;
-  document.body.appendChild(o);
-  o.querySelector('#bioNein').addEventListener('click',()=>document.body.removeChild(o));
-  o.querySelector('#bioJa').addEventListener('click',async()=>{document.body.removeChild(o);await bioRegistrieren();const b=document.getElementById('bioBtn');if(b)b.style.display='flex';});
+initTheme();
+
+// ── DOKUMENT-OVERLAY (ersetzt window.open — funktioniert identisch auf Mobil & Desktop) ──
+function showDocOverlay(html,title){
+  closeDocOverlay();
+  const overlay=document.createElement('div');
+  overlay.id='docOverlay';
+  overlay.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,0.88);z-index:600;display:flex;flex-direction:column;';
+  overlay.innerHTML=`
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;padding:10px 14px;
+      background:var(--bg2);border-bottom:2px solid var(--red);flex-shrink:0;">
+      <span style="color:var(--text);font-weight:700;font-size:13px;font-family:var(--font-head);
+        text-transform:uppercase;letter-spacing:.05em;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${title||''}</span>
+      <div style="display:flex;gap:8px;flex-shrink:0;">
+        <button id="docOverlayPrintBtn" class="btn-primary" style="padding:8px 14px;font-size:12px">🖨 Drucken</button>
+        <button id="docOverlayCloseBtn" class="btn-secondary" style="padding:8px 14px;font-size:12px">✕ Schließen</button>
+      </div>
+    </div>
+    <iframe id="docOverlayFrame" style="flex:1;border:none;width:100%;background:#fff;"></iframe>
+  `;
+  document.body.appendChild(overlay);
+  const frame=document.getElementById('docOverlayFrame');
+  frame.srcdoc=html;
+  document.getElementById('docOverlayCloseBtn').addEventListener('click',closeDocOverlay);
+  document.getElementById('docOverlayPrintBtn').addEventListener('click',()=>{
+    try{frame.contentWindow.focus();frame.contentWindow.print();}catch(e){}
+  });
+}
+function closeDocOverlay(){const o=document.getElementById('docOverlay');if(o)o.remove();}
+function showFileOverlay(url,title){
+  closeDocOverlay();
+  const overlay=document.createElement('div');
+  overlay.id='docOverlay';
+  overlay.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,0.88);z-index:600;display:flex;flex-direction:column;';
+  overlay.innerHTML=`
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;padding:10px 14px;
+      background:var(--bg2);border-bottom:2px solid var(--red);flex-shrink:0;">
+      <span style="color:var(--text);font-weight:700;font-size:13px;font-family:var(--font-head);
+        text-transform:uppercase;letter-spacing:.05em;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${title||''}</span>
+      <div style="display:flex;gap:8px;flex-shrink:0;">
+        <button id="docOverlayPrintBtn" class="btn-primary" style="padding:8px 14px;font-size:12px">🖨 Drucken</button>
+        <button id="docOverlayCloseBtn" class="btn-secondary" style="padding:8px 14px;font-size:12px">✕ Schließen</button>
+      </div>
+    </div>
+    <iframe id="docOverlayFrame" src="${url}" style="flex:1;border:none;width:100%;background:#fff;"></iframe>
+  `;
+  document.body.appendChild(overlay);
+  document.getElementById('docOverlayCloseBtn').addEventListener('click',closeDocOverlay);
+  document.getElementById('docOverlayPrintBtn').addEventListener('click',()=>{
+    const frame=document.getElementById('docOverlayFrame');
+    try{frame.contentWindow.focus();frame.contentWindow.print();}
+    catch(e){window.open(url,'_blank');}
+  });
 }
 
 // ── PIN ──
@@ -706,7 +830,6 @@ function updatePinDots(){
 function checkPin(){
   if(pinInput===getPin()){
     pinErfolgreich();
-    setTimeout(()=>angebotBioRegistrieren(),1500);
   }else{
     for(let i=0;i<6;i++)document.getElementById('pd'+i).classList.add('error');
     const h=document.getElementById('pinHint');h.textContent='❌ Falscher Code';h.style.color='var(--red)';
@@ -750,7 +873,6 @@ async function loadAutos(){
     const data=await sbFetch('/rest/v1/auftraege?order=erstellt_am.asc');
     const prevIds=new Set(autos.map(a=>a.id));
     autos=data.map(dbToAuto);
-    // Neue Karten (noch nicht in expandedCards) → immer eingeklappt starten
     autos.forEach(a=>{
       if(!prevIds.has(a.id)&&!expandedCards.has(a.id)){
         collapsedCards.add(a.id);
@@ -764,12 +886,14 @@ function dbToAuto(row){
     id:row.id,kennzeichen:row.kennzeichen||'',fahrzeug:row.fahrzeug||'',
     kunde:row.kunde||'',platz:row.platz||'',prioritaet:row.prioritaet||'Normal',
     status:row.status||'parkplatz',auftragsnr:row.auftragsnr||'',
+    nummer:row.nummer||'',arbeiter:row.arbeiter||'',
     hinweise:(row.hinweise||[]).map(h=>typeof h==='string'?{text:h,done:false}:h),
     diagnose:row.diagnose||null,
     mitarbeiter:row.mitarbeiter||[],
     dateien:row.dateien||[],
     arbeiten:row.arbeiten||[],
     material:row.material||[],
+    sfkMaterial:row.sfk_material||[],
     lieferscheine:row.lieferscheine||[],
     eingang:row.eingang||uhrzeit(),datum:row.datum||datumKurz(),statusSeit:row.status_seit||uhrzeit(),
   };
@@ -777,8 +901,10 @@ function dbToAuto(row){
 function autoToDb(a){
   return{id:a.id,kennzeichen:a.kennzeichen,fahrzeug:a.fahrzeug,kunde:a.kunde,platz:a.platz,
     prioritaet:a.prioritaet,status:a.status,auftragsnr:a.auftragsnr||'',
+    nummer:a.nummer||'',arbeiter:a.arbeiter||'',
     hinweise:a.hinweise,diagnose:a.diagnose||null,mitarbeiter:a.mitarbeiter||[],
     dateien:a.dateien||[],arbeiten:a.arbeiten||[],material:a.material||[],
+    sfk_material:a.sfkMaterial||[],
     lieferscheine:a.lieferscheine||[],
     eingang:a.eingang,datum:a.datum,status_seit:a.statusSeit,
     geaendert_am:new Date().toISOString()};
@@ -830,7 +956,7 @@ trash.addEventListener('drop',e=>{
 function renderMobileTabs(){
   const c=document.getElementById('mobileTabs');if(!c)return;
   c.innerHTML='';
-  STATI.forEach(s=>{
+  sichtbareStati().forEach(s=>{
     const count=autos.filter(a=>a.status===s.id).length;
     const btn=document.createElement('button');
     btn.className='mobile-tab'+(activeMobileTab===s.id?' active':'');
@@ -849,21 +975,16 @@ function updateMobileLanes(){
 window.addEventListener('resize',updateMobileLanes);
 
 // ── COLLAPSE ──
-// FIX: Einheitliche Logik – collapsedCards ist die einzige Quelle der Wahrheit.
-// Karten mit >= COLLAPSE_AT in der Spalte starten zugeklappt (wenn noch nie manuell geöffnet).
-// expandedCards merkt sich explizit geöffnete Karten – diese bleiben offen, egal wie viele Karten in der Spalte sind.
 function isCollapsed(id, wasAutoCollapse){
-  if(expandedCards.has(id)) return false;   // explizit geöffnet → immer offen
-  if(collapsedCards.has(id)) return true;   // explizit geschlossen → immer zu
-  return wasAutoCollapse;                    // neu erschienene Karte: Standard je nach Spalten-Größe
+  if(expandedCards.has(id)) return false;
+  if(collapsedCards.has(id)) return true;
+  return wasAutoCollapse;
 }
 function toggleCard(id, wasAutoCollapse){
   if(expandedCards.has(id)){
-    // war offen → schließen
     expandedCards.delete(id);
     collapsedCards.add(id);
   } else {
-    // war zu → öffnen
     collapsedCards.delete(id);
     expandedCards.add(id);
   }
@@ -879,7 +1000,9 @@ function render(){
   document.getElementById('statUnterbrochen').textContent = autos.filter(a=>a.status==='unterbrochen').length;
 
   const grid=document.getElementById('boardGrid');grid.innerHTML='';
-  STATI.forEach(s=>{
+  const stati=sichtbareStati();
+  grid.style.gridTemplateColumns=`repeat(${Math.max(stati.length,1)},1fr)`;
+  stati.forEach(s=>{
     const cards=autos.filter(a=>a.status===s.id)
       .sort((a,b)=>({'Express':0,'Dringend':1,'Normal':2}[a.prioritaet])-({'Express':0,'Dringend':1,'Normal':2}[b.prioritaet]));
     const autoCollapse=cards.length>=COLLAPSE_AT;
@@ -891,7 +1014,6 @@ function render(){
     hdr.innerHTML=`<span style="font-size:18px">${s.icon}</span>
       <span class="lane-title" style="color:${s.accent}">${s.label}</span>
       ${cards.length>0?`<span class="lane-count" style="background:rgba(0,0,0,0.4);color:${s.accent}">${cards.length}</span>`:''}`;
-    // FIX: Alle-auf/zu immer anzeigen, Collapse-State in beiden Sets speichern
     if(cards.length>0){
       const btn=document.createElement('button');btn.className='lane-toggle-btn';
       btn.style.cssText=`border:1px solid ${s.accent}66;color:${s.accent}`;
@@ -912,7 +1034,7 @@ function render(){
     body.addEventListener('dragleave',()=>{body.style.background='';body.style.borderColor='';body.style.boxShadow='';});
     body.addEventListener('drop',e=>{
       e.preventDefault();body.style.background='';body.style.borderColor='';body.style.boxShadow='';
-      if(dragId&&dragFrom!==s.id){const a=autos.find(x=>x.id===dragId);if(a){a.status=s.id;a.statusSeit=uhrzeit();collapsedCards.add(a.id);saveAuto(a);}fertigDragFromFertig=null;if(typeof closeFertigDD==='function')closeFertigDD();render();}
+      if(dragId&&dragFrom!==s.id){const a=autos.find(x=>x.id===dragId);if(a){a.status=s.id;a.statusSeit=uhrzeit();collapsedCards.add(a.id);saveAuto(a);}fertigDragFromFertig=null;aufbDragFromAufb=null;if(typeof closeFertigDD==='function')closeFertigDD();if(typeof closeAufbDD==='function')closeAufbDD();render();}
     });
 
     if(cards.length===0){body.innerHTML='<div class="lane-empty">Leer</div>';}
@@ -922,6 +1044,7 @@ function render(){
 
   renderMobileTabs();updateMobileLanes();
   if(window.renderFertigList)window.renderFertigList();
+  if(window.renderAufbereitungList)window.renderAufbereitungList();
 }
 
 // ── KARTE ──
@@ -930,6 +1053,7 @@ function makeCard(a,s,autoCollapse,collapsed){
   wrap.style.cssText=`background:var(--bg3);border:1px solid ${s.accent}33;box-shadow:0 2px 12px ${s.glow}`;
 
   if(a.status==='fertig'){const b=document.createElement('div');b.className='abholbereit-banner';b.textContent='🏁 Fahrzeug abholbereit';wrap.appendChild(b);}
+  if(a.status==='aufbereitung'){const b=document.createElement('div');b.className='abholbereit-banner';b.style.color='#67E8F9';b.style.borderBottomColor='rgba(103,232,249,0.25)';b.textContent='🧽 In Aufbereitung';wrap.appendChild(b);}
 
   const top=document.createElement('div');top.className='card-top';top.draggable=true;
   top.addEventListener('dragstart',e=>{dragId=a.id;dragFrom=a.status;e.dataTransfer.effectAllowed='move';setTimeout(()=>wrap.style.opacity='0.4',0);});
@@ -938,20 +1062,20 @@ function makeCard(a,s,autoCollapse,collapsed){
 
   const prio=document.createElement('div');prio.className='card-top-prio';
   prio.style.cssText=`background:${PRIO_DOT[a.prioritaet]};${a.prioritaet!=='Normal'?`box-shadow:0 0 5px ${PRIO_DOT[a.prioritaet]}`:''}`;
+  const nr=document.createElement('span');nr.style.cssText='font-family:var(--font-head);font-weight:700;font-size:12px;color:var(--text-muted);flex-shrink:0;margin-right:6px;';nr.textContent=a.nummer?('#'+a.nummer):'';
   const kz=document.createElement('span');kz.className='card-top-kz';kz.style.color=s.accent;kz.textContent=a.kennzeichen||'—';
-  // Eine Zeile: "Max Mustermann · Ford Mustang"
   const kundeEl=document.createElement('span');kundeEl.className='card-top-kunde';
   const namePart=a.kunde||'—';
   const fzPart=a.fahrzeug?(' · '+a.fahrzeug):'';
   kundeEl.innerHTML=namePart+'<span style="color:var(--text-muted);font-weight:400">'+fzPart+'</span>';
   const chev=document.createElement('span');chev.className='card-top-chevron'+(collapsed?'':' open');chev.textContent='▾';
-  top.appendChild(prio);top.appendChild(kz);top.appendChild(kundeEl);top.appendChild(chev);
+  top.appendChild(prio);top.appendChild(nr);top.appendChild(kz);top.appendChild(kundeEl);top.appendChild(chev);
   wrap.appendChild(top);
 
   if(!collapsed){
     const body=document.createElement('div');body.className='card-body';
     const fz=document.createElement('div');fz.className='card-fz';
-    fz.innerHTML=`${a.fahrzeug||'Fahrzeug unbekannt'}${a.platz?` · <span style="color:var(--text-muted)">${a.platz}</span>`:''}`;
+    fz.innerHTML=`${a.fahrzeug||'Fahrzeug unbekannt'}${a.platz?` · <span style="color:var(--text-muted)">${a.platz}</span>`:''}${a.arbeiter?` · <span style="color:var(--red);font-weight:600">👤 ${a.arbeiter}</span>`:''}`;
     body.appendChild(fz);
 
     if((a.hinweise||[]).length>0){
@@ -999,7 +1123,22 @@ function makeCard(a,s,autoCollapse,collapsed){
     btnMa.addEventListener('click',e=>{e.stopPropagation();toggleMitarbeiter(a.id);});
     maDiv.appendChild(btnMa);wrap.appendChild(maDiv);
 
-    // Status-Dropdown in Kopfzeile der Karte
+    // SFK-Werkstattauftrag direkt in der aufgeklappten Karte anklickbar —
+    // nur sichtbar, wenn ein Auftrag hochgeladen wurde. Öffnet dasselbe
+    // Overlay wie im Bearbeiten-Formular, also identisch auf Mobil & Desktop.
+    const sfkFile=a.dateien?.find(d=>d.typ==='sfk_auftrag');
+    if(sfkFile){
+      const sfkBtn=document.createElement('button');
+      sfkBtn.style.cssText='display:flex;align-items:center;gap:8px;width:calc(100% - 24px);margin:0 12px 8px;'+
+        'background:var(--bg4);border:1px solid var(--border2);border-radius:6px;color:var(--text);'+
+        'padding:8px 12px;cursor:pointer;font-size:12px;font-weight:600;text-align:left;transition:all .15s;';
+      sfkBtn.innerHTML=`<span style="font-size:16px;flex-shrink:0">📄</span><span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${sfkFile.name}</span><span style="color:var(--text-dim);font-size:11px;flex-shrink:0">👁 Öffnen</span>`;
+      sfkBtn.addEventListener('mouseenter',()=>{sfkBtn.style.borderColor='var(--red)';});
+      sfkBtn.addEventListener('mouseleave',()=>{sfkBtn.style.borderColor='var(--border2)';});
+      sfkBtn.addEventListener('click',e=>{e.stopPropagation();showFileOverlay(sfkFile.url,'SFK-Auftrag — '+(a.kennzeichen||''));});
+      wrap.appendChild(sfkBtn);
+    }
+
     const statusWrap=document.createElement('div');
     statusWrap.className='status-select-wrap';
     statusWrap.style.cssText='padding:6px 12px;border-top:1px solid var(--border);display:flex;align-items:center;gap:8px;';
@@ -1027,7 +1166,6 @@ function makeCard(a,s,autoCollapse,collapsed){
     const btnArb=document.createElement('button');btnArb.textContent='📝 Arbeiten';btnArb.style.color='#AFA9EC';btnArb.addEventListener('click',e=>{e.stopPropagation();openArbeitenModal(a.id);});
     actions.appendChild(btnEdit);actions.appendChild(btnDiag);actions.appendChild(btnArb);wrap.appendChild(actions);
 
-    // VERSCHIEBEN BUTTON (nur Mobile sichtbar)
     const btnVerschieben=document.createElement('button');
     btnVerschieben.className='btn-verschieben';
     const currentStati=STATI.find(x=>x.id===a.status);
@@ -1038,7 +1176,7 @@ function makeCard(a,s,autoCollapse,collapsed){
   return wrap;
 }
 
-// ── MITARBEITER ──
+// ── MITARBEITER (live "wer arbeitet dran") ──
 function initMyName(){if(!myName)setTimeout(()=>askMyName(),800);else updateNameDisplay();}
 function updateNameDisplay(){
   const av=document.getElementById('myAvatar'),tx=document.getElementById('myNameText');
@@ -1151,10 +1289,30 @@ function hintsEditorHTML(hinweise,fid){return `
 function formHTML(a,isEdit){
   initHints(a.hinweise||[]);
   const fschein=a.dateien?.find(d=>d.typ==='fahrzeugschein');
+  const sfk=a.dateien?.find(d=>d.typ==='sfk_auftrag');
   return `
   <div class="modal-header">
     <span class="modal-title">${isEdit?'Bearbeiten: '+a.kennzeichen:'Neues Fahrzeug'}</span>
     <button class="modal-close" onclick="closeModal()">✕</button>
+  </div>
+  <div class="section-label">SFK-Originalauftrag</div>
+  <div id="sfkAuftragArea" style="margin-bottom:14px">
+    ${sfk?`
+    <div style="display:flex;align-items:center;gap:8px;background:var(--bg3);border-radius:4px;padding:8px 12px;flex-wrap:wrap">
+      <span style="font-size:18px">📄</span>
+      <span style="flex:1;font-size:13px;color:var(--text);min-width:120px">${sfk.name}</span>
+      ${a.auftragsnr?`<span style="color:var(--red);font-size:12px;font-weight:700">Nr. ${a.auftragsnr}</span>`:''}
+      <button id="btnSfkOeffnen" class="btn-secondary" style="font-size:11px;padding:5px 10px">👁 Öffnen</button>
+      <button id="btnSfkDrucken" class="btn-secondary" style="font-size:11px;padding:5px 10px">🖨 Drucken</button>
+      <button id="btnSfkExport" class="btn-secondary" style="font-size:11px;padding:5px 10px">⬇ Export</button>
+      <button id="btnSfkErsetzen" class="btn-secondary" style="font-size:11px;padding:5px 10px">↻ Ersetzen</button>
+    </div>
+    <input type="file" id="sfk_replace_file" accept=".pdf" style="display:none"/>`
+    :`<div id="sfkAuftrag_drop" style="border:2px dashed var(--border2);border-radius:8px;padding:16px;text-align:center;cursor:pointer;background:var(--bg3)">
+      <div style="font-size:20px;margin-bottom:4px">📄</div>
+      <div style="color:var(--text-dim);font-size:12px">SFK-Auftrag (PDF) hier importieren</div>
+    </div>
+    <input type="file" id="sfkAuftrag_file" accept=".pdf" style="display:none"/>`}
   </div>
   <div class="section-label">Fahrzeugschein</div>
   <div style="margin-bottom:14px">${fschein?`
@@ -1181,6 +1339,15 @@ function formHTML(a,isEdit){
     <div class="field"><label>Priorität</label><select id="f_prio">${PRIORITAET.map(x=>`<option${x===a.prioritaet?' selected':''}>${x}</option>`).join('')}</select></div>
     <div class="field"><label>Arbeitsplatz (opt.)</label><input id="f_platz" value="${a.platz}" placeholder="Hebebühne 2 …"/></div>
   </div>
+  <div class="form-grid2">
+    <div class="field"><label>Karten-Nr.</label><input id="f_nummer" type="number" min="1" value="${a.nummer||''}" placeholder="z.B. 12"/></div>
+    <div class="field"><label>Zugewiesener Mitarbeiter</label>
+      <select id="f_arbeiter">
+        <option value="">— keiner —</option>
+        ${MITARBEITER.map(m=>`<option value="${m}"${a.arbeiter===m?' selected':''}>${m}</option>`).join('')}
+      </select>
+    </div>
+  </div>
   <div class="section-label">Art der Arbeit & nächste Schritte</div>
   <div class="field">${hintsEditorHTML(editHinweise,'fh')}</div>
   <div class="form-footer">
@@ -1189,13 +1356,40 @@ function formHTML(a,isEdit){
   </div>`;}
 
 function openNeu(){
-  const a={id:genId(),kennzeichen:'',fahrzeug:'',kunde:'',prioritaet:'Normal',hinweise:[],platz:'',status:'parkplatz',auftragsnr:'',arbeiten:[],material:[],lieferscheine:[],dateien:[],eingang:uhrzeit(),datum:datumKurz(),statusSeit:uhrzeit()};
+  const a={id:genId(),kennzeichen:'',fahrzeug:'',kunde:'',prioritaet:'Normal',hinweise:[],platz:'',status:'parkplatz',auftragsnr:'',nummer:nextKartenNummer(),arbeiter:'',arbeiten:[],material:[],sfkMaterial:[],lieferscheine:[],dateien:[],eingang:uhrzeit(),datum:datumKurz(),statusSeit:uhrzeit()};
   openModal(formHTML(a,false));
   setupFormListeners(a,false);
 }
 function openEdit(id){const a=autos.find(x=>x.id===id);if(a){openModal(formHTML(a,true));setupFormListeners(a,true);}}
 function setupFormListeners(a,isEdit){
   document.getElementById('btnSaveForm').addEventListener('click',()=>saveForm(a.id,isEdit));
+
+  const sfkOeffnen = document.getElementById('btnSfkOeffnen');
+  const sfkDrucken = document.getElementById('btnSfkDrucken');
+  const sfkExport  = document.getElementById('btnSfkExport');
+  const sfkErsetzen= document.getElementById('btnSfkErsetzen');
+  const sfkReplaceFile = document.getElementById('sfk_replace_file');
+  if(sfkOeffnen){
+    const sfk = a.dateien?.find(d=>d.typ==='sfk_auftrag');
+    sfkOeffnen.addEventListener('click',()=>showFileOverlay(sfk.url,'SFK-Auftrag — '+(a.kennzeichen||'')));
+    sfkDrucken.addEventListener('click',()=>showFileOverlay(sfk.url,'SFK-Auftrag — '+(a.kennzeichen||'')));
+    sfkExport.addEventListener('click',()=>{
+      const lnk=document.createElement('a');lnk.href=sfk.url;lnk.download=sfk.name;
+      document.body.appendChild(lnk);lnk.click();document.body.removeChild(lnk);
+    });
+    sfkErsetzen.addEventListener('click',()=>sfkReplaceFile.click());
+    sfkReplaceFile.addEventListener('change',()=>uploadSfkAuftrag(a.id,sfkReplaceFile));
+  }
+  const sfkDrop = document.getElementById('sfkAuftrag_drop');
+  const sfkFile = document.getElementById('sfkAuftrag_file');
+  if(sfkDrop && sfkFile){
+    sfkDrop.addEventListener('click',()=>sfkFile.click());
+    sfkDrop.addEventListener('dragover',e=>{e.preventDefault();sfkDrop.style.borderColor='var(--red)';});
+    sfkDrop.addEventListener('dragleave',()=>{sfkDrop.style.borderColor='';});
+    sfkDrop.addEventListener('drop',e=>{e.preventDefault();if(e.dataTransfer.files[0])uploadSfkAuftrag(a.id,{files:e.dataTransfer.files});});
+    sfkFile.addEventListener('change',()=>uploadSfkAuftrag(a.id,sfkFile));
+  }
+
   const fscheinDrop=document.getElementById('fschein_drop');
   const fscheinFile=document.getElementById('fschein_file');
   if(fscheinDrop&&fscheinFile){
@@ -1213,9 +1407,11 @@ async function saveForm(id,isEdit){
   if(!kz){alert('Kennzeichen ist Pflichtfeld');return;}
   const data={kennzeichen:kz,kunde:document.getElementById('f_kunde').value.trim(),
     fahrzeug:document.getElementById('f_fz').value,prioritaet:document.getElementById('f_prio').value,
-    platz:document.getElementById('f_platz').value,hinweise:[...editHinweise]};
+    platz:document.getElementById('f_platz').value,hinweise:[...editHinweise],
+    nummer:document.getElementById('f_nummer').value.trim(),
+    arbeiter:document.getElementById('f_arbeiter').value};
   if(isEdit){const a=autos.find(x=>x.id===id);if(a)Object.assign(a,data);await saveAuto(autos.find(x=>x.id===id));}
-  else{const a={id,...data,status:'parkplatz',auftragsnr:'',arbeiten:[],material:[],lieferscheine:[],dateien:[],eingang:uhrzeit(),datum:datumKurz(),statusSeit:uhrzeit()};collapsedCards.add(id);expandedCards.delete(id);autos.push(a);await saveAuto(a);}
+  else{const a={id,...data,status:'parkplatz',auftragsnr:'',arbeiten:[],material:[],sfkMaterial:[],lieferscheine:[],dateien:[],eingang:uhrzeit(),datum:datumKurz(),statusSeit:uhrzeit()};collapsedCards.add(id);expandedCards.delete(id);autos.push(a);await saveAuto(a);}
   closeModal();render();
 }
 async function uploadFahrzeugschein(autoId,input){
@@ -1234,6 +1430,46 @@ async function removeFahrzeugschein(autoId){
   a.dateien=(a.dateien||[]).filter(d=>d.typ!=='fahrzeugschein');await saveAuto(a);openEdit(autoId);
 }
 
+// SFK-Auftrag in der Karte hochladen — KI liest Arbeiten & Material aus.
+// Material wird NICHT in die manuelle "Verbrauchtes Material"-Liste gemischt,
+// sondern getrennt gespeichert (a.sfkMaterial) und taucht automatisch in der
+// Rechnungskontrolle auf.
+async function uploadSfkAuftrag(autoId,input){
+  const file=input.files[0];if(!file)return;
+  const a=autos.find(x=>x.id===autoId);if(!a)return;
+  try{
+    setSync('syncing','Hochladen');
+    const url=await uploadFile(file,`auftraege/${autoId}/sfk_${Date.now()}_${file.name}`);
+    a.dateien=(a.dateien||[]).filter(d=>d.typ!=='sfk_auftrag');
+    a.dateien.push({name:file.name,url,typ:'sfk_auftrag',datum:datumKurz()});
+    await saveAuto(a);setSync('ok','Live');
+  }catch(e){setSync('error','Fehler');openEdit(autoId);return;}
+
+  try{
+    setSync('syncing','KI analysiert');
+    const b64=await new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(r.result.split(',')[1]);r.onerror=rej;r.readAsDataURL(file);});
+    const key = localStorage.getItem('werkstatt-api-key');
+    if(!key)throw new Error('Kein API-Key gesetzt');
+    const response=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',
+      headers:{'Content-Type':'application/json','x-api-key':key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
+      body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:1000,
+        system:`Analysiere den SFK-Werkstattauftrag. Antworte NUR mit JSON:{"arbeiten":["kurze Beschreibung max 6 Wörter"],"material":[{"bezeichnung":"","menge":"","einheit":"Stk oder Ltr etc"}]} Gib im Feld material alle im Auftrag aufgeführten Teile/Materialien an, falls vorhanden. Sonst leeres Array.`,
+        messages:[{role:'user',content:[
+          {type:'document',source:{type:'base64',media_type:'application/pdf',data:b64}},
+          {type:'text',text:'Analysiere diesen SFK-Werkstattauftrag.'}
+        ]}]})});
+    if(!response.ok)throw new Error('API Fehler '+response.status);
+    const data=await response.json();
+    const parsed=JSON.parse(data.content.map(i=>i.text||'').join('').trim().replace(/^```json\s*/,'').replace(/\s*```$/,''));
+    a.sfkMaterial=(parsed.material||[]).map(m=>({bezeichnung:m.bezeichnung||'',menge:m.menge||'',einheit:m.einheit||'Stk'}));
+    if((parsed.arbeiten||[]).length>0){
+      a.arbeiten=[...(a.arbeiten||[]),...parsed.arbeiten.map(t=>({beschreibung:t,stunden:'',wer:''}))];
+    }
+    await saveAuto(a);setSync('ok','Live');
+  }catch(e){setSync('ok','Live');/* KI-Analyse fehlgeschlagen — Datei wurde trotzdem gespeichert */}
+  openEdit(autoId);
+}
+
 // ── DIAGNOSE ──
 function emptyDiagnose(){
   const d={km:'',tuev:'',fehlerspeicher:'',was_machen:'',hinweise:''};
@@ -1250,6 +1486,7 @@ function openDiagnose(autoId){
     return `<div class="diag-btns">
       <button class="diag-btn diag-btn-ok ${val==='ok'?'active':''}" data-key="${key}" data-val="ok">OK</button>
       <button class="diag-btn diag-btn-nok ${val==='nok'?'active':''}" data-key="${key}" data-val="nok" style="font-weight:900;font-size:13px;">✕</button>
+      <button class="diag-btn diag-btn-na ${val==='na'?'active':''}" data-key="${key}" data-val="na">Kein Nachweis</button>
     </div>`;}
   function diagRow(label,key){
     return `<div class="diag-row"><span class="diag-row-label">${label}</span>${statusBtns(key)}</div>`;}
@@ -1263,7 +1500,12 @@ function openDiagnose(autoId){
       <div class="diag-input-row"><label>KM-Stand <span style="color:var(--red)">*</span></label>
         <input id="diag_km" value="${d.km||''}" placeholder="z.B. 125000" style="border-color:${d.km?'var(--border2)':'var(--red)'}" required/></div>
       <div class="diag-input-row"><label>TÜV <span style="color:var(--red)">*</span></label>
-        <input id="diag_tuev" value="${d.tuev||''}" placeholder="z.B. 05/2026" style="border-color:${d.tuev?'var(--border2)':'var(--red)'}" required/></div>
+        <input id="diag_tuev" value="${d.tuev||''}" placeholder="z.B. 05/2026" style="border-color:${d.tuev?'var(--border2)':'var(--red)'}" ${d.tuev==='abgelaufen'?'disabled':''} required/>
+        <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--text-dim);
+          text-transform:none;letter-spacing:0;font-weight:400;margin-top:2px;cursor:pointer">
+          <input type="checkbox" id="diag_tuev_abgelaufen" ${d.tuev==='abgelaufen'?'checked':''} style="width:15px;height:15px;cursor:pointer"/>
+          TÜV abgelaufen
+        </label></div>
     </div>
     <div class="diag-section">
       <div class="diag-section-title">Allgemein</div>
@@ -1304,6 +1546,7 @@ function openDiagnose(autoId){
       const row=btn.closest('.diag-btns');
       row.querySelectorAll('.diag-btn-ok').forEach(b=>b.classList.toggle('active',a.diagnose[key]==='ok'));
       row.querySelectorAll('.diag-btn-nok').forEach(b=>b.classList.toggle('active',a.diagnose[key]==='nok'));
+      row.querySelectorAll('.diag-btn-na').forEach(b=>b.classList.toggle('active',a.diagnose[key]==='na'));
       saveDiagNow(a);
     });
   });
@@ -1316,11 +1559,24 @@ function openDiagnose(autoId){
     }
   });
 
+  const tuevCheck=document.getElementById('diag_tuev_abgelaufen');
+  const tuevInput=document.getElementById('diag_tuev');
+  if(tuevCheck&&tuevInput){
+    tuevCheck.addEventListener('change',()=>{
+      if(!a.diagnose)a.diagnose=emptyDiagnose();
+      if(tuevCheck.checked){
+        tuevInput.value='abgelaufen';tuevInput.disabled=true;a.diagnose.tuev='abgelaufen';
+      }else{
+        tuevInput.value='';tuevInput.disabled=false;tuevInput.focus();a.diagnose.tuev='';
+      }
+      saveDiagNow(a);
+    });
+  }
+
   document.getElementById('btnDiagPDF').addEventListener('click',()=>exportDiagnosePDF(autoId));
 }
 
 async function saveDiagNow(a){
-  // Pflichtfelder KM + TÜV visuell markieren
   const kmEl=document.getElementById('diag_km');
   const tuevEl=document.getElementById('diag_tuev');
   if(kmEl)kmEl.style.borderColor=kmEl.value.trim()?'':'var(--red)';
@@ -1334,7 +1590,6 @@ function exportDiagnosePDF(autoId){
   const a=autos.find(x=>x.id===autoId);if(!a)return;
   const d2=a.diagnose||{};
   if(!d2.km||!d2.tuev){
-    // Felder rot markieren
     const kmEl=document.getElementById('diag_km');
     const tuevEl=document.getElementById('diag_tuev');
     if(kmEl&&!kmEl.value.trim()){kmEl.style.borderColor='var(--red)';kmEl.focus();}
@@ -1346,6 +1601,7 @@ function exportDiagnosePDF(autoId){
   function badge(key){const v=d[key]||'';
     if(v==='ok')return '<span style="background:#14532d;color:#4ade80;padding:2px 8px;border-radius:3px;font-size:11px;font-weight:700">OK</span>';
     if(v==='nok')return '<span style="background:#7f1d1d;color:#fca5a5;padding:2px 8px;border-radius:3px;font-size:11px;font-weight:900">✕</span>';
+    if(v==='na')return '<span style="background:#78350f;color:#fdba74;padding:2px 8px;border-radius:3px;font-size:11px;font-weight:700">Kein Nachweis</span>';
     return '<span style="color:#aaa;font-size:11px">—</span>';}
   function tbl(items,title){return `<table style="width:100%;border-collapse:collapse;margin-bottom:10px">
     <thead><tr><th colspan="2" style="background:#C0141C;color:#fff;padding:5px 8px;font-size:12px;text-align:left">${title}</th></tr></thead>
@@ -1377,12 +1633,8 @@ function exportDiagnosePDF(autoId){
     <div style="border-top:1px solid #000;padding-top:4px;font-size:11px;color:#666">Datum / Unterschrift Mechaniker</div>
     <div style="border-top:1px solid #000;padding-top:4px;font-size:11px;color:#666">Datum / Unterschrift Kunde</div>
   </div>
-  <div style="position:fixed;top:12px;right:12px;display:flex;gap:8px;z-index:999;">
-    <button onclick="window.print()" style="background:#C0141C;color:#fff;border:none;border-radius:6px;padding:9px 18px;font-size:14px;font-weight:700;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,0.3);">🖨 Drucken</button>
-    <button onclick="window.close()" style="background:#222;color:#fff;border:1px solid #444;border-radius:6px;padding:9px 14px;font-size:14px;font-weight:700;cursor:pointer;">✕</button>
-  </div>
-  <script>// Kein Auto-Print<\/script></body></html>`;
-  const win=window.open('','_blank');if(win){win.document.write(html);win.document.close();}
+  </body></html>`;
+  showDocOverlay(html,'Diagnose — '+(a.kennzeichen||''));
 }
 
 // ── ARBEITEN MODAL ──
@@ -1510,6 +1762,8 @@ async function uploadLS(autoId,input){
 }
 
 // ── RECHNUNGSKONTROLLE ──
+// FIX: window.open ersetzt durch showDocOverlay — funktioniert identisch auf Mobil & Desktop.
+// Keine Preise/Stundensätze — nur Arbeitsstunden & Material (Mengen), wie gewünscht.
 function openRechnungskontrolle(autoId){
   const a=autos.find(x=>x.id===autoId);if(!a)return;
   const gesamtStd=(a.arbeiten||[]).reduce((s,ar)=>s+(parseFloat(ar.stunden)||0),0);
@@ -1521,13 +1775,9 @@ function openRechnungskontrolle(autoId){
     td{padding:5px 8px;border-bottom:1px solid #eee;vertical-align:top;font-size:12px;}
     .box{border:1px solid #ddd;border-radius:4px;padding:8px 10px;margin-bottom:8px;}
     .label{font-size:10px;color:#888;text-transform:uppercase;letter-spacing:.06em;}
-    @media print{button{display:none!important;}@page{margin:15mm;}}
-    @media(max-width:600px){body{padding:12px;padding-top:60px;}}
+    @media print{@page{margin:15mm;}}
+    @media(max-width:600px){body{padding:12px;}}
   </style></head><body>
-  <div style="position:fixed;top:12px;right:12px;display:flex;gap:8px;z-index:999;">
-    <button onclick="window.print()" style="background:#C0141C;color:#fff;border:none;border-radius:6px;padding:9px 18px;font-size:14px;font-weight:700;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,0.3);">🖨 Drucken</button>
-    <button onclick="window.close()" style="background:#222;color:#fff;border:1px solid #444;border-radius:6px;padding:9px 14px;font-size:14px;font-weight:700;cursor:pointer;">✕</button>
-  </div>
   <div style="display:flex;justify-content:space-between;border-bottom:3px solid #C0141C;padding-bottom:10px;margin-bottom:14px">
     <div><div style="font-size:16px;font-weight:700">Rechnungskontrolle</div>
     <div style="color:#C0141C;font-size:12px;font-weight:700">AUTOPARTNER AMERICANCARS · Auf dem Lölfert 37 · 58119 Hagen</div></div>
@@ -1552,6 +1802,10 @@ function openRechnungskontrolle(autoId){
       ?(a.material||[]).map(m=>`<tr><td>${m.bezeichnung||'—'}</td><td style="text-align:center">${m.menge||'—'}</td><td>${m.einheit||'—'}</td></tr>`).join('')
       :'<tr><td colspan="3" style="color:#aaa;font-style:italic;padding:12px 8px">Kein Material erfasst</td></tr>'}
   </tbody></table>
+  ${(a.sfkMaterial||[]).length>0?`
+  <table><thead><tr><th>Material laut Werkstattauftrag (automatisch erkannt)</th><th>Menge</th><th>Einheit</th></tr></thead><tbody>
+    ${a.sfkMaterial.map(m=>`<tr><td>${m.bezeichnung||'—'}</td><td style="text-align:center">${m.menge||'—'}</td><td>${m.einheit||'—'}</td></tr>`).join('')}
+  </tbody></table>`:''}
   ${(a.lieferscheine||[]).length>0?`<div class="box"><div class="label" style="margin-bottom:6px">Lieferscheine (${a.lieferscheine.length})</div>
     ${a.lieferscheine.map(ls=>`<div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid #eee;font-size:12px"><span>${ls.typ==='pdf'?'📄':'🖼'} ${ls.name}</span><span style="color:#888">${ls.datum||''}</span></div>`).join('')}</div>`:''}
   <div class="box" style="background:#fff8f8;border-color:#C0141C">
@@ -1566,9 +1820,8 @@ function openRechnungskontrolle(autoId){
     <div style="border-top:1px solid #000;padding-top:4px;font-size:11px;color:#666">Datum / Serviceberater</div>
     <div style="border-top:1px solid #000;padding-top:4px;font-size:11px;color:#666">Geprüft</div>
   </div>
-  <script>// Kein Auto-Print<\/script>
   </body></html>`;
-  const win=window.open('','_blank');if(win){win.document.write(html);win.document.close();}
+  showDocOverlay(html,'Rechnungskontrolle — '+(a.kennzeichen||''));
 }
 
 // ── DIKTIEREN ──
@@ -1606,7 +1859,6 @@ async function stopDiktieren(){
     ?`Extrahiere verbrauchtes Material aus dem Diktat. Antworte NUR mit JSON:{"eintraege":[{"bezeichnung":"Name","menge":"Zahl oder leer","einheit":"Stk oder Ltr etc"}]}`
     :`Extrahiere durchgeführte Arbeiten aus dem Diktat. Antworte NUR mit JSON:{"eintraege":[{"beschreibung":"kurze Arbeit max 6 Wörter","stunden":"Zahl oder leer"}]}`;
   try{
-    // FIX: callClaude() nutzt Key + richtigen Header
     const raw = await callClaude(system, `Diktat: "${txt}"`);
     const parsed=JSON.parse(raw);
     const eintraege=parsed.eintraege||[];
@@ -1651,7 +1903,7 @@ async function openBarcodeScanner(){
   }catch{document.getElementById('scanStatus').textContent='Kamera nicht verfügbar — Auftragsnr. manuell eingeben';}
 }
 
-// ── SFK IMPORT ──
+// ── SFK IMPORT (neuer Auftrag) ──
 let sfkParsed=null;
 function openSFKImport(){
   openModal(`
@@ -1696,7 +1948,6 @@ function openSFKImport(){
   document.getElementById('sfk_import_btn').addEventListener('click',()=>doImportSFK());
 }
 
-// FIX: handleSFKFile nutzt jetzt Key + richtigen Header
 async function handleSFKFile(f){
   document.getElementById('sfk_loading').style.display='block';
   document.getElementById('sfk_analyze_btn').style.display='none';
@@ -1718,7 +1969,7 @@ async function handleSFKFile(f){
         'anthropic-dangerous-direct-browser-access':'true'
       },
       body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:1000,
-        system:`Analysiere den SFK-Werkstattauftrag. Antworte NUR mit JSON:{"kennzeichen":"","kunde":"","fahrzeug":"","auftragsnr":"","arbeiten":["kurze Beschreibung max 5 Wörter"]}`,
+        system:`Analysiere den SFK-Werkstattauftrag. Antworte NUR mit JSON:{"kennzeichen":"","kunde":"","fahrzeug":"","auftragsnr":"","arbeiten":["kurze Beschreibung max 5 Wörter"],"material":[{"bezeichnung":"","menge":"","einheit":"Stk oder Ltr etc"}]} Gib im Feld material alle im Auftrag aufgeführten Teile/Materialien an, falls vorhanden. Sonst leeres Array.`,
         messages:[{role:'user',content:[
           {type:'document',source:{type:'base64',media_type:'application/pdf',data:b64}},
           {type:'text',text:'Analysiere diesen SFK-Werkstattauftrag.'}
@@ -1736,15 +1987,14 @@ async function handleSFKFile(f){
   document.getElementById('sfk_loading').style.display='none';
 }
 
-// FIX: analyzeSFKText nutzt jetzt callClaude()
 async function analyzeSFKText(){
   const txt=document.getElementById('sfk_txt').value.trim();if(!txt)return;
   document.getElementById('sfk_loading').style.display='block';
   document.getElementById('sfk_analyze_btn').style.display='none';
   try{
     const system=`Analysiere den SFK-Werkstattauftrag. Antworte NUR mit JSON ohne Markdown:
-{"kennzeichen":"","kunde":"","fahrzeug":"","auftragsnr":"","arbeiten":["kurze Beschreibung max 5 Wörter"]}
-Regeln: Kurze deutsche Sätze, keine A+E/ERN Abkürzungen, keine UMFASST-Punkte, keine Materialien.`;
+{"kennzeichen":"","kunde":"","fahrzeug":"","auftragsnr":"","arbeiten":["kurze Beschreibung max 5 Wörter"],"material":[{"bezeichnung":"","menge":"","einheit":"Stk oder Ltr etc"}]}
+Regeln: Kurze deutsche Sätze, keine A+E/ERN Abkürzungen, keine UMFASST-Punkte. Gib im Feld material alle aufgeführten Teile/Materialien an, falls vorhanden, sonst leeres Array.`;
     const result=await callClaude(system,txt);
     sfkParsed=JSON.parse(result);
     showSFKPreview();
@@ -1764,7 +2014,11 @@ function showSFKPreview(){
       <div><div style="color:var(--text-dim);font-size:11px;text-transform:uppercase;margin-bottom:2px">Fahrzeug</div><div style="font-size:13px">${sfkParsed.fahrzeug||'—'}</div></div>
       <div><div style="color:var(--text-dim);font-size:11px;text-transform:uppercase;margin-bottom:2px">Auftrag Nr.</div><div style="font-size:13px">${sfkParsed.auftragsnr||'—'}</div></div>
     </div>
-    <div style="background:var(--bg4);border-radius:4px;padding:8px">${(sfkParsed.arbeiten||[]).map(a=>`<div style="padding:4px 0;border-bottom:1px solid var(--border);font-size:12px"><span style="color:var(--red)">◆</span> ${a}</div>`).join('')}</div>`;
+    <div style="background:var(--bg4);border-radius:4px;padding:8px">${(sfkParsed.arbeiten||[]).map(a=>`<div style="padding:4px 0;border-bottom:1px solid var(--border);font-size:12px"><span style="color:var(--red)">◆</span> ${a}</div>`).join('')}</div>
+    ${(sfkParsed.material||[]).length>0?`<div style="margin-top:8px;background:var(--bg4);border-radius:4px;padding:8px">
+      <div style="color:var(--text-dim);font-size:10px;text-transform:uppercase;margin-bottom:4px">Material (${sfkParsed.material.length})</div>
+      ${sfkParsed.material.map(m=>`<div style="padding:3px 0;border-bottom:1px solid var(--border);font-size:12px">${m.bezeichnung||''} ${m.menge?'· '+m.menge:''} ${m.einheit||''}</div>`).join('')}
+    </div>`:''}`;
   document.getElementById('sfk_preview').style.display='block';
   document.getElementById('sfk_import_btn').style.display='block';
 }
@@ -1774,14 +2028,16 @@ async function doImportSFK(){
   const id=genId();
   const a={id,kennzeichen:sfkParsed.kennzeichen||'',fahrzeug:sfkParsed.fahrzeug||'',
     kunde:sfkParsed.kunde||'',auftragsnr:sfkParsed.auftragsnr||'',
-    platz:'',prioritaet:'Normal',status:'parkplatz',
+    platz:'',prioritaet:'Normal',status:'parkplatz',nummer:nextKartenNummer(),arbeiter:'',
     hinweise:(sfkParsed.arbeiten||[]).map(t=>({text:t,done:false})),
-    arbeiten:[],material:[],lieferscheine:[],dateien:[],
+    arbeiten:[],material:[],
+    sfkMaterial:(sfkParsed.material||[]).map(m=>({bezeichnung:m.bezeichnung||'',menge:m.menge||'',einheit:m.einheit||'Stk'})),
+    lieferscheine:[],dateien:[],
     eingang:uhrzeit(),datum:datumKurz(),statusSeit:uhrzeit()};
   if(sfkParsed._pdfFile){
     try{const url=await uploadFile(sfkParsed._pdfFile,`auftraege/${id}/sfk_${sfkParsed._pdfFile.name}`);a.dateien.push({name:sfkParsed._pdfFile.name,url,typ:'sfk_auftrag',datum:datumKurz()});}catch(e){console.error(e);}
   }
-  collapsedCards.add(id); // Neue Karte startet eingeklappt
+  collapsedCards.add(id);
   expandedCards.delete(id);
   autos.push(a);await saveAuto(a);closeModal();render();sfkParsed=null;
 }
@@ -1885,12 +2141,20 @@ function showAdminPanel(){
       </div>
     </div>
     <div class="admin-section">
-      <div class="admin-section-title">📋 Spalten umbenennen</div>
+      <div class="admin-section-title">📋 Spaltenverwaltung</div>
       ${STATI.map(s=>`<div class="admin-row">
-        <div class="admin-row-label">${s.icon} ${s.label}</div>
-        <input id="spalte_${s.id}" value="${s.label}" style="background:var(--bg4);border:1px solid var(--border2);border-radius:4px;color:var(--text);padding:6px 10px;font-size:13px;outline:none;width:180px"/>
+        <span style="font-size:18px;flex-shrink:0">${s.icon}</span>
+        <input id="spalte_${s.id}" value="${s.label}" style="flex:1;background:var(--bg4);border:1px solid var(--border2);border-radius:4px;color:var(--text);padding:6px 10px;font-size:13px;outline:none"/>
+        <button class="spalte-toggle-btn" data-id="${s.id}" title="${SPALTEN_HIDDEN[s.id]?'Einblenden':'Ausblenden'}"
+          style="background:none;border:1px solid var(--border2);border-radius:4px;color:${SPALTEN_HIDDEN[s.id]?'#4ade80':'var(--text-dim)'};cursor:pointer;padding:5px 9px;font-size:12px;flex-shrink:0">${SPALTEN_HIDDEN[s.id]?'👁 Einblenden':'🚫 Ausblenden'}</button>
       </div>`).join('')}
       <button class="btn-primary" id="btnSaveSpalten" style="width:100%;margin-top:10px">✓ Spalten speichern</button>
+    </div>
+    <div class="admin-section">
+      <div class="admin-section-title">👤 Mitarbeiterverwaltung</div>
+      <div style="font-size:11px;color:var(--text-dim);margin-bottom:8px">Diese Namen stehen bei „Zugewiesener Mitarbeiter" in der Auftragskarte zur Auswahl.</div>
+      <div id="mitarbeiterManager">${renderMitarbeiterManagerHTML()}</div>
+      <button class="btn-secondary" id="btnAddMitarbeiter" style="width:100%;margin-top:10px">+ Mitarbeiter hinzufügen</button>
     </div>
     <div class="admin-section">
       <div class="admin-section-title">✅ Diagnose-Checkliste</div>
@@ -1909,7 +2173,6 @@ function showAdminPanel(){
     </div>
   `);
 
-  // API Key speichern
   document.getElementById('btnSaveApiKey').addEventListener('click',()=>{
     const key=document.getElementById('apiKeyInput').value.trim();
     if(!key){alert('Bitte einen gültigen API-Key eingeben');return;}
@@ -1920,7 +2183,6 @@ function showAdminPanel(){
     setTimeout(()=>showAdminPanel(),1500);
   });
 
-  // API Key löschen (falls Button vorhanden)
   const btnClear=document.getElementById('btnClearApiKey');
   if(btnClear)btnClear.addEventListener('click',()=>{
     localStorage.removeItem('werkstatt-api-key');
@@ -1932,9 +2194,52 @@ function showAdminPanel(){
     const c={};STATI.forEach(s=>{const el=document.getElementById('spalte_'+s.id);if(el&&el.value.trim()){c[s.id]=el.value.trim();s.label=el.value.trim();}});
     localStorage.setItem('werkstatt-spalten',JSON.stringify(c));closeModal();render();renderMobileTabs();
   });
+  document.querySelectorAll('.spalte-toggle-btn').forEach(btn=>{
+    btn.addEventListener('click',()=>{
+      const id=btn.dataset.id;
+      SPALTEN_HIDDEN[id]=!SPALTEN_HIDDEN[id];
+      saveSpaltenHidden();
+      showAdminPanel();
+      render();renderMobileTabs();
+    });
+  });
   document.getElementById('btnDiagAdmin').addEventListener('click',openDiagAdmin);
   document.getElementById('btnBackupEx').addEventListener('click',exportBackup);
   document.getElementById('btnBackupIm').addEventListener('click',importBackup);
+  setupMitarbeiterManagerListeners();
+}
+
+function renderMitarbeiterManagerHTML(){
+  if(MITARBEITER.length===0)return `<div style="color:var(--text-dim);font-size:12px;padding:6px 0">Noch keine Mitarbeiter hinterlegt.</div>`;
+  return MITARBEITER.map((name,i)=>`
+    <div class="admin-row" data-idx="${i}">
+      <input class="mitarbeiter-name-input" data-idx="${i}" value="${name}"
+        style="flex:1;background:var(--bg4);border:1px solid var(--border2);border-radius:4px;color:var(--text);padding:6px 10px;font-size:13px;outline:none"/>
+      <button class="mitarbeiter-del" data-idx="${i}" title="Löschen"
+        style="background:none;border:1px solid var(--red);border-radius:4px;color:var(--red);cursor:pointer;padding:4px 7px;font-size:12px">✕</button>
+    </div>`).join('');
+}
+function setupMitarbeiterManagerListeners(){
+  const container=document.getElementById('mitarbeiterManager');
+  if(!container)return;
+  container.querySelectorAll('.mitarbeiter-name-input').forEach(inp=>{
+    inp.addEventListener('input',()=>{MITARBEITER[parseInt(inp.dataset.idx)]=inp.value;saveMitarbeiterListe();});
+  });
+  container.querySelectorAll('.mitarbeiter-del').forEach(btn=>{
+    btn.addEventListener('click',()=>{
+      MITARBEITER.splice(parseInt(btn.dataset.idx),1);saveMitarbeiterListe();refreshMitarbeiterManager();
+    });
+  });
+  const addBtn=document.getElementById('btnAddMitarbeiter');
+  if(addBtn){
+    addBtn.addEventListener('click',()=>{
+      MITARBEITER.push('Neuer Mitarbeiter');saveMitarbeiterListe();refreshMitarbeiterManager();
+    });
+  }
+}
+function refreshMitarbeiterManager(){
+  const c=document.getElementById('mitarbeiterManager');
+  if(c){c.innerHTML=renderMitarbeiterManagerHTML();setupMitarbeiterManagerListeners();}
 }
 
 function openDiagAdmin(){
@@ -2023,11 +2328,9 @@ function openMoveSheet(autoId){
       btn.addEventListener('click',()=>{
         a.status=s.id;a.statusSeit=uhrzeit();
         saveAuto(a);
-        // Mobile Tab auf neue Spalte wechseln
         activeMobileTab=s.id;
         document.body.removeChild(overlay);
         render();
-        // Kurz zur neuen Spalte scrollen
         setTimeout(()=>{
           const lane=document.querySelector('.lane.mobile-active');
           if(lane)lane.scrollIntoView({behavior:'smooth',block:'start'});
@@ -2037,7 +2340,21 @@ function openMoveSheet(autoId){
     sheet.appendChild(btn);
   });
 
-  // Fertig-Button extra
+  const btnAufb=document.createElement('button');
+  btnAufb.className='move-sheet-btn'+(a.status==='aufbereitung'?' current':'');
+  btnAufb.innerHTML=`<span class="move-icon">🧽</span><span style="flex:1">Aufbereitung</span>${a.status==='aufbereitung'?'<span style="font-size:12px;color:var(--text-muted)">← Aktuell</span>':''}`;
+  btnAufb.style.borderLeftColor='#67E8F9';
+  btnAufb.style.borderLeftWidth='3px';
+  if(a.status!=='aufbereitung'){
+    btnAufb.addEventListener('click',()=>{
+      a.status='aufbereitung';a.statusSeit=uhrzeit();
+      saveAuto(a);
+      document.body.removeChild(overlay);
+      render();
+    });
+  }
+  sheet.appendChild(btnAufb);
+
   const btnFertig=document.createElement('button');
   btnFertig.className='move-sheet-btn'+(a.status==='fertig'?' current':'');
   btnFertig.innerHTML=`<span class="move-icon">🏁</span><span style="flex:1">Fertige Aufträge</span>${a.status==='fertig'?'<span style="font-size:12px;color:var(--text-muted)">← Aktuell</span>':''}`;
@@ -2071,21 +2388,16 @@ let forceMobileView = localStorage.getItem('werkstatt-view') === 'mobile';
 function applyViewMode(){
   const btn = document.getElementById('viewToggleBtn');
   const lbl = document.getElementById('viewToggleLabel');
-  const mobileTabs = document.getElementById('mobileTabs');
-  const boardGrid = document.getElementById('boardGrid');
 
   if(forceMobileView){
-    // Force mobile layout
     document.body.classList.add('force-mobile');
     if(btn) btn.classList.add('mobile-mode');
     if(lbl) lbl.textContent = '📱 Mobil';
   } else {
-    // Auto / Desktop layout
     document.body.classList.remove('force-mobile');
     if(btn) btn.classList.remove('mobile-mode');
     if(lbl) lbl.textContent = '🖥 Desktop';
   }
-  // Re-render lanes
   updateMobileLanes();
 }
 
@@ -2096,14 +2408,8 @@ function toggleViewMode(){
   render();
 }
 
-// Override updateMobileLanes to respect forceMobileView
-const _origUpdateMobileLanes = typeof updateMobileLanes === 'function' ? updateMobileLanes : null;
-
 
 // ── FERTIGE AUFTRÄGE ZONE ──
-// Hover: rein per CSS (#fertigZone:hover #fertigDropdown)
-// JS nur für: Inhalt, Drag&Drop, Buttons
-
 function positionFertigDropdown(){
   const zone=document.getElementById('fertigZone');
   const dd=document.getElementById('fertigDropdown');
@@ -2130,7 +2436,6 @@ function renderFertigList(){
   fertige.forEach(a=>{
     const item=document.createElement('div');
     item.className='fertig-item';
-    // DRAGGABLE aus fertig-Liste zurück auf Board
     item.draggable=true;
     item.style.cursor='grab';
     item.title='Ziehen zum Verschieben in eine Spalte';
@@ -2140,7 +2445,6 @@ function renderFertigList(){
       dragFrom='fertig';
       e.dataTransfer.effectAllowed='move';
       item.style.opacity='0.5';
-      // Trash anzeigen
       const tr=document.getElementById('trash');
       if(tr)tr.classList.add('drag-active');
     });
@@ -2183,14 +2487,14 @@ function renderFertigList(){
   });
 }
 
-// ── FERTIG ZONE: vollständig JS-gesteuert (Chrome-kompatibel) ──
 let fertigHoverTimer=null;
-let fertigDragFromFertig=null; // ID wenn Drag AUS fertig-Liste
+let fertigDragFromFertig=null;
 
 function openFertigDD(){
   const zone=document.getElementById('fertigZone');
   const dd=document.getElementById('fertigDropdown');
   if(!zone||!dd)return;
+  closeAufbDD();
   renderFertigList();
   positionFertigDropdown();
   zone.classList.add('dd-open');
@@ -2210,50 +2514,185 @@ function cancelFertigClose(){
   clearTimeout(fertigHoverTimer);
 }
 
+// ── AUFBEREITUNG ZONE (exakt wie Fertig, eigener Status "aufbereitung") ──
+function positionAufbDropdown(){
+  const zone=document.getElementById('aufbereitungZone');
+  const dd=document.getElementById('aufbereitungDropdown');
+  if(!zone||!dd)return;
+  const rect=zone.getBoundingClientRect();
+  const ddW=Math.min(680,window.innerWidth-20);
+  let left=rect.left+(rect.width/2)-(ddW/2);
+  left=Math.max(10,Math.min(left,window.innerWidth-ddW-10));
+  dd.style.cssText=`position:fixed;display:block;pointer-events:all;z-index:9000;top:${rect.bottom+4}px;left:${left}px;width:${ddW}px;transform:none;min-width:unset;max-height:60vh;overflow-y:auto;`;
+}
+
+function renderAufbereitungList(){
+  const list=document.getElementById('aufbereitungList');
+  const countEl=document.getElementById('statAufbereitung');
+  if(!list)return;
+  const aufb=autos.filter(a=>a.status==='aufbereitung')
+    .sort((a,b)=>(b.statusSeit||'').localeCompare(a.statusSeit||''));
+  if(countEl)countEl.textContent=aufb.length;
+  if(aufb.length===0){
+    list.innerHTML='<div class="aufb-empty">Keine Aufträge in Aufbereitung</div>';
+    return;
+  }
+  list.innerHTML='';
+  aufb.forEach(a=>{
+    const item=document.createElement('div');
+    item.className='aufb-item';
+    item.draggable=true;
+    item.style.cursor='grab';
+    item.title='Ziehen zum Verschieben in eine Spalte';
+    item.addEventListener('dragstart',e=>{
+      aufbDragFromAufb=a.id;
+      dragId=a.id;
+      dragFrom='aufbereitung';
+      e.dataTransfer.effectAllowed='move';
+      item.style.opacity='0.5';
+      const tr=document.getElementById('trash');
+      if(tr)tr.classList.add('drag-active');
+    });
+    item.addEventListener('dragend',()=>{
+      aufbDragFromAufb=null;
+      dragId=null;dragFrom=null;
+      item.style.opacity='1';
+      const tr=document.getElementById('trash');
+      if(tr)tr.classList.remove('drag-active');
+    });
+
+    const dragHandle=document.createElement('span');
+    dragHandle.textContent='⠿';
+    dragHandle.style.cssText='color:var(--text-muted);font-size:16px;cursor:grab;flex-shrink:0;margin-right:2px;';
+
+    const kz=document.createElement('span');kz.className='aufb-kz';kz.textContent=a.kennzeichen||'—';
+    const info=document.createElement('div');info.className='aufb-info';
+    const k=document.createElement('div');k.className='aufb-kunde';k.textContent=a.kunde||'—';
+    const fz=document.createElement('div');fz.className='aufb-fz';fz.textContent=a.fahrzeug||'';
+    info.appendChild(k);if(a.fahrzeug)info.appendChild(fz);
+    const zeit=document.createElement('span');zeit.className='aufb-zeit';zeit.textContent=a.statusSeit||a.datum||'';
+    const btns=document.createElement('div');btns.className='aufb-item-btns';
+    const mkBtn=(txt,title,fn,red)=>{
+      const b=document.createElement('button');b.className='aufb-item-btn'+(red?' red':'');
+      b.textContent=txt;b.title=title;
+      b.addEventListener('click',e=>{e.stopPropagation();fn();});
+      return b;
+    };
+    btns.appendChild(mkBtn('✎','Bearbeiten',()=>{closeAufbDD();openEdit(a.id);}));
+    btns.appendChild(mkBtn('📝','Arbeiten',()=>{closeAufbDD();openArbeitenModal(a.id);}));
+    btns.appendChild(mkBtn('🧾','Rechnung',()=>{closeAufbDD();openRechnungskontrolle(a.id);}));
+    btns.appendChild(mkBtn('🏁','Fertig',()=>{
+      a.status='fertig';a.statusSeit=uhrzeit();
+      saveAuto(a);render();closeAufbDD();
+    }));
+    btns.appendChild(mkBtn('↩','Wieder öffnen → In Arbeit',()=>{
+      a.status='in_arbeit';a.statusSeit=uhrzeit();
+      collapsedCards.add(a.id);
+      saveAuto(a);render();closeAufbDD();
+    },true));
+    item.appendChild(dragHandle);
+    item.appendChild(kz);item.appendChild(info);item.appendChild(zeit);item.appendChild(btns);
+    list.appendChild(item);
+  });
+}
+
+let aufbHoverTimer=null;
+let aufbDragFromAufb=null;
+
+function openAufbDD(){
+  const zone=document.getElementById('aufbereitungZone');
+  const dd=document.getElementById('aufbereitungDropdown');
+  if(!zone||!dd)return;
+  closeFertigDD();
+  renderAufbereitungList();
+  positionAufbDropdown();
+  zone.classList.add('dd-open');
+  dd.style.display='block';
+  dd.style.pointerEvents='all';
+}
+function closeAufbDD(){
+  const zone=document.getElementById('aufbereitungZone');
+  const dd=document.getElementById('aufbereitungDropdown');
+  if(zone)zone.classList.remove('dd-open');
+  if(dd){dd.style.display='none';dd.style.pointerEvents='none';}
+}
+function scheduleAufbClose(){
+  aufbHoverTimer=setTimeout(closeAufbDD,350);
+}
+function cancelAufbClose(){
+  clearTimeout(aufbHoverTimer);
+}
+
 document.addEventListener('DOMContentLoaded',()=>{
   const zone=document.getElementById('fertigZone');
   const dd=document.getElementById('fertigDropdown');
-  if(!zone||!dd)return;
-
-  // Hover: Zone
-  zone.addEventListener('mouseenter',()=>{cancelFertigClose();openFertigDD();});
-  zone.addEventListener('mouseleave',()=>scheduleFertigClose());
-
-  // Hover: Dropdown selbst (hält es offen wenn Maus reingeht)
-  dd.addEventListener('mouseenter',()=>cancelFertigClose());
-  dd.addEventListener('mouseleave',()=>scheduleFertigClose());
-
-  // Click toggle (für Touch + Tastatur)
-  zone.querySelector('.fertig-btn-inner').addEventListener('click',e=>{
-    e.stopPropagation();
-    if(zone.classList.contains('dd-open'))closeFertigDD();
-    else openFertigDD();
-  });
-
-  // Außen-Klick schließt
-  document.addEventListener('click',e=>{
-    if(!zone.contains(e.target)&&!dd.contains(e.target))closeFertigDD();
-  });
-
-  // Drag IN: Karte auf FertigZone ziehen
-  zone.addEventListener('dragover',e=>{
-    e.preventDefault();
-    if(!fertigDragFromFertig)zone.classList.add('drag-over');
-  });
-  zone.addEventListener('dragleave',e=>{
-    if(!zone.contains(e.relatedTarget))zone.classList.remove('drag-over');
-  });
-  zone.addEventListener('drop',e=>{
-    e.preventDefault();zone.classList.remove('drag-over');
-    if(dragId&&!fertigDragFromFertig){
-      const a=autos.find(x=>x.id===dragId);
-      if(a){
-        a.status='fertig';a.statusSeit=uhrzeit();
-        saveAuto(a);render();
-        openFertigDD();
+  if(zone&&dd){
+    zone.addEventListener('mouseenter',()=>{cancelFertigClose();openFertigDD();});
+    zone.addEventListener('mouseleave',()=>scheduleFertigClose());
+    dd.addEventListener('mouseenter',()=>cancelFertigClose());
+    dd.addEventListener('mouseleave',()=>scheduleFertigClose());
+    zone.querySelector('.fertig-btn-inner').addEventListener('click',e=>{
+      e.stopPropagation();
+      if(zone.classList.contains('dd-open'))closeFertigDD();
+      else openFertigDD();
+    });
+    document.addEventListener('click',e=>{
+      if(!zone.contains(e.target)&&!dd.contains(e.target))closeFertigDD();
+    });
+    zone.addEventListener('dragover',e=>{
+      e.preventDefault();
+      if(!fertigDragFromFertig)zone.classList.add('drag-over');
+    });
+    zone.addEventListener('dragleave',e=>{
+      if(!zone.contains(e.relatedTarget))zone.classList.remove('drag-over');
+    });
+    zone.addEventListener('drop',e=>{
+      e.preventDefault();zone.classList.remove('drag-over');
+      if(dragId&&!fertigDragFromFertig){
+        const a=autos.find(x=>x.id===dragId);
+        if(a){
+          a.status='fertig';a.statusSeit=uhrzeit();
+          saveAuto(a);render();
+          openFertigDD();
+        }
       }
-    }
-  });
+    });
+  }
+
+  const azone=document.getElementById('aufbereitungZone');
+  const add=document.getElementById('aufbereitungDropdown');
+  if(azone&&add){
+    azone.addEventListener('mouseenter',()=>{cancelAufbClose();openAufbDD();});
+    azone.addEventListener('mouseleave',()=>scheduleAufbClose());
+    add.addEventListener('mouseenter',()=>cancelAufbClose());
+    add.addEventListener('mouseleave',()=>scheduleAufbClose());
+    azone.querySelector('.aufb-btn-inner').addEventListener('click',e=>{
+      e.stopPropagation();
+      if(azone.classList.contains('dd-open'))closeAufbDD();
+      else openAufbDD();
+    });
+    document.addEventListener('click',e=>{
+      if(!azone.contains(e.target)&&!add.contains(e.target))closeAufbDD();
+    });
+    azone.addEventListener('dragover',e=>{
+      e.preventDefault();
+      if(!aufbDragFromAufb)azone.classList.add('drag-over');
+    });
+    azone.addEventListener('dragleave',e=>{
+      if(!azone.contains(e.relatedTarget))azone.classList.remove('drag-over');
+    });
+    azone.addEventListener('drop',e=>{
+      e.preventDefault();azone.classList.remove('drag-over');
+      if(dragId&&!aufbDragFromAufb){
+        const a=autos.find(x=>x.id===dragId);
+        if(a){
+          a.status='aufbereitung';a.statusSeit=uhrzeit();
+          saveAuto(a);render();
+          openAufbDD();
+        }
+      }
+    });
+  }
 });
 
 // ── START ──
@@ -2261,8 +2700,6 @@ if(sessionStorage.getItem('werkstatt-auth')==='1'){
   document.getElementById('pinScreen').style.display='none';
   initMyName();loadAutos();startRealtime();
   setTimeout(applyViewMode,100);
-}else{
-  initBio();
 }
 </script>
 </body>
