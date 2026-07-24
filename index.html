@@ -284,7 +284,9 @@ input,select,textarea,button{font-family:var(--font-body);}
 .modal-box{background:var(--bg2);border:1px solid var(--border2);border-top:3px solid var(--red);
   border-radius:6px;width:100%;max-width:700px;padding:24px;
   box-shadow:0 40px 80px rgba(0,0,0,.8);max-height:92vh;overflow-y:auto;}
+.modal-box-large{max-width:1400px;width:96vw;max-height:96vh;}
 .modal-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;}
+.modal-header-actions{display:flex;align-items:center;gap:8px;}
 .modal-title{font-family:var(--font-head);font-weight:600;font-size:14px;color:var(--text);
   letter-spacing:.1em;text-transform:uppercase;}
 .modal-close{background:none;border:none;color:var(--text-dim);cursor:pointer;font-size:20px;padding:0 4px;}
@@ -1314,7 +1316,7 @@ function clearSearch(){document.getElementById('searchInput').value='';document.
 
 // ── MODAL ──
 let modalCloseGuard=null;
-function openModal(html){modalCloseGuard=null;document.getElementById('modalBox').innerHTML=html;document.getElementById('modalOverlay').style.display='flex';}
+function openModal(html){modalCloseGuard=null;const mb=document.getElementById('modalBox');mb.className='modal-box';mb.innerHTML=html;document.getElementById('modalOverlay').style.display='flex';}
 function closeModal(){
   if(modalCloseGuard&&!modalCloseGuard())return;
   document.getElementById('modalOverlay').style.display='none';
@@ -1342,14 +1344,14 @@ function openPdfViewer(url,name,autoPrint){
   openModal(`
     <div class="modal-header">
       <span class="modal-title">${istBild?'🖼':'📄'} ${name||(istBild?'Bild':'PDF-Dokument')}</span>
-      <button class="modal-close" onclick="closeModal()">✕</button>
+      <div class="modal-header-actions">
+        <button class="btn-primary" id="btnPdfDrucken">🖨 Drucken</button>
+        <button class="btn-secondary" onclick="closeModal()">✕ Schließen</button>
+      </div>
     </div>
-    <iframe id="pdfViewerFrame" src="${url}" style="width:100%;height:65vh;border:1px solid var(--border2);border-radius:6px;background:#fff;display:block"></iframe>
-    <div class="form-footer">
-      <button class="btn-secondary" onclick="closeModal()">Schließen</button>
-      <button class="btn-primary" id="btnPdfDrucken">🖨 Drucken</button>
-    </div>
+    <iframe id="pdfViewerFrame" src="${url}" style="width:100%;height:80vh;border:1px solid var(--border2);border-radius:6px;background:#fff;display:block"></iframe>
   `);
+  document.getElementById('modalBox').classList.add('modal-box-large');
   document.getElementById('btnPdfDrucken').addEventListener('click',()=>{
     const frame=document.getElementById('pdfViewerFrame');
     try{
@@ -1375,14 +1377,14 @@ function openHtmlPreview(htmlContent,title){
   openModal(`
     <div class="modal-header">
       <span class="modal-title">📄 ${title||'Vorschau'}</span>
-      <button class="modal-close" onclick="closeModal()">✕</button>
+      <div class="modal-header-actions">
+        <button class="btn-primary" id="btnPdfDrucken">🖨 Drucken</button>
+        <button class="btn-secondary" onclick="closeModal()">✕ Schließen</button>
+      </div>
     </div>
-    <iframe id="pdfViewerFrame" style="width:100%;height:65vh;border:1px solid var(--border2);border-radius:6px;background:#fff;display:block"></iframe>
-    <div class="form-footer">
-      <button class="btn-secondary" onclick="closeModal()">Schließen</button>
-      <button class="btn-primary" id="btnPdfDrucken">🖨 Drucken</button>
-    </div>
+    <iframe id="pdfViewerFrame" style="width:100%;height:80vh;border:1px solid var(--border2);border-radius:6px;background:#fff;display:block"></iframe>
   `);
+  document.getElementById('modalBox').classList.add('modal-box-large');
   const frame=document.getElementById('pdfViewerFrame');
   frame.srcdoc=htmlContent;
   document.getElementById('btnPdfDrucken').addEventListener('click',()=>{
@@ -1684,6 +1686,7 @@ function openDiagnose(autoId){
       <button class="btn-primary" id="btnDiagPDF">⬇ PDF exportieren</button>
     </div>
   `);
+  document.getElementById('modalBox').classList.add('modal-box-large');
 
   // Event Listeners für Buttons (OK / ✕ / Kein Nachweis)
   document.getElementById('modalBox').querySelectorAll('.diag-btn').forEach(btn=>{
@@ -1785,35 +1788,35 @@ function exportDiagnosePDF(autoId){
     if(v==='nok')return '<span style="background:#7f1d1d;color:#fca5a5;padding:2px 8px;border-radius:3px;font-size:11px;font-weight:700">✕</span>';
     if(v==='kein_nachweis')return '<span style="background:#374151;color:#93c5fd;padding:2px 8px;border-radius:3px;font-size:11px;font-weight:700">Kein Nachweis</span>';
     return '<span style="color:#aaa;font-size:11px">—</span>';}
-  function tbl(items,title){return `<table style="width:100%;border-collapse:collapse;margin-bottom:10px">
-    <thead><tr><th colspan="2" style="background:#C0141C;color:#fff;padding:5px 8px;font-size:12px;text-align:left">${title}</th></tr></thead>
-    <tbody>${items.map(k=>`<tr><td style="padding:5px 8px;border-bottom:1px solid #eee;font-size:12px">${k}</td><td style="padding:5px 8px;border-bottom:1px solid #eee;text-align:center">${badge(k)}</td></tr>`).join('')}</tbody>
+  function tbl(items,title){return `<table style="width:100%;border-collapse:collapse;margin-bottom:6px">
+    <thead><tr><th colspan="2" style="background:#C0141C;color:#fff;padding:4px 8px;font-size:11px;text-align:left">${title}</th></tr></thead>
+    <tbody>${items.map(k=>`<tr><td style="padding:3px 8px;border-bottom:1px solid #eee;font-size:11px">${k}</td><td style="padding:3px 8px;border-bottom:1px solid #eee;text-align:center">${badge(k)}</td></tr>`).join('')}</tbody>
   </table>`;}
-  const html=`<!DOCTYPE html><html><head><meta charset="UTF-8"/><style>body{font-family:Arial,sans-serif;margin:0;padding:20px;color:#000;font-size:13px;}.two{display:grid;grid-template-columns:1fr 1fr;gap:8px;}.box{border:1px solid #ddd;border-radius:4px;padding:8px 10px;margin-bottom:8px;}.label{font-size:10px;color:#888;text-transform:uppercase;letter-spacing:.06em;}@media print{@page{margin:15mm;}}</style></head><body>
-  <div style="display:flex;justify-content:space-between;border-bottom:3px solid #C0141C;padding-bottom:10px;margin-bottom:14px">
-    <div><div style="font-size:18px;font-weight:700">KFZ-Meisterbetrieb</div><div style="color:#C0141C;font-weight:700;font-size:13px">AUTOPARTNER AMERICANCARS</div><div style="font-size:11px;color:#666">Auf dem Lölfert 37 · 58119 Hagen · 02334/808140</div></div>
-    <div style="color:#C0141C;font-size:18px;font-weight:700">Diagnose</div>
+  const html=`<!DOCTYPE html><html><head><meta charset="UTF-8"/><style>body{font-family:Arial,sans-serif;margin:0;padding:16px;color:#000;font-size:12px;}.two{display:grid;grid-template-columns:1fr 1fr;gap:6px;}.box{border:1px solid #ddd;border-radius:4px;padding:6px 10px;margin-bottom:6px;}.label{font-size:9px;color:#888;text-transform:uppercase;letter-spacing:.06em;}@media print{@page{margin:12mm;}}</style></head><body>
+  <div style="display:flex;justify-content:space-between;border-bottom:2px solid #C0141C;padding-bottom:6px;margin-bottom:10px">
+    <div><div style="font-size:16px;font-weight:700">KFZ-Meisterbetrieb</div><div style="color:#C0141C;font-weight:700;font-size:12px">AUTOPARTNER AMERICANCARS</div><div style="font-size:10px;color:#666">Auf dem Lölfert 37 · 58119 Hagen · 02334/808140</div></div>
+    <div style="color:#C0141C;font-size:16px;font-weight:700">Diagnose</div>
   </div>
-  <div class="two" style="margin-bottom:12px">
+  <div class="two" style="margin-bottom:8px">
     <div class="box"><div class="label">Kunde</div><div style="font-weight:700">${a.kunde||'—'}</div></div>
     <div class="box"><div class="label">Fahrzeug</div><div style="font-weight:700">${a.fahrzeug||'—'}</div></div>
     <div class="box"><div class="label">Kennzeichen</div><div style="font-weight:700">${a.kennzeichen||'—'}</div></div>
     <div class="box"><div style="display:grid;grid-template-columns:1fr 1fr;gap:8px"><div><div class="label">KM-Stand</div><div style="font-weight:700">${d.km||'—'}</div></div><div><div class="label">TÜV</div><div style="font-weight:700">${d.tuev||'—'}${d.tuev_abgelaufen?' <span style="color:#c0141c">(abgelaufen)</span>':''}</div></div></div></div>
   </div>
-  <div class="two" style="margin-bottom:10px">
+  <div class="two" style="margin-bottom:6px">
     ${tbl(DIAG_ITEMS_LEFT,'Allgemein (1)')}
     ${tbl(DIAG_ITEMS_RIGHT,'Allgemein (2)')}
   </div>
-  <div class="two" style="margin-bottom:10px">
+  <div class="two" style="margin-bottom:6px">
     ${tbl(DIAG_REIFEN,'Reifen')}
     ${tbl(DIAG_BREMSEN,'Bremsen')}
   </div>
-  ${d.fehlerspeicher?`<div class="box" style="margin-bottom:8px"><div class="label">Fehlerspeicher</div>${d.fehlerspeicher}</div>`:''}
-  ${d.was_machen?`<div class="box" style="margin-bottom:8px"><div class="label">Was muss gemacht werden?</div>${d.was_machen}</div>`:''}
+  ${d.fehlerspeicher?`<div class="box" style="margin-bottom:6px"><div class="label">Fehlerspeicher</div>${d.fehlerspeicher}</div>`:''}
+  ${d.was_machen?`<div class="box" style="margin-bottom:6px"><div class="label">Was muss gemacht werden?</div>${d.was_machen}</div>`:''}
   ${d.hinweise?`<div class="box"><div class="label">Hinweise</div>${d.hinweise}</div>`:''}
-  <div style="margin-top:20px;display:grid;grid-template-columns:1fr 1fr;gap:40px">
-    <div style="border-top:1px solid #000;padding-top:4px;font-size:11px;color:#666">Datum / Unterschrift Mechaniker</div>
-    <div style="border-top:1px solid #000;padding-top:4px;font-size:11px;color:#666">Datum / Unterschrift Kunde</div>
+  <div style="margin-top:14px;display:grid;grid-template-columns:1fr 1fr;gap:40px">
+    <div style="border-top:1px solid #000;padding-top:4px;font-size:10px;color:#666">Datum / Unterschrift Mechaniker</div>
+    <div style="border-top:1px solid #000;padding-top:4px;font-size:10px;color:#666">Datum / Unterschrift Kunde</div>
   </div>
   </body></html>`;
   openHtmlPreview(html,'Diagnose — '+(a.kennzeichen||''));
