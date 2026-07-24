@@ -75,8 +75,12 @@ input,select,textarea,button{font-family:var(--font-body);}
   font-size:10px;font-weight:700;font-family:var(--font-head);letter-spacing:.04em;flex-shrink:0;}
 .lane-body{border-radius:0 0 6px 6px;padding:6px;flex:1;overflow-y:auto;
   transition:background .15s,border-color .15s;border:2px solid var(--border);background:var(--bg2);}
+.lane-body.ptr-drop-target{background:#1a0a0a;border-color:var(--red);box-shadow:inset 0 0 20px rgba(192,20,28,0.22);}
 .lane-empty{color:var(--text-muted);text-align:center;padding:20px 8px;font-size:12px;
   font-family:var(--font-head);letter-spacing:.06em;text-transform:uppercase;}
+.ptr-ghost{position:fixed;z-index:500;pointer-events:none;background:var(--bg4);border:2px solid var(--red);
+  border-radius:6px;padding:8px 14px;font-family:var(--font-head);font-weight:700;font-size:14px;color:var(--text);
+  box-shadow:0 8px 20px rgba(0,0,0,.5);max-width:220px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 
 /* CARD */
 .card-wrap{margin-bottom:6px;border-radius:6px;overflow:hidden;}
@@ -321,7 +325,7 @@ input,select,textarea,button{font-family:var(--font-body);}
 .zone-btn{display:flex;align-items:center;gap:10px;background:var(--bg3);border:2px solid var(--zone-border,var(--border2));
   border-radius:8px;padding:12px 20px;cursor:pointer;font-family:var(--font-head);font-size:15px;font-weight:700;
   letter-spacing:.06em;text-transform:uppercase;color:var(--zone-accent,var(--text-dim));white-space:nowrap;transition:background .15s;}
-.zone-btn:hover,.zone-btn.drag-over{background:var(--bg4);}
+.zone-btn:hover,.zone-btn.ptr-drop-target{background:var(--bg4);}
 .zone-btn-icon{font-size:20px;}
 .zone-btn-count{background:var(--zone-accent,var(--red));color:#0a0a0a;border-radius:5px;min-width:26px;height:26px;
   display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:800;padding:0 6px;}
@@ -343,35 +347,33 @@ input,select,textarea,button{font-family:var(--font-body);}
 .zone-card-actions button{background:var(--bg4);border:1px solid var(--border2);border-radius:4px;
   color:var(--text-dim);padding:5px 6px;cursor:pointer;font-size:11px;font-weight:600;white-space:nowrap;}
 .zone-card-actions button:hover{background:var(--bg2);color:var(--text);}
-.zone-mobile-lane{display:none;}
 
 /* MITARBEITERBOARD */
 #mitarbeiterBoard{border-top:2px solid var(--red);background:var(--bg2);flex-shrink:0;
-  padding:14px 16px;max-height:52vh;overflow-y:auto;}
-.mab-title{font-family:var(--font-head);font-size:14px;font-weight:700;letter-spacing:.1em;
-  text-transform:uppercase;color:var(--red);margin-bottom:12px;display:flex;align-items:center;gap:8px;}
-.mab-row{display:flex;align-items:center;gap:14px;background:var(--bg3);border:1px solid var(--border);
-  border-radius:8px;padding:14px 16px;margin-bottom:10px;min-height:88px;transition:border-color .15s,background .15s;}
-.mab-row.drop-over{border-color:var(--red);background:rgba(192,20,28,0.08);}
-.mab-name{width:150px;flex-shrink:0;font-family:var(--font-head);font-size:18px;font-weight:600;
+  padding:10px 12px;max-height:52vh;overflow-y:auto;}
+.mab-row-pair{display:flex;align-items:stretch;background:var(--bg3);border:1px solid var(--border);
+  border-radius:6px;margin-bottom:6px;overflow:hidden;min-height:0;}
+.mab-half{display:flex;align-items:center;gap:10px;padding:8px 12px;flex:1;min-width:0;
+  transition:border-color .15s,background .15s;}
+.mab-half.ptr-drop-target{background:rgba(192,20,28,0.08);}
+.mab-half.empty-slot{visibility:hidden;}
+.mab-divider{width:1px;background:var(--border2);flex-shrink:0;}
+.mab-name{width:84px;flex-shrink:0;font-family:var(--font-head);font-size:14px;font-weight:600;
   letter-spacing:.03em;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
-.mab-empty{flex-shrink:0;}
-.mab-cards{display:flex;gap:12px;flex:1;overflow-x:auto;min-height:60px;align-items:center;}
-.mab-cards:empty::after{content:'Auftrag hierher ziehen';color:var(--text-muted);font-size:11px;
-  font-family:var(--font-head);letter-spacing:.05em;text-transform:uppercase;}
-.mab-card{border-radius:8px;padding:10px 14px;min-width:220px;flex-shrink:0;background:var(--bg4);
-  border:1px solid var(--border2);cursor:grab;position:relative;}
-.mab-card.aktuell{border-color:#E8454D;box-shadow:0 0 10px rgba(192,20,28,0.18);}
+.mab-cards{display:flex;gap:6px;flex:1;overflow-x:auto;min-height:32px;align-items:center;min-width:0;}
+.mab-card{display:flex;align-items:center;gap:6px;border-radius:5px;padding:5px 9px;flex-shrink:0;
+  background:var(--bg4);border:1px solid var(--border2);cursor:grab;position:relative;white-space:nowrap;}
+.mab-card.aktuell{border-color:#E8454D;box-shadow:0 0 8px rgba(192,20,28,0.18);}
 .mab-card:not(.aktuell){opacity:.65;}
-.mab-card-kz{font-family:var(--font-head);font-size:17px;font-weight:700;color:var(--text-dim);}
+.mab-card-kz{font-family:var(--font-head);font-size:13px;font-weight:700;color:var(--text-dim);}
 .mab-card.aktuell .mab-card-kz{color:#E8454D;}
-.mab-card-fahrzeug{font-size:13px;color:var(--silver);margin-top:3px;}
-.mab-card-kunde{font-size:12px;color:var(--text-dim);margin-top:1px;}
-.mab-card-x{position:absolute;top:6px;right:8px;background:none;border:none;color:var(--text-muted);
-  cursor:pointer;font-size:15px;padding:0;line-height:1;}
+.mab-card-fahrzeug{font-size:11px;color:var(--silver);}
+.mab-card-kunde{font-size:11px;color:var(--text-dim);}
+.mab-card-x{background:none;border:none;color:var(--text-muted);
+  cursor:pointer;font-size:13px;padding:0 0 0 2px;line-height:1;flex-shrink:0;}
 .mab-card-x:hover{color:var(--red);}
-.mab-empty-text{flex:1;font-size:13px;color:var(--text-muted);font-family:var(--font-head);
-  letter-spacing:.05em;text-transform:uppercase;}
+.mab-empty-text{flex:1;font-size:11px;color:var(--text-muted);font-family:var(--font-head);
+  letter-spacing:.05em;text-transform:uppercase;white-space:nowrap;}
 .mab-admin-row{display:flex;align-items:center;gap:6px;margin-bottom:6px;}
 .mab-admin-row input{flex:1;background:var(--bg4);border:1px solid var(--border2);border-radius:4px;
   color:var(--text);padding:6px 10px;font-size:13px;outline:none;}
@@ -394,9 +396,15 @@ input,select,textarea,button{font-family:var(--font-body);}
   .lane{display:none;}
   .lane.mobile-active{display:flex;}
   #mitarbeiterBoard{max-height:none;}
-  .mab-name{width:110px;font-size:15px;}
-  .mab-card{min-width:170px;padding:8px 10px;}
-  #zoneButtons{display:none;}
+  .mab-row-pair{flex-direction:column;}
+  .mab-divider{width:100%;height:1px;}
+  .mab-name{width:90px;font-size:14px;}
+  #zoneButtons{gap:8px;flex-wrap:wrap;justify-content:center;width:100%;order:3;}
+  .zone-btn{padding:8px 12px;font-size:12px;gap:6px;}
+  .zone-btn-icon{font-size:16px;}
+  .zone-dropdown{min-width:280px;max-width:calc(100vw - 24px);}
+  .zone-card{flex-direction:column;align-items:stretch;}
+  .zone-card-actions{flex-direction:row;width:auto;}
   .diag-grid{grid-template-columns:1fr;}
   .diag-row{flex-wrap:wrap;row-gap:6px;}
   .diag-btns{flex-wrap:wrap;}
@@ -478,7 +486,6 @@ input,select,textarea,button{font-family:var(--font-body);}
 </div>
 
 <div id="mitarbeiterBoard">
-  <div class="mab-title"><span>👥 Mitarbeiter — Tagesplanung</span></div>
   <div id="mabRows"></div>
 </div>
 
@@ -548,7 +555,7 @@ const DIAG_ITEMS_RIGHT = JSON.parse(localStorage.getItem('werkstatt-diag-right')
 const DIAG_BREMSEN = ['Bremsscheiben vorne','Bremsbeläge vorne','Bremsscheiben hinten','Bremsbeläge hinten','Bremsleitungen vorne','Bremsleitungen hinten'];
 const DIAG_REIFEN  = ['Reifen VR','Reifen VL','Reifen HR','Reifen HL'];
 
-let autos=[], dragId=null, dragFrom=null;
+let autos=[];
 let collapsedCards=new Set(), expandedCards=new Set();
 let currentSearch='';
 let activeMobileTab = STATI[0].id;
@@ -780,51 +787,128 @@ function startRealtime(){
   },5000);
 }
 
-// ── MÜLLEIMER ──
+// ── DRAG & DROP (Pointer Events — funktioniert einheitlich mit Maus UND Touch) ──
 const trash=document.getElementById('trash');
-document.addEventListener('dragstart',()=>trash.classList.add('drag-active'));
-document.addEventListener('dragend',()=>{trash.classList.remove('drag-active','over');document.getElementById('trashIcon').textContent='🗑️';});
-trash.addEventListener('dragover',e=>{e.preventDefault();trash.classList.add('over');document.getElementById('trashIcon').textContent='🔥';});
-trash.addEventListener('dragleave',()=>{trash.classList.remove('over');document.getElementById('trashIcon').textContent='🗑️';});
-trash.addEventListener('drop',e=>{
-  e.preventDefault();trash.classList.remove('over');document.getElementById('trashIcon').textContent='🗑️';
-  if(dragId){
-    const id=dragId;dragId=null;dragFrom=null;
-    const a=autos.find(x=>x.id===id);
-    openConfirm(`Auftrag "${a?.kennzeichen||id}" endgültig löschen?`,async()=>{autos=autos.filter(x=>x.id!==id);await deleteAuto(id);render();});
-  }
-});
+let ptrDrag=null;          // {kind:'board'|'assign', id, source, el, startX, startY, moved, ghost}
+let dropHighlightEl=null;
+let suppressClickUntil=0;
+const PTR_DRAG_THRESHOLD=8;
 
-// Zusätzliche, koordinatenbasierte Erkennung für das Droppen in eine Mitarbeiterzeile:
-// greift unabhängig davon, welches innere Element der Browser als exaktes Drop-Ziel meldet.
-document.addEventListener('dragover',e=>{if(dragId||dragAssignId)e.preventDefault();});
-document.addEventListener('drop',e=>{
-  if(!dragId&&!dragAssignId)return;
-  const row=[...document.querySelectorAll('.mab-row')].find(r=>{
-    const rect=r.getBoundingClientRect();
-    return e.clientX>=rect.left&&e.clientX<=rect.right&&e.clientY>=rect.top&&e.clientY<=rect.bottom;
+function wireDraggable(el,kind,idFn,sourceFn){
+  el.style.touchAction='none'; // verhindert Scrollen des Bildschirms während des Ziehens
+  el.addEventListener('pointerdown',e=>{
+    if(e.pointerType==='mouse'&&e.button!==0)return;
+    if(e.target.closest('button'))return;
+    ptrDrag={kind,id:idFn(),source:sourceFn(),el,startX:e.clientX,startY:e.clientY,moved:false,ghost:null};
+    try{el.setPointerCapture(e.pointerId);}catch(err){}
   });
-  if(!row)return;
-  e.preventDefault();
-  const maId=row.dataset.maId;
-  if(dragId){
-    const a=autos.find(x=>x.id===dragId); if(!a)return;
-    const maxPos=Math.max(0,...autos.filter(x=>x.zugewiesenAn===maId).map(x=>x.zuwPos||0));
-    a.zugewiesenAn=maId;a.zuwPos=maxPos+1;saveAuto(a);render();
-  }else if(dragAssignId){
-    const a=autos.find(x=>x.id===dragAssignId); if(!a)return;
-    if(dragAssignFrom!==maId){
-      const maxPos=Math.max(0,...autos.filter(x=>x.zugewiesenAn===maId).map(x=>x.zuwPos||0));
+  el.addEventListener('pointermove',ptrDragMove);
+  el.addEventListener('pointerup',ptrDragEnd);
+  el.addEventListener('pointercancel',ptrDragCancel);
+}
+
+function ptrDragMove(e){
+  if(!ptrDrag)return;
+  const dx=e.clientX-ptrDrag.startX, dy=e.clientY-ptrDrag.startY;
+  if(!ptrDrag.moved&&Math.hypot(dx,dy)>PTR_DRAG_THRESHOLD){
+    ptrDrag.moved=true;
+    ptrDrag.ghost=document.createElement('div');
+    ptrDrag.ghost.className='ptr-ghost';
+    ptrDrag.ghost.textContent=(ptrDrag.el.textContent||'').trim().replace(/\s+/g,' ').slice(0,44);
+    document.body.appendChild(ptrDrag.ghost);
+    ptrDrag.el.style.opacity='0.35';
+    if(ptrDrag.kind==='board'){trash.classList.add('drag-active');}
+  }
+  if(ptrDrag.moved){
+    ptrDrag.ghost.style.left=(e.clientX+14)+'px';
+    ptrDrag.ghost.style.top=(e.clientY+14)+'px';
+    updateDropHighlight(e.clientX,e.clientY);
+    e.preventDefault();
+  }
+}
+
+function updateDropHighlight(x,y){
+  const el=document.elementFromPoint(x,y);
+  let target=null;
+  if(el){
+    if(ptrDrag.kind==='board')target=el.closest('#trash');
+    if(!target)target=el.closest('.lane-body')||el.closest('.zone-btn')||el.closest('.mab-half[data-ma-id]');
+  }
+  if(target!==dropHighlightEl){
+    if(dropHighlightEl){dropHighlightEl.classList.remove('ptr-drop-target');if(dropHighlightEl.id==='trash'){trash.classList.remove('over');document.getElementById('trashIcon').textContent='🗑️';}}
+    if(target){target.classList.add('ptr-drop-target');if(target.id==='trash'){trash.classList.add('over');document.getElementById('trashIcon').textContent='🔥';}}
+    dropHighlightEl=target;
+  }
+}
+function clearDropHighlight(){
+  if(dropHighlightEl){dropHighlightEl.classList.remove('ptr-drop-target');if(dropHighlightEl.id==='trash'){trash.classList.remove('over');document.getElementById('trashIcon').textContent='🗑️';}}
+  dropHighlightEl=null;
+}
+
+function ptrDragEnd(e){
+  if(!ptrDrag)return;
+  if(ptrDrag.moved){
+    performPtrDrop(e.clientX,e.clientY,ptrDrag);
+    ptrDrag.el.style.opacity='';
+    if(ptrDrag.ghost)ptrDrag.ghost.remove();
+    clearDropHighlight();
+    trash.classList.remove('drag-active','over');
+    document.getElementById('trashIcon').textContent='🗑️';
+    suppressClickUntil=Date.now()+300;
+  }
+  ptrDrag=null;
+}
+function ptrDragCancel(){
+  if(!ptrDrag)return;
+  ptrDrag.el.style.opacity='';
+  if(ptrDrag.ghost)ptrDrag.ghost.remove();
+  clearDropHighlight();
+  trash.classList.remove('drag-active','over');
+  document.getElementById('trashIcon').textContent='🗑️';
+  ptrDrag=null;
+}
+
+function performPtrDrop(x,y,drag){
+  const el=document.elementFromPoint(x,y);
+  if(!el)return;
+  if(drag.kind==='board'&&el.closest('#trash')){
+    const id=drag.id;
+    const a=autos.find(v=>v.id===id);
+    openConfirm(`Auftrag "${a?.kennzeichen||id}" endgültig löschen?`,async()=>{autos=autos.filter(v=>v.id!==id);await deleteAuto(id);render();});
+    return;
+  }
+  const laneBody=el.closest('.lane-body');
+  if(laneBody){
+    const status=laneBody.closest('.lane').dataset.status;
+    const a=autos.find(v=>v.id===drag.id);
+    if(a&&a.status!==status){a.status=status;a.statusSeit=uhrzeit();saveAuto(a);render();}
+    return;
+  }
+  const zoneBtn=el.closest('.zone-btn');
+  if(zoneBtn){
+    const wrap=zoneBtn.closest('.zone-btn-wrap');
+    const status=wrap?.dataset.zoneId;
+    const a=autos.find(v=>v.id===drag.id);
+    if(status&&a&&a.status!==status){a.status=status;a.statusSeit=uhrzeit();saveAuto(a);render();}
+    return;
+  }
+  const mabHalf=el.closest('.mab-half[data-ma-id]');
+  if(mabHalf){
+    const maId=mabHalf.dataset.maId;
+    const a=autos.find(v=>v.id===drag.id);
+    if(a){
+      const maxPos=Math.max(0,...autos.filter(v=>v.zugewiesenAn===maId).map(v=>v.zuwPos||0));
       a.zugewiesenAn=maId;a.zuwPos=maxPos+1;saveAuto(a);render();
     }
+    return;
   }
-});
+}
 
 // ── MOBILE TABS ──
 function renderMobileTabs(){
   const c=document.getElementById('mobileTabs');if(!c)return;
   c.innerHTML='';
-  const sichtbar = STATI.filter(s=>!s.hidden);
+  const sichtbar = STATI.filter(s=>!s.hidden && !s.headerZone);
   if(!sichtbar.find(s=>s.id===activeMobileTab) && sichtbar.length>0) activeMobileTab = sichtbar[0].id;
   sichtbar.forEach(s=>{
     const count=autos.filter(a=>a.status===s.id).length;
@@ -861,14 +945,6 @@ function render(){
 
   sichtbareSpalten.forEach(s=>grid.appendChild(buildLane(s)));
 
-  // Zonen-Buttons (Neue Aufträge/Langeweile/Aufbereitung/Fertig) bekommen zusätzlich eine
-  // versteckte Lane, damit sie auf dem Handy trotzdem über die Mobile-Tabs erreichbar sind
-  document.querySelectorAll('.zone-mobile-lane').forEach(el=>el.remove());
-  STATI.filter(s=>!s.hidden && s.headerZone).forEach(s=>{
-    const lane=buildLane(s);lane.classList.add('zone-mobile-lane');
-    document.getElementById('board').appendChild(lane);
-  });
-
   renderMobileTabs();updateMobileLanes();
   renderZoneButtons();
   renderMitarbeiterZeilen();
@@ -897,12 +973,6 @@ function buildLane(s){
   lane.appendChild(hdr);
 
   const body=document.createElement('div');body.className='lane-body';
-  body.addEventListener('dragover',e=>{e.preventDefault();if(dragFrom!==s.id){body.style.background='#1a0a0a';body.style.borderColor=s.accent;body.style.boxShadow=`inset 0 0 20px ${s.glow}`;}});
-  body.addEventListener('dragleave',()=>{body.style.background='';body.style.borderColor='';body.style.boxShadow='';});
-  body.addEventListener('drop',e=>{
-    e.preventDefault();body.style.background='';body.style.borderColor='';body.style.boxShadow='';
-    if(dragId&&dragFrom!==s.id){const a=autos.find(x=>x.id===dragId);if(a){a.status=s.id;a.statusSeit=uhrzeit();saveAuto(a);}render();}
-  });
 
   if(cards.length===0){body.innerHTML='<div class="lane-empty">Leer</div>';}
   else cards.forEach(a=>body.appendChild(makeCard(a,s,autoCollapse,isCollapsed(a.id,autoCollapse))));
@@ -917,10 +987,9 @@ function makeCard(a,s,autoCollapse,collapsed){
 
   if(a.status==='fertig'){const b=document.createElement('div');b.className='abholbereit-banner';b.textContent='🏁 Fahrzeug abholbereit';wrap.appendChild(b);}
 
-  const top=document.createElement('div');top.className='card-top';top.draggable=true;
-  top.addEventListener('dragstart',e=>{dragId=a.id;dragFrom=a.status;e.dataTransfer.effectAllowed='move';setTimeout(()=>wrap.style.opacity='0.4',0);});
-  top.addEventListener('dragend',()=>{wrap.style.opacity='1';dragId=null;dragFrom=null;});
-  top.addEventListener('click',()=>toggleCard(a.id,autoCollapse));
+  const top=document.createElement('div');top.className='card-top';
+  wireDraggable(top,'board',()=>a.id,()=>a.status);
+  top.addEventListener('click',()=>{if(Date.now()<suppressClickUntil)return;toggleCard(a.id,autoCollapse);});
 
   const prio=document.createElement('div');prio.className='card-top-prio';
   prio.style.cssText=`background:${PRIO_DOT[a.prioritaet]};${a.prioritaet!=='Normal'?`box-shadow:0 0 5px ${PRIO_DOT[a.prioritaet]}`:''}`;
@@ -1000,7 +1069,7 @@ function renderZoneButtons(){
   STATI.filter(s=>s.headerZone&&!s.hidden).forEach(s=>{
     const cards=autos.filter(a=>a.status===s.id);
 
-    const wrap=document.createElement('div');wrap.className='zone-btn-wrap';
+    const wrap=document.createElement('div');wrap.className='zone-btn-wrap';wrap.dataset.zoneId=s.id;
     wrap.style.setProperty('--zone-accent',s.accent);
     wrap.style.setProperty('--zone-border',s.accent+'55');
 
@@ -1017,7 +1086,7 @@ function renderZoneButtons(){
       dd.innerHTML='<div class="zone-dropdown-empty">Leer</div>';
     }else{
       cards.forEach(a=>{
-        const zc=document.createElement('div');zc.className='zone-card';zc.draggable=true;
+        const zc=document.createElement('div');zc.className='zone-card';
         zc.innerHTML=`<div class="zone-card-info">
             <div class="zone-card-top"><span class="zone-card-kz">${a.kennzeichen||'—'}</span><span class="zone-card-fahrzeug">${a.fahrzeug||''}</span></div>
             <div class="zone-card-kunde">${a.kunde||''}</div>
@@ -1027,8 +1096,7 @@ function renderZoneButtons(){
             <button data-act="diag">📋 Diagnose</button>
             <button data-act="arbeit">📝 Arbeiten</button>
           </div>`;
-        zc.addEventListener('dragstart',e=>{dragId=a.id;dragFrom=s.id;e.dataTransfer.effectAllowed='move';});
-        zc.addEventListener('dragend',()=>{dragId=null;dragFrom=null;});
+        wireDraggable(zc,'board',()=>a.id,()=>a.status);
         zc.querySelector('[data-act="edit"]').addEventListener('click',e=>{e.stopPropagation();openEdit(a.id);});
         zc.querySelector('[data-act="diag"]').addEventListener('click',e=>{e.stopPropagation();openDiagnose(a.id);});
         zc.querySelector('[data-act="arbeit"]').addEventListener('click',e=>{e.stopPropagation();openArbeitenModal(a.id);});
@@ -1043,25 +1111,21 @@ function renderZoneButtons(){
       dd.style.top=(rect.bottom+4)+'px';
     }
     wrap.addEventListener('mouseenter',positionDropdown);
-
-    // Drop-Ziel: sowohl Button als auch Dropdown nehmen Karten per Drag&Drop an
-    [btn,dd].forEach(el=>{
-      el.addEventListener('dragover',e=>{e.preventDefault();wrap.classList.add('force-open');btn.classList.add('drag-over');positionDropdown();});
-      el.addEventListener('dragleave',()=>{btn.classList.remove('drag-over');});
-      el.addEventListener('drop',e=>{
-        e.preventDefault();btn.classList.remove('drag-over');wrap.classList.remove('force-open');
-        if(dragId&&dragFrom!==s.id){
-          const a=autos.find(x=>x.id===dragId);
-          if(a){a.status=s.id;a.statusSeit=uhrzeit();saveAuto(a);}
-          render();
-        }
-      });
+    // Tippen zum Öffnen/Schließen — nötig auf Touch-Geräten, da es dort kein Hover gibt
+    btn.addEventListener('click',e=>{
+      if(Date.now()<suppressClickUntil)return;
+      e.stopPropagation();
+      const isOpen=wrap.classList.contains('force-open');
+      document.querySelectorAll('.zone-btn-wrap.force-open').forEach(w=>w.classList.remove('force-open'));
+      if(!isOpen){positionDropdown();wrap.classList.add('force-open');}
     });
-    wrap.addEventListener('mouseleave',()=>wrap.classList.remove('force-open'));
 
     c.appendChild(wrap);
   });
 }
+document.addEventListener('click',e=>{
+  if(!e.target.closest('.zone-btn-wrap'))document.querySelectorAll('.zone-btn-wrap.force-open').forEach(w=>w.classList.remove('force-open'));
+});
 
 // ── MITARBEITER (Zuweisungs-Zeilen) ──
 let MITARBEITERLISTE = [];
@@ -1071,8 +1135,6 @@ let MITARBEITERLISTE = [];
 })();
 function saveMitarbeiterliste(){ localStorage.setItem('werkstatt-mitarbeiterliste', JSON.stringify(MITARBEITERLISTE)); }
 
-let dragAssignId=null, dragAssignFrom=null;
-
 function renderMitarbeiterZeilen(){
   const c=document.getElementById('mabRows'); if(!c) return;
   c.innerHTML='';
@@ -1080,11 +1142,14 @@ function renderMitarbeiterZeilen(){
     c.innerHTML='<div style="color:var(--text-muted);font-size:12px;padding:6px 2px">Noch keine Mitarbeiter angelegt — im Adminbereich hinzufügen.</div>';
     return;
   }
-  MITARBEITERLISTE.forEach(ma=>{
-    const row=document.createElement('div');row.className='mab-row';row.dataset.maId=ma.id;
+
+  function buildHalf(ma){
+    const half=document.createElement('div');half.className='mab-half';
+    if(!ma){half.classList.add('empty-slot');return half;}
+    half.dataset.maId=ma.id;
 
     const name=document.createElement('div');name.className='mab-name';name.textContent=ma.name;name.title=ma.name;
-    row.appendChild(name);
+    half.appendChild(name);
 
     const cardsWrap=document.createElement('div');cardsWrap.className='mab-cards';
 
@@ -1098,43 +1163,27 @@ function renderMitarbeiterZeilen(){
 
     zugewiesen.forEach((a,i)=>{
       const mc=document.createElement('div');mc.className='mab-card'+(i===0?' aktuell':'');
-      mc.draggable=true;
-      mc.addEventListener('dragstart',e=>{dragAssignId=a.id;dragAssignFrom=ma.id;e.stopPropagation();e.dataTransfer.effectAllowed='move';});
-      mc.addEventListener('dragend',()=>{dragAssignId=null;dragAssignFrom=null;});
-      const kzEl=document.createElement('div');kzEl.className='mab-card-kz';kzEl.textContent=a.kennzeichen||'—';
-      const fahrzeugEl=document.createElement('div');fahrzeugEl.className='mab-card-fahrzeug';fahrzeugEl.textContent=a.fahrzeug||'';
-      const kundeEl=document.createElement('div');kundeEl.className='mab-card-kunde';kundeEl.textContent=a.kunde||'';
+      wireDraggable(mc,'assign',()=>a.id,()=>ma.id);
+      const kzEl=document.createElement('span');kzEl.className='mab-card-kz';kzEl.textContent=a.kennzeichen||'—';
+      const fahrzeugEl=document.createElement('span');fahrzeugEl.className='mab-card-fahrzeug';fahrzeugEl.textContent=a.fahrzeug||'';
+      const kundeEl=document.createElement('span');kundeEl.className='mab-card-kunde';kundeEl.textContent=a.kunde||'';
       const xBtn=document.createElement('button');xBtn.className='mab-card-x';xBtn.textContent='✕';xBtn.title='Zuweisung entfernen';
       xBtn.addEventListener('click',e=>{e.stopPropagation();a.zugewiesenAn=null;a.zuwPos=0;saveAuto(a);render();});
       mc.appendChild(kzEl);mc.appendChild(fahrzeugEl);mc.appendChild(kundeEl);mc.appendChild(xBtn);
       cardsWrap.appendChild(mc);
     });
 
-    row.appendChild(cardsWrap);
+    half.appendChild(cardsWrap);
+    return half;
+  }
 
-    function assignToThisMitarbeiter(){
-      if(dragId){
-        const a=autos.find(x=>x.id===dragId); if(!a) return;
-        const maxPos=Math.max(0,...autos.filter(x=>x.zugewiesenAn===ma.id).map(x=>x.zuwPos||0));
-        a.zugewiesenAn=ma.id;a.zuwPos=maxPos+1;saveAuto(a);render();
-      }else if(dragAssignId){
-        const a=autos.find(x=>x.id===dragAssignId); if(!a) return;
-        if(dragAssignFrom!==ma.id){
-          const maxPos=Math.max(0,...autos.filter(x=>x.zugewiesenAn===ma.id).map(x=>x.zuwPos||0));
-          a.zugewiesenAn=ma.id;a.zuwPos=maxPos+1;saveAuto(a);render();
-        }
-      }
-    }
-    // Auf mehreren Ebenen registrieren (Zeile, Karten-Bereich, Name), damit der Drop
-    // unabhängig davon greift, über welchem inneren Element genau losgelassen wird
-    [row,cardsWrap,name].forEach(el=>{
-      el.addEventListener('dragover',e=>{e.preventDefault();e.stopPropagation();if(dragId||dragAssignId)row.classList.add('drop-over');});
-      el.addEventListener('dragleave',e=>{e.stopPropagation();row.classList.remove('drop-over');});
-      el.addEventListener('drop',e=>{e.preventDefault();e.stopPropagation();row.classList.remove('drop-over');assignToThisMitarbeiter();});
-    });
-
-    c.appendChild(row);
-  });
+  for(let i=0;i<MITARBEITERLISTE.length;i+=2){
+    const pair=document.createElement('div');pair.className='mab-row-pair';
+    pair.appendChild(buildHalf(MITARBEITERLISTE[i]));
+    pair.appendChild(document.createElement('div')).className='mab-divider';
+    pair.appendChild(buildHalf(MITARBEITERLISTE[i+1]||null));
+    c.appendChild(pair);
+  }
 }
 
 // ── MITARBEITER (Auf Karte "ich arbeite daran") ──
