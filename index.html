@@ -1268,6 +1268,40 @@ function openConfirm(msg,onYes){
   o.querySelector('#cYes').addEventListener('click',()=>{close();onYes();});
 }
 
+// ── PDF-VIEWER (öffnet PDFs innerhalb der App statt in neuem Tab) ──
+function openPdfViewer(url,name,autoPrint){
+  const istBild=/\.(jpe?g|png|gif|webp|heic|bmp)$/i.test(name||'');
+  openModal(`
+    <div class="modal-header">
+      <span class="modal-title">${istBild?'🖼':'📄'} ${name||(istBild?'Bild':'PDF-Dokument')}</span>
+      <button class="modal-close" onclick="closeModal()">✕</button>
+    </div>
+    <iframe id="pdfViewerFrame" src="${url}" style="width:100%;height:65vh;border:1px solid var(--border2);border-radius:6px;background:#fff;display:block"></iframe>
+    <div class="form-footer">
+      <button class="btn-secondary" onclick="closeModal()">Schließen</button>
+      <button class="btn-primary" id="btnPdfDrucken">🖨 Drucken</button>
+    </div>
+  `);
+  document.getElementById('btnPdfDrucken').addEventListener('click',()=>{
+    const frame=document.getElementById('pdfViewerFrame');
+    try{
+      frame.contentWindow.focus();
+      frame.contentWindow.print();
+    }catch(e){
+      // Manche PDFs liegen auf einer anderen Domain (z.B. Cloud-Speicher) — der Browser
+      // verbietet dann das direkte Drucken aus dem eingebetteten Fenster heraus.
+      // In dem Fall öffnet sich ausnahmsweise ein Tab, nur um den Druckdialog anzuzeigen.
+      const w=window.open(url,'_blank');
+      if(w)w.onload=()=>{try{w.print();}catch(err){}};
+    }
+  });
+  if(autoPrint){
+    document.getElementById('pdfViewerFrame').addEventListener('load',()=>{
+      setTimeout(()=>document.getElementById('btnPdfDrucken')?.click(),200);
+    },{once:true});
+  }
+}
+
 // ── HINTS MODAL ──
 let editHinweise=[];
 function initHints(h){editHinweise=h.map(x=>typeof x==='string'?{text:x,done:false}:{...x});}
@@ -1336,7 +1370,7 @@ function formHTML(a,isEdit){
     <div style="display:flex;align-items:center;gap:8px;background:var(--bg3);border-radius:4px;padding:8px 12px">
       <span style="font-size:18px">📋</span>
       <span style="flex:1;font-size:13px;color:var(--text)">${fschein.name}</span>
-      <a href="${fschein.url}" target="_blank" style="color:var(--red);font-size:12px;font-weight:600;text-decoration:none">Öffnen</a>
+      <button id="btnOeffnenFschein" style="background:none;border:none;color:var(--red);font-size:12px;font-weight:600;cursor:pointer;padding:0">Öffnen</button>
       <button id="btnRemoveFschein" style="background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:14px;padding:0 4px">✕</button>
     </div>`:
     `<div id="fschein_drop" style="border:2px dashed var(--border2);border-radius:8px;padding:16px;text-align:center;cursor:pointer;background:var(--bg3)">
@@ -1380,11 +1414,8 @@ function setupFormListeners(a,isEdit){
   const sfkReplaceFile = document.getElementById('sfk_replace_file');
   if(sfkOeffnen){
     const sfk = a.dateien?.find(d=>d.typ==='sfk_auftrag');
-    sfkOeffnen.addEventListener('click',()=>window.open(sfk.url,'_blank'));
-    sfkDrucken.addEventListener('click',()=>{
-      const w = window.open(sfk.url,'_blank');
-      if(w) w.onload = ()=>{ try{w.print();}catch(e){} };
-    });
+    sfkOeffnen.addEventListener('click',()=>openPdfViewer(sfk.url,sfk.name));
+    sfkDrucken.addEventListener('click',()=>openPdfViewer(sfk.url,sfk.name,true));
     sfkExport.addEventListener('click',()=>{
       const lnk=document.createElement('a');lnk.href=sfk.url;lnk.download=sfk.name;
       document.body.appendChild(lnk);lnk.click();document.body.removeChild(lnk);
@@ -1413,6 +1444,11 @@ function setupFormListeners(a,isEdit){
   }
   const btnRemove=document.getElementById('btnRemoveFschein');
   if(btnRemove)btnRemove.addEventListener('click',()=>removeFahrzeugschein(a.id));
+  const btnOeffnenFschein=document.getElementById('btnOeffnenFschein');
+  if(btnOeffnenFschein){
+    const fschein=a.dateien?.find(d=>d.typ==='fahrzeugschein');
+    btnOeffnenFschein.addEventListener('click',()=>openPdfViewer(fschein.url,fschein.name));
+  }
 }
 
 function openErsetzenWahl(autoId,fileInput){
@@ -1528,7 +1564,7 @@ function openDiagnose(autoId){
     </div>
     <div id="diagWarnBanner" class="diag-warn-banner">
       <span class="diag-warn-icon">⚠️</span>
-      <span>KM-Stand und TÜV müssen ausgefüllt sein, bevor du dieses Fenster schließen kannst.</span>
+      <span>KM-Stand und TÜV sind noch leer. Beim erneuten Schließen wird das Fenster trotzdem geschlossen.</span>
     </div>
     <div class="diag-section">
       <div class="diag-section-title">Allgemein</div>
@@ -1591,18 +1627,35 @@ function openDiagnose(autoId){
 
   // TÜV abgelaufen Checkbox
   const tuevAbgelaufen=document.getElementById('diag_tuev_abgelaufen');
-  if(tuevAbgelaufen){
+  const tuevFeld=document.getElementById('diag_tuev');
+  if(tuevAbgelaufen&&tuevFeld){
     tuevAbgelaufen.addEventListener('change',()=>{
       if(!a.diagnose)a.diagnose=emptyDiagnose();
       a.diagnose.tuev_abgelaufen=tuevAbgelaufen.checked;
+      if(tuevAbgelaufen.checked){
+        if(!tuevFeld.dataset.vorherigerWert)tuevFeld.dataset.vorherigerWert=tuevFeld.value;
+        tuevFeld.value='abgelaufen';
+        a.diagnose.tuev='abgelaufen';
+      }else{
+        tuevFeld.value=tuevFeld.dataset.vorherigerWert&&tuevFeld.dataset.vorherigerWert!=='abgelaufen'?tuevFeld.dataset.vorherigerWert:'';
+        a.diagnose.tuev=tuevFeld.value;
+        delete tuevFeld.dataset.vorherigerWert;
+      }
+      validateDiagnoseClose(a,false);
       saveDiagNow(a);
     });
   }
 
   document.getElementById('btnDiagPDF').addEventListener('click',()=>exportDiagnosePDF(autoId));
 
-  // Fenster darf erst geschlossen werden, wenn KM-Stand und TÜV ausgefüllt sind
-  modalCloseGuard=()=>validateDiagnoseClose(a,true);
+  // Fenster: beim ersten Schließen-Versuch mit leeren Pflichtfeldern nur warnen,
+  // beim zweiten Versuch trotzdem schließen
+  let diagCloseAttempts=0;
+  modalCloseGuard=()=>{
+    if(validateDiagnoseClose(a,true))return true;
+    diagCloseAttempts++;
+    return diagCloseAttempts>=2;
+  };
 }
 
 function validateDiagnoseClose(a,showWarning){
@@ -1795,7 +1848,9 @@ function renderLSList(autoId){
     const row=document.createElement('div');
     row.style.cssText='display:flex;align-items:center;gap:8px;margin-bottom:6px;background:var(--bg3);border-radius:4px;padding:8px 10px';
     row.innerHTML=`<span style="font-size:16px">${ls.typ==='pdf'?'📄':'🖼'}</span><span style="flex:1;font-size:13px;color:var(--text)">${ls.name}</span>`;
-    const link=document.createElement('a');link.href=ls.url;link.target='_blank';link.textContent='Öffnen';link.style.cssText='color:var(--red);font-size:12px;font-weight:600;text-decoration:none';
+    const link=document.createElement('button');
+    link.textContent='Öffnen';link.style.cssText='background:none;border:none;color:var(--red);font-size:12px;font-weight:600;text-decoration:none;cursor:pointer;padding:0';
+    link.addEventListener('click',()=>openPdfViewer(ls.url,ls.name));
     const del=document.createElement('button');del.style.cssText='background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:14px;padding:0 4px';del.textContent='✕';
     del.addEventListener('click',()=>{a.lieferscheine.splice(i,1);saveAuto(a);renderLSList(autoId);});
     row.appendChild(link);row.appendChild(del);el.appendChild(row);
@@ -1818,7 +1873,7 @@ function renderMaterialKosten(autoId){
     dd.onchange=()=>{
       if(dd.value==='')return;
       const ls=a.lieferscheine[dd.value];
-      if(ls)window.open(ls.url,'_blank');
+      if(ls)openPdfViewer(ls.url,ls.name);
       dd.value='';
     };
   }
