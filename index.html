@@ -358,7 +358,7 @@ input,select,textarea,button{font-family:var(--font-body);}
 .mab-half.ptr-drop-target{background:rgba(192,20,28,0.08);}
 .mab-half.empty-slot{visibility:hidden;}
 .mab-divider{width:1px;background:var(--border2);flex-shrink:0;}
-.mab-name{width:84px;flex-shrink:0;font-family:var(--font-head);font-size:14px;font-weight:600;
+.mab-name{width:100px;flex-shrink:0;font-family:var(--font-head);font-size:18px;font-weight:600;
   letter-spacing:.03em;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 .mab-cards{display:flex;gap:6px;flex:1;overflow-x:auto;min-height:32px;align-items:center;min-width:0;}
 .mab-card{display:flex;align-items:center;gap:6px;border-radius:5px;padding:5px 9px;flex-shrink:0;
@@ -406,7 +406,7 @@ input,select,textarea,button{font-family:var(--font-body);}
   #mitarbeiterBoard{max-height:none;}
   .mab-row-pair{flex-direction:column;}
   .mab-divider{width:100%;height:1px;}
-  .mab-name{width:90px;font-size:14px;}
+  .mab-name{width:110px;font-size:17px;}
   #zoneButtons{gap:8px;flex-wrap:wrap;justify-content:center;width:100%;order:3;}
   .zone-btn{padding:8px 12px;font-size:12px;gap:6px;}
   .zone-btn-icon{font-size:16px;}
@@ -790,6 +790,7 @@ async function uploadFile(file,pfad){
 // ── POLLING ──
 function startRealtime(){
   setInterval(async()=>{
+    if(aufgabeInputOffenFuer)return; // nicht aktualisieren, solange jemand eine Aufgabe eintippt
     try{
       const data=await sbFetch('/rest/v1/auftraege?select=id,geaendert_am&order=erstellt_am.asc');
       const changed=data.some(r=>{const l=autos.find(a=>a.id===r.id);return !l||r.geaendert_am>=(l.geaendert_am||'');})|| data.length!==autos.length;
@@ -1049,6 +1050,15 @@ function makeCard(a,s,autoCollapse,collapsed){
     const timeEl=document.createElement('div');timeEl.className='card-time';timeEl.textContent=`${a.datum} · ${a.eingang}`;
     wrap.appendChild(timeEl);
 
+    // Zugeteilt an (Mitarbeiterzeile)
+    if(a.zugewiesenAn){
+      const zugewiesenerMa=MITARBEITERLISTE.find(m=>m.id===a.zugewiesenAn);
+      const zuEl=document.createElement('div');
+      zuEl.style.cssText='padding:0 12px 6px;font-size:12px;color:#E8454D;font-weight:700;display:flex;align-items:center;gap:5px;';
+      zuEl.textContent=`📌 Zugeteilt an: ${zugewiesenerMa?zugewiesenerMa.name:'unbekannt'}`;
+      wrap.appendChild(zuEl);
+    }
+
     // Mitarbeiter
     const maDiv=document.createElement('div');maDiv.style.cssText='padding:4px 12px 8px;display:flex;flex-wrap:wrap;align-items:center;gap:4px;';
     (a.mitarbeiter||[]).forEach(m=>{
@@ -1148,6 +1158,12 @@ let MITARBEITERLISTE = [];
 })();
 function saveMitarbeiterliste(){ localStorage.setItem('werkstatt-mitarbeiterliste', JSON.stringify(MITARBEITERLISTE)); }
 
+// Zustand des "+"-Eingabefelds für individuelle Aufgaben — bewusst außerhalb von render()
+// gehalten, damit ein Neuzeichnen (z.B. durch Live-Aktualisierung) das offene Feld nicht
+// verliert oder vorzeitig abschickt.
+let aufgabeInputOffenFuer=null;
+let aufgabeInputText='';
+
 function renderMitarbeiterZeilen(){
   const c=document.getElementById('mabRows'); if(!c) return;
   c.innerHTML='';
@@ -1195,15 +1211,14 @@ function renderMitarbeiterZeilen(){
 
     half.appendChild(cardsWrap);
 
-    const addBtn=document.createElement('button');addBtn.className='mab-add-btn';addBtn.textContent='+';addBtn.title='Individuelle Aufgabe hinzufügen';
-    addBtn.addEventListener('click',e=>{
-      e.stopPropagation();
-      if(half.querySelector('.mab-add-input'))return;
+    if(aufgabeInputOffenFuer===ma.id){
       const inp=document.createElement('input');inp.className='mab-add-input';inp.placeholder='Aufgabe … (Enter)';
+      inp.value=aufgabeInputText;
+      inp.addEventListener('input',()=>{aufgabeInputText=inp.value;});
       const commit=()=>{
         const txt=inp.value.trim();
-        inp.remove();
-        if(!txt)return;
+        aufgabeInputOffenFuer=null;aufgabeInputText='';
+        if(!txt){render();return;}
         const maxPos=Math.max(0,...autos.filter(v=>v.zugewiesenAn===ma.id).map(v=>v.zuwPos||0));
         const neu={id:genId(),kennzeichen:'',fahrzeug:'',kunde:'',prioritaet:'Normal',hinweise:[],platz:'',
           status:'aufgabe',auftragsnr:'',arbeiten:[],material:[],lieferscheine:[],dateien:[],
@@ -1211,12 +1226,21 @@ function renderMitarbeiterZeilen(){
           eingang:uhrzeit(),datum:datumKurz(),statusSeit:uhrzeit()};
         autos.push(neu);saveAuto(neu);render();
       };
-      inp.addEventListener('keydown',e2=>{if(e2.key==='Enter')commit();if(e2.key==='Escape'){inp.remove();}});
-      inp.addEventListener('blur',commit);
+      inp.addEventListener('keydown',e2=>{
+        if(e2.key==='Enter')commit();
+        if(e2.key==='Escape'){aufgabeInputOffenFuer=null;aufgabeInputText='';render();}
+      });
       half.appendChild(inp);
-      setTimeout(()=>inp.focus(),0);
-    });
-    half.appendChild(addBtn);
+      setTimeout(()=>{inp.focus();inp.setSelectionRange(inp.value.length,inp.value.length);},0);
+    }else{
+      const addBtn=document.createElement('button');addBtn.className='mab-add-btn';addBtn.textContent='+';addBtn.title='Individuelle Aufgabe hinzufügen';
+      addBtn.addEventListener('click',e=>{
+        e.stopPropagation();
+        aufgabeInputOffenFuer=ma.id;aufgabeInputText='';
+        render();
+      });
+      half.appendChild(addBtn);
+    }
 
     return half;
   }
@@ -1344,6 +1368,26 @@ function openPdfViewer(url,name,autoPrint){
       setTimeout(()=>document.getElementById('btnPdfDrucken')?.click(),200);
     },{once:true});
   }
+}
+
+// ── HTML-BERICHT-VORSCHAU (Diagnose-PDF, Rechnungskontrolle) — ebenfalls in-App statt neuem Tab ──
+function openHtmlPreview(htmlContent,title){
+  openModal(`
+    <div class="modal-header">
+      <span class="modal-title">📄 ${title||'Vorschau'}</span>
+      <button class="modal-close" onclick="closeModal()">✕</button>
+    </div>
+    <iframe id="pdfViewerFrame" style="width:100%;height:65vh;border:1px solid var(--border2);border-radius:6px;background:#fff;display:block"></iframe>
+    <div class="form-footer">
+      <button class="btn-secondary" onclick="closeModal()">Schließen</button>
+      <button class="btn-primary" id="btnPdfDrucken">🖨 Drucken</button>
+    </div>
+  `);
+  const frame=document.getElementById('pdfViewerFrame');
+  frame.srcdoc=htmlContent;
+  document.getElementById('btnPdfDrucken').addEventListener('click',()=>{
+    try{frame.contentWindow.focus();frame.contentWindow.print();}catch(e){}
+  });
 }
 
 // ── HINTS MODAL ──
@@ -1771,8 +1815,8 @@ function exportDiagnosePDF(autoId){
     <div style="border-top:1px solid #000;padding-top:4px;font-size:11px;color:#666">Datum / Unterschrift Mechaniker</div>
     <div style="border-top:1px solid #000;padding-top:4px;font-size:11px;color:#666">Datum / Unterschrift Kunde</div>
   </div>
-  <script>window.onload=()=>window.print();<\/script></body></html>`;
-  const win=window.open('','_blank');if(win){win.document.write(html);win.document.close();}
+  </body></html>`;
+  openHtmlPreview(html,'Diagnose — '+(a.kennzeichen||''));
 }
 
 // ── ARBEITEN MODAL ──
@@ -1983,13 +2027,9 @@ function openRechnungskontrolle(autoId){
     td{padding:5px 8px;border-bottom:1px solid #eee;vertical-align:top;font-size:12px;}
     .box{border:1px solid #ddd;border-radius:4px;padding:8px 10px;margin-bottom:8px;}
     .label{font-size:10px;color:#888;text-transform:uppercase;letter-spacing:.06em;}
-    .close-btn{position:fixed;top:12px;right:12px;background:#C0141C;color:#fff;border:none;
-      border-radius:6px;padding:8px 16px;font-size:14px;font-weight:700;cursor:pointer;
-      box-shadow:0 2px 8px rgba(0,0,0,0.3);z-index:999;}
-    @media print{.close-btn{display:none;}@page{margin:15mm;}}
+    @media print{@page{margin:15mm;}}
     @media(max-width:600px){body{padding:12px;padding-top:50px;}}
   </style></head><body>
-  <button class="close-btn" onclick="window.close()">✕ Schließen</button>
   <div style="display:flex;justify-content:space-between;border-bottom:3px solid #C0141C;padding-bottom:10px;margin-bottom:14px">
     <div><div style="font-size:16px;font-weight:700">Rechnungskontrolle</div>
     <div style="color:#C0141C;font-size:12px;font-weight:700">AUTOPARTNER AMERICANCARS · Auf dem Lölfert 37 · 58119 Hagen</div></div>
@@ -2048,15 +2088,8 @@ function openRechnungskontrolle(autoId){
     <div style="border-top:1px solid #000;padding-top:4px;font-size:11px;color:#666">Datum / Serviceberater</div>
     <div style="border-top:1px solid #000;padding-top:4px;font-size:11px;color:#666">Geprüft</div>
   </div>
-
-  <script>
-    // Auf Mobilgeräten kein auto-print
-    if(window.innerWidth > 768) window.onload=()=>window.print();
-  <\/script>
   </body></html>`;
-
-  const win=window.open('','_blank');
-  if(win){win.document.write(html);win.document.close();}
+  openHtmlPreview(html,'Rechnungskontrolle — '+(a.kennzeichen||''));
 }
 
 // ── DIKTIEREN ──
