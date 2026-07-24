@@ -316,15 +316,15 @@ input,select,textarea,button{font-family:var(--font-body);}
   padding:0 16px;cursor:pointer;font-size:20px;font-weight:700;}
 
 /* ZONEN-BUTTONS (Header) */
-#zoneButtons{display:flex;align-items:center;gap:22px;}
+#zoneButtons{display:flex;align-items:center;gap:24px;}
 .zone-btn-wrap{position:relative;}
-.zone-btn{display:flex;align-items:center;gap:8px;background:var(--bg3);border:1px solid var(--zone-border,var(--border2));
-  border-radius:6px;padding:8px 14px;cursor:pointer;font-family:var(--font-head);font-size:12px;font-weight:700;
+.zone-btn{display:flex;align-items:center;gap:10px;background:var(--bg3);border:2px solid var(--zone-border,var(--border2));
+  border-radius:8px;padding:12px 20px;cursor:pointer;font-family:var(--font-head);font-size:15px;font-weight:700;
   letter-spacing:.06em;text-transform:uppercase;color:var(--zone-accent,var(--text-dim));white-space:nowrap;transition:background .15s;}
 .zone-btn:hover,.zone-btn.drag-over{background:var(--bg4);}
-.zone-btn-icon{font-size:15px;}
-.zone-btn-count{background:var(--zone-accent,var(--red));color:#0a0a0a;border-radius:4px;min-width:20px;height:20px;
-  display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;padding:0 5px;}
+.zone-btn-icon{font-size:20px;}
+.zone-btn-count{background:var(--zone-accent,var(--red));color:#0a0a0a;border-radius:5px;min-width:26px;height:26px;
+  display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:800;padding:0 6px;}
 .zone-dropdown{display:none;position:fixed;background:var(--bg2);
   border:1px solid var(--zone-border,var(--border2));border-radius:8px;padding:10px;min-width:340px;max-width:420px;
   max-height:440px;overflow-y:auto;z-index:150;box-shadow:0 12px 28px rgba(0,0,0,.6);}
@@ -338,33 +338,37 @@ input,select,textarea,button{font-family:var(--font-body);}
 .zone-card-kz{font-family:var(--font-head);font-weight:700;font-size:16px;letter-spacing:.06em;color:var(--zone-accent,var(--text));flex-shrink:0;}
 .zone-card-fahrzeug{font-size:13px;color:var(--silver);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;}
 .zone-card-kunde{font-size:12px;color:var(--text-dim);}
+.zone-card-actions{display:flex;gap:6px;margin-top:6px;}
+.zone-card-actions button{flex:1;background:var(--bg4);border:1px solid var(--border2);border-radius:4px;
+  color:var(--text-dim);padding:5px 4px;cursor:pointer;font-size:11px;font-weight:600;white-space:nowrap;}
+.zone-card-actions button:hover{background:var(--bg3);color:var(--text);}
 .zone-mobile-lane{display:none;}
 
 /* MITARBEITERBOARD */
 #mitarbeiterBoard{border-top:2px solid var(--red);background:var(--bg2);flex-shrink:0;
-  padding:10px 12px;max-height:34vh;overflow-y:auto;}
-.mab-title{font-family:var(--font-head);font-size:12px;font-weight:700;letter-spacing:.1em;
-  text-transform:uppercase;color:var(--red);margin-bottom:8px;display:flex;align-items:center;gap:8px;}
-.mab-row{display:flex;align-items:center;gap:10px;background:var(--bg3);border:1px solid var(--border);
-  border-radius:6px;padding:7px 10px;margin-bottom:6px;transition:border-color .15s,background .15s;}
+  padding:14px 16px;max-height:52vh;overflow-y:auto;}
+.mab-title{font-family:var(--font-head);font-size:14px;font-weight:700;letter-spacing:.1em;
+  text-transform:uppercase;color:var(--red);margin-bottom:12px;display:flex;align-items:center;gap:8px;}
+.mab-row{display:flex;align-items:center;gap:14px;background:var(--bg3);border:1px solid var(--border);
+  border-radius:8px;padding:14px 16px;margin-bottom:10px;min-height:88px;transition:border-color .15s,background .15s;}
 .mab-row.drop-over{border-color:var(--red);background:rgba(192,20,28,0.08);}
-.mab-name{width:100px;flex-shrink:0;font-family:var(--font-head);font-size:13px;font-weight:600;
+.mab-name{width:150px;flex-shrink:0;font-family:var(--font-head);font-size:18px;font-weight:600;
   letter-spacing:.03em;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 .mab-empty{flex-shrink:0;}
-.mab-cards{display:flex;gap:8px;flex:1;overflow-x:auto;min-height:44px;align-items:center;}
+.mab-cards{display:flex;gap:12px;flex:1;overflow-x:auto;min-height:60px;align-items:center;}
 .mab-cards:empty::after{content:'Auftrag hierher ziehen';color:var(--text-muted);font-size:11px;
   font-family:var(--font-head);letter-spacing:.05em;text-transform:uppercase;}
-.mab-card{border-radius:6px;padding:6px 10px;min-width:130px;flex-shrink:0;background:var(--bg4);
+.mab-card{border-radius:8px;padding:10px 14px;min-width:220px;flex-shrink:0;background:var(--bg4);
   border:1px solid var(--border2);cursor:grab;position:relative;}
 .mab-card.aktuell{border-color:#E8454D;box-shadow:0 0 10px rgba(192,20,28,0.18);}
-.mab-card:not(.aktuell){opacity:.6;}
-.mab-card-kz{font-family:var(--font-head);font-size:13px;font-weight:700;color:var(--text-dim);}
+.mab-card:not(.aktuell){opacity:.65;}
+.mab-card-kz{font-family:var(--font-head);font-size:17px;font-weight:700;color:var(--text-dim);}
 .mab-card.aktuell .mab-card-kz{color:#E8454D;}
-.mab-card-sub{font-size:10px;color:var(--text-muted);margin-top:1px;}
-.mab-card-x{position:absolute;top:2px;right:4px;background:none;border:none;color:var(--text-muted);
-  cursor:pointer;font-size:12px;padding:0;line-height:1;}
+.mab-card-sub{font-size:12px;color:var(--text-muted);margin-top:2px;}
+.mab-card-x{position:absolute;top:6px;right:8px;background:none;border:none;color:var(--text-muted);
+  cursor:pointer;font-size:15px;padding:0;line-height:1;}
 .mab-card-x:hover{color:var(--red);}
-.mab-empty-text{flex:1;font-size:12px;color:var(--text-muted);font-family:var(--font-head);
+.mab-empty-text{flex:1;font-size:13px;color:var(--text-muted);font-family:var(--font-head);
   letter-spacing:.05em;text-transform:uppercase;}
 .mab-admin-row{display:flex;align-items:center;gap:6px;margin-bottom:6px;}
 .mab-admin-row input{flex:1;background:var(--bg4);border:1px solid var(--border2);border-radius:4px;
@@ -388,8 +392,8 @@ input,select,textarea,button{font-family:var(--font-body);}
   .lane{display:none;}
   .lane.mobile-active{display:flex;}
   #mitarbeiterBoard{max-height:none;}
-  .mab-name{width:78px;font-size:12px;}
-  .mab-card{min-width:112px;padding:5px 8px;}
+  .mab-name{width:110px;font-size:15px;}
+  .mab-card{min-width:170px;padding:8px 10px;}
   #zoneButtons{display:none;}
   .diag-grid{grid-template-columns:1fr;}
   .diag-row{flex-wrap:wrap;row-gap:6px;}
@@ -1012,10 +1016,17 @@ function renderZoneButtons(){
     }else{
       cards.forEach(a=>{
         const zc=document.createElement('div');zc.className='zone-card';zc.draggable=true;
-        zc.innerHTML=`<div class="zone-card-top"><span class="zone-card-kz">${a.kennzeichen||'—'}</span><span class="zone-card-fahrzeug">${a.fahrzeug||''}</span></div><div class="zone-card-kunde">${a.kunde||''}</div>`;
+        zc.innerHTML=`<div class="zone-card-top"><span class="zone-card-kz">${a.kennzeichen||'—'}</span><span class="zone-card-fahrzeug">${a.fahrzeug||''}</span></div><div class="zone-card-kunde">${a.kunde||''}</div>
+          <div class="zone-card-actions">
+            <button data-act="edit">✎ Bearbeiten</button>
+            <button data-act="diag">📋 Diagnose</button>
+            <button data-act="arbeit">📝 Arbeiten</button>
+          </div>`;
         zc.addEventListener('dragstart',e=>{dragId=a.id;dragFrom=s.id;e.dataTransfer.effectAllowed='move';});
         zc.addEventListener('dragend',()=>{dragId=null;dragFrom=null;});
-        zc.addEventListener('click',()=>openEdit(a.id));
+        zc.querySelector('[data-act="edit"]').addEventListener('click',e=>{e.stopPropagation();openEdit(a.id);});
+        zc.querySelector('[data-act="diag"]').addEventListener('click',e=>{e.stopPropagation();openDiagnose(a.id);});
+        zc.querySelector('[data-act="arbeit"]').addEventListener('click',e=>{e.stopPropagation();openArbeitenModal(a.id);});
         dd.appendChild(zc);
       });
     }
@@ -1072,7 +1083,7 @@ function renderMitarbeiterZeilen(){
 
     const cardsWrap=document.createElement('div');cardsWrap.className='mab-cards';
 
-    const zugewiesen = autos.filter(a=>a.zugewiesenAn===ma.id && a.status==='in_arbeit')
+    const zugewiesen = autos.filter(a=>a.zugewiesenAn===ma.id)
       .sort((x,y)=>(x.zuwPos||0)-(y.zuwPos||0));
 
     if(zugewiesen.length===0){
@@ -1086,7 +1097,8 @@ function renderMitarbeiterZeilen(){
       mc.addEventListener('dragstart',e=>{dragAssignId=a.id;dragAssignFrom=ma.id;e.stopPropagation();e.dataTransfer.effectAllowed='move';});
       mc.addEventListener('dragend',()=>{dragAssignId=null;dragAssignFrom=null;});
       const kzEl=document.createElement('div');kzEl.className='mab-card-kz';kzEl.textContent=a.kennzeichen||'—';
-      const subEl=document.createElement('div');subEl.className='mab-card-sub';subEl.textContent=(a.fahrzeug||'')+' · '+(i===0?'aktuell':'geplant');
+      const statusLabel=(STATI.find(s=>s.id===a.status)||{}).label||a.status;
+      const subEl=document.createElement('div');subEl.className='mab-card-sub';subEl.textContent=(a.fahrzeug||'')+' · '+statusLabel+(i===0?' · aktuell':' · geplant');
       const xBtn=document.createElement('button');xBtn.className='mab-card-x';xBtn.textContent='✕';xBtn.title='Zuweisung entfernen';
       xBtn.addEventListener('click',e=>{e.stopPropagation();a.zugewiesenAn=null;a.zuwPos=0;saveAuto(a);render();});
       mc.appendChild(kzEl);mc.appendChild(subEl);mc.appendChild(xBtn);
