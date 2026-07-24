@@ -61,7 +61,7 @@ input,select,textarea,button{font-family:var(--font-body);}
 .mobile-tab .tab-count{background:rgba(0,0,0,0.3);border-radius:3px;padding:1px 5px;font-size:11px;}
 
 /* BOARD */
-#board{flex:1;overflow:hidden;padding:12px;display:flex;flex-direction:column;}
+#board{flex:1;overflow:hidden;padding:12px;display:flex;flex-direction:column;position:relative;}
 .board-grid{display:grid;gap:10px;height:100%;}
 
 /* LANE */
@@ -265,7 +265,7 @@ input,select,textarea,button{font-family:var(--font-body);}
 .theme-toggle:hover{border-color:var(--red);}
 
 /* MÜLLEIMER */
-#trash{position:fixed;bottom:16px;left:50%;transform:translateX(-50%);
+#trash{position:absolute;bottom:16px;left:50%;transform:translateX(-50%);
   width:64px;height:64px;border-radius:50%;background:#1a0000;border:2px dashed #7f1d1d;
   display:flex;flex-direction:column;align-items:center;justify-content:center;
   font-size:22px;color:#7f1d1d;transition:all .2s;z-index:100;opacity:0;pointer-events:none;}
@@ -325,7 +325,7 @@ input,select,textarea,button{font-family:var(--font-body);}
 .zone-btn-icon{font-size:15px;}
 .zone-btn-count{background:var(--zone-accent,var(--red));color:#0a0a0a;border-radius:4px;min-width:20px;height:20px;
   display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;padding:0 5px;}
-.zone-dropdown{display:none;position:absolute;top:100%;left:0;margin-top:4px;background:var(--bg2);
+.zone-dropdown{display:none;position:fixed;background:var(--bg2);
   border:1px solid var(--zone-border,var(--border2));border-radius:6px;padding:8px;min-width:260px;max-width:320px;
   max-height:340px;overflow-y:auto;z-index:150;box-shadow:0 12px 28px rgba(0,0,0,.6);}
 .zone-btn-wrap:hover .zone-dropdown,.zone-btn-wrap.force-open .zone-dropdown{display:block;}
@@ -441,11 +441,6 @@ input,select,textarea,button{font-family:var(--font-body);}
     <div class="my-avatar" id="myAvatar">?</div>
     <span id="myNameText">Wer bist du?</span>
   </div>
-  <div class="hstat"><div class="hstat-val" id="statTotal" style="color:var(--silver)">0</div><div class="hstat-lbl">Gesamt</div></div>
-  <div class="hstat"><div class="hstat-val" id="statAktiv" style="color:#E8454D">0</div><div class="hstat-lbl">In Arbeit</div></div>
-  <div class="hstat"><div class="hstat-val" id="statTeile" style="color:#AFA9EC">0</div><div class="hstat-lbl">Teile</div></div>
-  <div class="hstat"><div class="hstat-val" id="statAllesDa" style="color:#C0DD97">0</div><div class="hstat-lbl">Bereit</div></div>
-  <div class="hstat"><div class="hstat-val" id="statUnterbrochen" style="color:#FAC775">0</div><div class="hstat-lbl">Unterbrochen</div></div>
   <div class="hspace"></div>
   <div id="zoneButtons"></div>
   <div class="hspace"></div>
@@ -466,16 +461,17 @@ input,select,textarea,button{font-family:var(--font-body);}
 </div>
 
 <div class="mobile-tabs" id="mobileTabs"></div>
-<div id="board"><div class="board-grid" id="boardGrid"></div></div>
+<div id="board">
+  <div class="board-grid" id="boardGrid"></div>
+  <div id="trash">
+    <span id="trashIcon">🗑️</span>
+    <span id="trash-label">Löschen</span>
+  </div>
+</div>
 
 <div id="mitarbeiterBoard">
   <div class="mab-title"><span>👥 Mitarbeiter — Tagesplanung</span></div>
   <div id="mabRows"></div>
-</div>
-
-<div id="trash">
-  <span id="trashIcon">🗑️</span>
-  <span id="trash-label">Löschen</span>
 </div>
 
 <div class="modal-overlay" id="modalOverlay" style="display:none">
@@ -711,11 +707,13 @@ function setSync(s,m){
   if(el)el.className=s;
   if(tx)tx.textContent=m;
 }
+let istErsterLoad=true;
 async function loadAutos(){
   try{
     setSync('syncing','↻ Laden …');
     const data=await sbFetch('/rest/v1/auftraege?order=erstellt_am.asc');
     autos=data.map(dbToAuto);
+    if(istErsterLoad){collapsedCards=new Set(autos.map(a=>a.id));expandedCards=new Set();istErsterLoad=false;}
     setSync('ok','● Live');render();
   }catch(e){setSync('error','✕ Fehler');console.error(e);}
 }
@@ -823,12 +821,6 @@ function toggleCard(id,autoCollapse){
 
 // ── RENDER ──
 function render(){
-  document.getElementById('statTotal').textContent      = autos.length;
-  document.getElementById('statAktiv').textContent      = autos.filter(a=>a.status==='in_arbeit').length;
-  document.getElementById('statTeile').textContent      = autos.filter(a=>a.status==='teile').length;
-  document.getElementById('statAllesDa').textContent    = autos.filter(a=>a.status==='alles_da').length;
-  document.getElementById('statUnterbrochen').textContent = autos.filter(a=>a.status==='unterbrochen').length;
-
   const grid=document.getElementById('boardGrid');grid.innerHTML='';
   const sichtbareSpalten = STATI.filter(s=>!s.hidden && !s.headerZone);
   grid.style.gridTemplateColumns = `repeat(${sichtbareSpalten.length}, 1fr)`;
@@ -1002,9 +994,16 @@ function renderZoneButtons(){
     }
     wrap.appendChild(dd);
 
+    function positionDropdown(){
+      const rect=btn.getBoundingClientRect();
+      dd.style.left=Math.max(4,Math.min(rect.left,window.innerWidth-dd.offsetWidth-4))+'px';
+      dd.style.top=(rect.bottom+4)+'px';
+    }
+    wrap.addEventListener('mouseenter',positionDropdown);
+
     // Drop-Ziel: sowohl Button als auch Dropdown nehmen Karten per Drag&Drop an
     [btn,dd].forEach(el=>{
-      el.addEventListener('dragover',e=>{e.preventDefault();wrap.classList.add('force-open');btn.classList.add('drag-over');});
+      el.addEventListener('dragover',e=>{e.preventDefault();wrap.classList.add('force-open');btn.classList.add('drag-over');positionDropdown();});
       el.addEventListener('dragleave',()=>{btn.classList.remove('drag-over');});
       el.addEventListener('drop',e=>{
         e.preventDefault();btn.classList.remove('drag-over');wrap.classList.remove('force-open');
