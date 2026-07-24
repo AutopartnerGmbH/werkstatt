@@ -326,22 +326,23 @@ input,select,textarea,button{font-family:var(--font-body);}
 .zone-btn-count{background:var(--zone-accent,var(--red));color:#0a0a0a;border-radius:5px;min-width:26px;height:26px;
   display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:800;padding:0 6px;}
 .zone-dropdown{display:none;position:fixed;background:var(--bg2);
-  border:1px solid var(--zone-border,var(--border2));border-radius:8px;padding:10px;min-width:340px;max-width:420px;
+  border:1px solid var(--zone-border,var(--border2));border-radius:8px;padding:10px;min-width:460px;max-width:560px;
   max-height:440px;overflow-y:auto;z-index:150;box-shadow:0 12px 28px rgba(0,0,0,.6);}
 .zone-btn-wrap:hover .zone-dropdown,.zone-btn-wrap.force-open .zone-dropdown{display:block;}
 .zone-dropdown-empty{color:var(--text-muted);font-size:13px;text-align:center;padding:18px 4px;
   font-family:var(--font-head);letter-spacing:.05em;text-transform:uppercase;}
-.zone-card{display:flex;flex-direction:column;gap:2px;background:var(--bg3);border:1px solid var(--border2);
+.zone-card{display:flex;align-items:center;gap:14px;background:var(--bg3);border:1px solid var(--border2);
   border-radius:6px;padding:10px 12px;margin-bottom:8px;cursor:grab;}
 .zone-card:last-child{margin-bottom:0;}
+.zone-card-info{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px;}
 .zone-card-top{display:flex;align-items:center;gap:10px;}
 .zone-card-kz{font-family:var(--font-head);font-weight:700;font-size:16px;letter-spacing:.06em;color:var(--zone-accent,var(--text));flex-shrink:0;}
 .zone-card-fahrzeug{font-size:13px;color:var(--silver);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;}
 .zone-card-kunde{font-size:12px;color:var(--text-dim);}
-.zone-card-actions{display:flex;gap:6px;margin-top:6px;}
-.zone-card-actions button{flex:1;background:var(--bg4);border:1px solid var(--border2);border-radius:4px;
-  color:var(--text-dim);padding:5px 4px;cursor:pointer;font-size:11px;font-weight:600;white-space:nowrap;}
-.zone-card-actions button:hover{background:var(--bg3);color:var(--text);}
+.zone-card-actions{display:flex;flex-direction:column;gap:4px;flex-shrink:0;width:108px;}
+.zone-card-actions button{background:var(--bg4);border:1px solid var(--border2);border-radius:4px;
+  color:var(--text-dim);padding:5px 6px;cursor:pointer;font-size:11px;font-weight:600;white-space:nowrap;}
+.zone-card-actions button:hover{background:var(--bg2);color:var(--text);}
 .zone-mobile-lane{display:none;}
 
 /* MITARBEITERBOARD */
@@ -364,7 +365,8 @@ input,select,textarea,button{font-family:var(--font-body);}
 .mab-card:not(.aktuell){opacity:.65;}
 .mab-card-kz{font-family:var(--font-head);font-size:17px;font-weight:700;color:var(--text-dim);}
 .mab-card.aktuell .mab-card-kz{color:#E8454D;}
-.mab-card-sub{font-size:12px;color:var(--text-muted);margin-top:2px;}
+.mab-card-fahrzeug{font-size:13px;color:var(--silver);margin-top:3px;}
+.mab-card-kunde{font-size:12px;color:var(--text-dim);margin-top:1px;}
 .mab-card-x{position:absolute;top:6px;right:8px;background:none;border:none;color:var(--text-muted);
   cursor:pointer;font-size:15px;padding:0;line-height:1;}
 .mab-card-x:hover{color:var(--red);}
@@ -923,7 +925,7 @@ function makeCard(a,s,autoCollapse,collapsed){
   const prio=document.createElement('div');prio.className='card-top-prio';
   prio.style.cssText=`background:${PRIO_DOT[a.prioritaet]};${a.prioritaet!=='Normal'?`box-shadow:0 0 5px ${PRIO_DOT[a.prioritaet]}`:''}`;
   const kz=document.createElement('span');kz.className='card-top-kz';kz.style.color=s.accent;kz.textContent=a.kennzeichen||'—';
-  const kunde=document.createElement('span');kunde.className='card-top-kunde';kunde.textContent=a.kunde||a.fahrzeug||'';
+  const kunde=document.createElement('span');kunde.className='card-top-kunde';kunde.textContent=[a.kunde,a.fahrzeug].filter(Boolean).join(' – ');
   const chev=document.createElement('span');chev.className='card-top-chevron'+(collapsed?'':' open');chev.textContent='▾';
   top.appendChild(prio);top.appendChild(kz);top.appendChild(kunde);top.appendChild(chev);
   wrap.appendChild(top);
@@ -1016,7 +1018,10 @@ function renderZoneButtons(){
     }else{
       cards.forEach(a=>{
         const zc=document.createElement('div');zc.className='zone-card';zc.draggable=true;
-        zc.innerHTML=`<div class="zone-card-top"><span class="zone-card-kz">${a.kennzeichen||'—'}</span><span class="zone-card-fahrzeug">${a.fahrzeug||''}</span></div><div class="zone-card-kunde">${a.kunde||''}</div>
+        zc.innerHTML=`<div class="zone-card-info">
+            <div class="zone-card-top"><span class="zone-card-kz">${a.kennzeichen||'—'}</span><span class="zone-card-fahrzeug">${a.fahrzeug||''}</span></div>
+            <div class="zone-card-kunde">${a.kunde||''}</div>
+          </div>
           <div class="zone-card-actions">
             <button data-act="edit">✎ Bearbeiten</button>
             <button data-act="diag">📋 Diagnose</button>
@@ -1097,11 +1102,11 @@ function renderMitarbeiterZeilen(){
       mc.addEventListener('dragstart',e=>{dragAssignId=a.id;dragAssignFrom=ma.id;e.stopPropagation();e.dataTransfer.effectAllowed='move';});
       mc.addEventListener('dragend',()=>{dragAssignId=null;dragAssignFrom=null;});
       const kzEl=document.createElement('div');kzEl.className='mab-card-kz';kzEl.textContent=a.kennzeichen||'—';
-      const statusLabel=(STATI.find(s=>s.id===a.status)||{}).label||a.status;
-      const subEl=document.createElement('div');subEl.className='mab-card-sub';subEl.textContent=(a.fahrzeug||'')+' · '+statusLabel+(i===0?' · aktuell':' · geplant');
+      const fahrzeugEl=document.createElement('div');fahrzeugEl.className='mab-card-fahrzeug';fahrzeugEl.textContent=a.fahrzeug||'';
+      const kundeEl=document.createElement('div');kundeEl.className='mab-card-kunde';kundeEl.textContent=a.kunde||'';
       const xBtn=document.createElement('button');xBtn.className='mab-card-x';xBtn.textContent='✕';xBtn.title='Zuweisung entfernen';
       xBtn.addEventListener('click',e=>{e.stopPropagation();a.zugewiesenAn=null;a.zuwPos=0;saveAuto(a);render();});
-      mc.appendChild(kzEl);mc.appendChild(subEl);mc.appendChild(xBtn);
+      mc.appendChild(kzEl);mc.appendChild(fahrzeugEl);mc.appendChild(kundeEl);mc.appendChild(xBtn);
       cardsWrap.appendChild(mc);
     });
 
@@ -1310,7 +1315,7 @@ function formHTML(a,isEdit){
   </div>`;}
 
 function openNeu(){
-  const a={id:genId(),kennzeichen:'',fahrzeug:'',kunde:'',prioritaet:'Normal',hinweise:[],platz:'',status:'parkplatz',auftragsnr:'',arbeiten:[],material:[],lieferscheine:[],dateien:[],zugewiesenAn:null,zuwPos:0,eingang:uhrzeit(),datum:datumKurz(),statusSeit:uhrzeit()};
+  const a={id:genId(),kennzeichen:'',fahrzeug:'',kunde:'',prioritaet:'Normal',hinweise:[],platz:'',status:'neue_auftraege',auftragsnr:'',arbeiten:[],material:[],lieferscheine:[],dateien:[],zugewiesenAn:null,zuwPos:0,eingang:uhrzeit(),datum:datumKurz(),statusSeit:uhrzeit()};
   openModal(formHTML(a,false));
   setupFormListeners(a,false);
 }
@@ -1415,7 +1420,7 @@ async function saveForm(id,isEdit){
     fahrzeug:document.getElementById('f_fz').value,prioritaet:document.getElementById('f_prio').value,
     platz:document.getElementById('f_platz').value,hinweise:[...editHinweise]};
   if(isEdit){const a=autos.find(x=>x.id===id);if(a)Object.assign(a,data);await saveAuto(autos.find(x=>x.id===id));}
-  else{const a={id,...data,status:'parkplatz',auftragsnr:'',arbeiten:[],material:[],lieferscheine:[],dateien:[],zugewiesenAn:null,zuwPos:0,eingang:uhrzeit(),datum:datumKurz(),statusSeit:uhrzeit()};autos.push(a);await saveAuto(a);}
+  else{const a={id,...data,status:'neue_auftraege',auftragsnr:'',arbeiten:[],material:[],lieferscheine:[],dateien:[],zugewiesenAn:null,zuwPos:0,eingang:uhrzeit(),datum:datumKurz(),statusSeit:uhrzeit()};autos.push(a);await saveAuto(a);}
   closeModal();render();
 }
 async function uploadFahrzeugschein(autoId,input){
