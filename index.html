@@ -197,6 +197,16 @@ input,select,textarea,button{font-family:var(--font-body);}
 .diag-btn-ok.active{background:#14532d;color:#4ade80;}
 .diag-btn-nok{background:var(--bg4);color:var(--text-dim);}
 .diag-btn-nok.active{background:#7f1d1d;color:#fca5a5;}
+.diag-btn-kein{background:var(--bg4);color:var(--text-dim);white-space:nowrap;}
+.diag-btn-kein.active{background:#374151;color:#93c5fd;}
+.diag-required{color:var(--red);}
+.diag-input-row.required input{border-color:var(--red);}
+.diag-input-row.error input{border-color:var(--red);box-shadow:0 0 0 3px rgba(192,20,28,0.35);animation:diagPulse 1s infinite;}
+@keyframes diagPulse{0%,100%{opacity:1}50%{opacity:.6}}
+.diag-warn-banner{display:none;align-items:center;gap:12px;background:#7f1d1d;border:2px solid var(--red);
+  border-radius:8px;padding:16px 18px;margin-bottom:14px;color:#fff;font-size:16px;font-weight:700;line-height:1.4;}
+.diag-warn-banner .diag-warn-icon{font-size:28px;flex-shrink:0;}
+.diag-warn-banner.shake{animation:shake .4s;}
 .diag-input-row{display:flex;flex-direction:column;gap:4px;margin-bottom:8px;}
 .diag-input-row label{font-size:11px;color:var(--text-dim);font-weight:700;letter-spacing:.08em;text-transform:uppercase;}
 .diag-input-row input,.diag-input-row textarea{
@@ -305,6 +315,29 @@ input,select,textarea,button{font-family:var(--font-body);}
 .hint-add-btn{background:var(--red);border:none;border-radius:4px;color:#fff;
   padding:0 16px;cursor:pointer;font-size:20px;font-weight:700;}
 
+/* ZONEN-BUTTONS (Header) */
+#zoneButtons{display:flex;align-items:center;gap:8px;}
+.zone-btn-wrap{position:relative;}
+.zone-btn{display:flex;align-items:center;gap:8px;background:var(--bg3);border:1px solid var(--zone-border,var(--border2));
+  border-radius:6px;padding:7px 12px;cursor:pointer;font-family:var(--font-head);font-size:12px;font-weight:700;
+  letter-spacing:.06em;text-transform:uppercase;color:var(--zone-accent,var(--text-dim));white-space:nowrap;transition:background .15s;}
+.zone-btn:hover,.zone-btn.drag-over{background:var(--bg4);}
+.zone-btn-icon{font-size:15px;}
+.zone-btn-count{background:var(--zone-accent,var(--red));color:#0a0a0a;border-radius:4px;min-width:20px;height:20px;
+  display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;padding:0 5px;}
+.zone-dropdown{display:none;position:absolute;top:100%;left:0;margin-top:4px;background:var(--bg2);
+  border:1px solid var(--zone-border,var(--border2));border-radius:6px;padding:8px;min-width:260px;max-width:320px;
+  max-height:340px;overflow-y:auto;z-index:150;box-shadow:0 12px 28px rgba(0,0,0,.6);}
+.zone-btn-wrap:hover .zone-dropdown,.zone-btn-wrap.force-open .zone-dropdown{display:block;}
+.zone-dropdown-empty{color:var(--text-muted);font-size:12px;text-align:center;padding:14px 4px;
+  font-family:var(--font-head);letter-spacing:.05em;text-transform:uppercase;}
+.zone-card{display:flex;align-items:center;gap:8px;background:var(--bg3);border:1px solid var(--border2);
+  border-radius:6px;padding:7px 10px;margin-bottom:6px;cursor:grab;}
+.zone-card:last-child{margin-bottom:0;}
+.zone-card-kz{font-family:var(--font-head);font-weight:700;font-size:13px;color:var(--zone-accent,var(--text));flex-shrink:0;}
+.zone-card-kunde{font-size:12px;color:var(--silver);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;}
+.zone-mobile-lane{display:none;}
+
 /* MITARBEITERBOARD */
 #mitarbeiterBoard{border-top:2px solid var(--red);background:var(--bg2);flex-shrink:0;
   padding:10px 12px;max-height:34vh;overflow-y:auto;}
@@ -355,6 +388,12 @@ input,select,textarea,button{font-family:var(--font-body);}
   #mitarbeiterBoard{max-height:none;}
   .mab-name{width:78px;font-size:12px;}
   .mab-card{min-width:112px;padding:5px 8px;}
+  #zoneButtons{display:none;}
+  .diag-grid{grid-template-columns:1fr;}
+  .diag-row{flex-wrap:wrap;row-gap:6px;}
+  .diag-btns{flex-wrap:wrap;}
+  .diag-warn-banner{font-size:14px;padding:14px;}
+  .diag-warn-banner .diag-warn-icon{font-size:22px;}
 }
 
 ::-webkit-scrollbar{width:5px;}
@@ -408,6 +447,8 @@ input,select,textarea,button{font-family:var(--font-body);}
   <div class="hstat"><div class="hstat-val" id="statAllesDa" style="color:#C0DD97">0</div><div class="hstat-lbl">Bereit</div></div>
   <div class="hstat"><div class="hstat-val" id="statUnterbrochen" style="color:#FAC775">0</div><div class="hstat-lbl">Unterbrochen</div></div>
   <div class="hspace"></div>
+  <div id="zoneButtons"></div>
+  <div class="hspace"></div>
   <span id="syncStatus" class="ok"><span class="sync-dot"></span><span id="syncText">Live</span></span>
   <div class="hactions">
     <div class="search-wrap">
@@ -451,11 +492,14 @@ const ADMIN_PW     = 'admin';
 
 // ── SPALTEN ──
 const STATI = [
+  {id:'neue_auftraege',label:'Neue Aufträge', icon:'📋', color:'#78350F', accent:'#FBBF24', glow:'rgba(251,191,36,0.18)', headerZone:true},
+  {id:'langeweile',    label:'Langeweile',    icon:'😴', color:'#4C1D95', accent:'#C4B5FD', glow:'rgba(196,181,253,0.18)', headerZone:true},
   {id:'in_arbeit',   label:'In Arbeit',                icon:'🔧', color:'#8B0E13', accent:'#E8454D', glow:'rgba(192,20,28,0.22)'},
   {id:'teile',       label:'Warten auf Teile',         icon:'📦', color:'#534AB7', accent:'#AFA9EC', glow:'rgba(175,169,236,0.18)'},
   {id:'alles_da',    label:'Alles da – kann losgehen', icon:'✅', color:'#3B6D11', accent:'#C0DD97', glow:'rgba(192,221,151,0.18)'},
   {id:'unterbrochen',label:'Arbeit unterbrochen',      icon:'⏸', color:'#854F0B', accent:'#FAC775', glow:'rgba(250,199,117,0.18)'},
-  {id:'aufbereitung',label:'Aufbereitung',             icon:'🧽', color:'#0E7490', accent:'#67E8F9', glow:'rgba(103,232,249,0.18)'},
+  {id:'aufbereitung',label:'Aufbereitung',             icon:'🧽', color:'#0E7490', accent:'#67E8F9', glow:'rgba(103,232,249,0.18)', headerZone:true},
+  {id:'fertig',      label:'Fertig',                   icon:'🏁', color:'#166534', accent:'#86EFAC', glow:'rgba(134,239,172,0.18)', headerZone:true},
   {id:'parkplatz',   label:'Parkplatz / Vorlauf',      icon:'🅿', color:'#2a2a2a', accent:'#888888', glow:'rgba(136,136,136,0.12)'},
 ];
 
@@ -786,47 +830,59 @@ function render(){
   document.getElementById('statUnterbrochen').textContent = autos.filter(a=>a.status==='unterbrochen').length;
 
   const grid=document.getElementById('boardGrid');grid.innerHTML='';
-  const sichtbareSpalten = STATI.filter(s=>!s.hidden);
+  const sichtbareSpalten = STATI.filter(s=>!s.hidden && !s.headerZone);
   grid.style.gridTemplateColumns = `repeat(${sichtbareSpalten.length}, 1fr)`;
   grid.style.minWidth = (sichtbareSpalten.length * 190) + 'px';
 
-  sichtbareSpalten.forEach(s=>{
-    const cards=autos.filter(a=>a.status===s.id)
-      .sort((a,b)=>({'Express':0,'Dringend':1,'Normal':2}[a.prioritaet])-({'Express':0,'Dringend':1,'Normal':2}[b.prioritaet]));
-    const autoCollapse=cards.length>=COLLAPSE_AT;
+  sichtbareSpalten.forEach(s=>grid.appendChild(buildLane(s)));
 
-    const lane=document.createElement('div');lane.className='lane';lane.dataset.status=s.id;
-
-    const hdr=document.createElement('div');hdr.className='lane-header';
-    hdr.style.cssText=`background:${s.color};border:1px solid ${s.accent}44;box-shadow:0 0 14px ${s.glow}`;
-    hdr.innerHTML=`<span style="font-size:18px">${s.icon}</span>
-      <span class="lane-title" style="color:${s.accent}">${s.label}</span>
-      ${cards.length>0?`<span class="lane-count" style="background:rgba(0,0,0,0.4);color:${s.accent}">${cards.length}</span>`:''}`;
-    if(cards.length>0&&autoCollapse){
-      const btn=document.createElement('button');btn.className='lane-toggle-btn';
-      btn.style.cssText=`border:1px solid ${s.accent}66;color:${s.accent}`;
-      const allOpen=cards.every(c=>expandedCards.has(c.id));
-      btn.textContent=allOpen?'▲ Alle zu':'▼ Alle auf';
-      btn.addEventListener('click',e=>{e.stopPropagation();if(allOpen)cards.forEach(c=>expandedCards.delete(c.id));else cards.forEach(c=>expandedCards.add(c.id));render();});
-      hdr.appendChild(btn);
-    }
-    lane.appendChild(hdr);
-
-    const body=document.createElement('div');body.className='lane-body';
-    body.addEventListener('dragover',e=>{e.preventDefault();if(dragFrom!==s.id){body.style.background='#1a0a0a';body.style.borderColor=s.accent;body.style.boxShadow=`inset 0 0 20px ${s.glow}`;}});
-    body.addEventListener('dragleave',()=>{body.style.background='';body.style.borderColor='';body.style.boxShadow='';});
-    body.addEventListener('drop',e=>{
-      e.preventDefault();body.style.background='';body.style.borderColor='';body.style.boxShadow='';
-      if(dragId&&dragFrom!==s.id){const a=autos.find(x=>x.id===dragId);if(a){a.status=s.id;a.statusSeit=uhrzeit();saveAuto(a);}render();}
-    });
-
-    if(cards.length===0){body.innerHTML='<div class="lane-empty">Leer</div>';}
-    else cards.forEach(a=>body.appendChild(makeCard(a,s,autoCollapse,isCollapsed(a.id,autoCollapse))));
-    lane.appendChild(body);grid.appendChild(lane);
+  // Zonen-Buttons (Neue Aufträge/Langeweile/Aufbereitung/Fertig) bekommen zusätzlich eine
+  // versteckte Lane, damit sie auf dem Handy trotzdem über die Mobile-Tabs erreichbar sind
+  document.querySelectorAll('.zone-mobile-lane').forEach(el=>el.remove());
+  STATI.filter(s=>!s.hidden && s.headerZone).forEach(s=>{
+    const lane=buildLane(s);lane.classList.add('zone-mobile-lane');
+    document.getElementById('board').appendChild(lane);
   });
 
   renderMobileTabs();updateMobileLanes();
+  renderZoneButtons();
   renderMitarbeiterZeilen();
+}
+
+function buildLane(s){
+  const cards=autos.filter(a=>a.status===s.id)
+    .sort((a,b)=>({'Express':0,'Dringend':1,'Normal':2}[a.prioritaet])-({'Express':0,'Dringend':1,'Normal':2}[b.prioritaet]));
+  const autoCollapse=cards.length>=COLLAPSE_AT;
+
+  const lane=document.createElement('div');lane.className='lane';lane.dataset.status=s.id;
+
+  const hdr=document.createElement('div');hdr.className='lane-header';
+  hdr.style.cssText=`background:${s.color};border:1px solid ${s.accent}44;box-shadow:0 0 14px ${s.glow}`;
+  hdr.innerHTML=`<span style="font-size:18px">${s.icon}</span>
+    <span class="lane-title" style="color:${s.accent}">${s.label}</span>
+    ${cards.length>0?`<span class="lane-count" style="background:rgba(0,0,0,0.4);color:${s.accent}">${cards.length}</span>`:''}`;
+  if(cards.length>0&&autoCollapse){
+    const btn=document.createElement('button');btn.className='lane-toggle-btn';
+    btn.style.cssText=`border:1px solid ${s.accent}66;color:${s.accent}`;
+    const allOpen=cards.every(c=>expandedCards.has(c.id));
+    btn.textContent=allOpen?'▲ Alle zu':'▼ Alle auf';
+    btn.addEventListener('click',e=>{e.stopPropagation();if(allOpen)cards.forEach(c=>expandedCards.delete(c.id));else cards.forEach(c=>expandedCards.add(c.id));render();});
+    hdr.appendChild(btn);
+  }
+  lane.appendChild(hdr);
+
+  const body=document.createElement('div');body.className='lane-body';
+  body.addEventListener('dragover',e=>{e.preventDefault();if(dragFrom!==s.id){body.style.background='#1a0a0a';body.style.borderColor=s.accent;body.style.boxShadow=`inset 0 0 20px ${s.glow}`;}});
+  body.addEventListener('dragleave',()=>{body.style.background='';body.style.borderColor='';body.style.boxShadow='';});
+  body.addEventListener('drop',e=>{
+    e.preventDefault();body.style.background='';body.style.borderColor='';body.style.boxShadow='';
+    if(dragId&&dragFrom!==s.id){const a=autos.find(x=>x.id===dragId);if(a){a.status=s.id;a.statusSeit=uhrzeit();saveAuto(a);}render();}
+  });
+
+  if(cards.length===0){body.innerHTML='<div class="lane-empty">Leer</div>';}
+  else cards.forEach(a=>body.appendChild(makeCard(a,s,autoCollapse,isCollapsed(a.id,autoCollapse))));
+  lane.appendChild(body);
+  return lane;
 }
 
 // ── KARTE ──
@@ -910,6 +966,59 @@ function makeCard(a,s,autoCollapse,collapsed){
     actions.appendChild(btnEdit);actions.appendChild(btnDiag);actions.appendChild(btnArb);wrap.appendChild(actions);
   }
   return wrap;
+}
+
+// ── ZONEN-BUTTONS (Header: Neue Aufträge, Langeweile, Aufbereitung, Fertig) ──
+function renderZoneButtons(){
+  const c=document.getElementById('zoneButtons');if(!c)return;
+  c.innerHTML='';
+  STATI.filter(s=>s.headerZone&&!s.hidden).forEach(s=>{
+    const cards=autos.filter(a=>a.status===s.id);
+
+    const wrap=document.createElement('div');wrap.className='zone-btn-wrap';
+    wrap.style.setProperty('--zone-accent',s.accent);
+    wrap.style.setProperty('--zone-border',s.accent+'55');
+
+    const btn=document.createElement('div');btn.className='zone-btn';
+    btn.innerHTML=`<span class="zone-btn-icon">${s.icon}</span><span>${s.label}</span>`;
+    if(cards.length>0){
+      const cnt=document.createElement('span');cnt.className='zone-btn-count';cnt.textContent=cards.length;
+      btn.appendChild(cnt);
+    }
+    wrap.appendChild(btn);
+
+    const dd=document.createElement('div');dd.className='zone-dropdown';
+    if(cards.length===0){
+      dd.innerHTML='<div class="zone-dropdown-empty">Leer</div>';
+    }else{
+      cards.forEach(a=>{
+        const zc=document.createElement('div');zc.className='zone-card';zc.draggable=true;
+        zc.innerHTML=`<span class="zone-card-kz">${a.kennzeichen||'—'}</span><span class="zone-card-kunde">${a.kunde||a.fahrzeug||''}</span>`;
+        zc.addEventListener('dragstart',e=>{dragId=a.id;dragFrom=s.id;e.dataTransfer.effectAllowed='move';});
+        zc.addEventListener('dragend',()=>{dragId=null;dragFrom=null;});
+        zc.addEventListener('click',()=>openEdit(a.id));
+        dd.appendChild(zc);
+      });
+    }
+    wrap.appendChild(dd);
+
+    // Drop-Ziel: sowohl Button als auch Dropdown nehmen Karten per Drag&Drop an
+    [btn,dd].forEach(el=>{
+      el.addEventListener('dragover',e=>{e.preventDefault();wrap.classList.add('force-open');btn.classList.add('drag-over');});
+      el.addEventListener('dragleave',()=>{btn.classList.remove('drag-over');});
+      el.addEventListener('drop',e=>{
+        e.preventDefault();btn.classList.remove('drag-over');wrap.classList.remove('force-open');
+        if(dragId&&dragFrom!==s.id){
+          const a=autos.find(x=>x.id===dragId);
+          if(a){a.status=s.id;a.statusSeit=uhrzeit();saveAuto(a);}
+          render();
+        }
+      });
+    });
+    wrap.addEventListener('mouseleave',()=>wrap.classList.remove('force-open'));
+
+    c.appendChild(wrap);
+  });
 }
 
 // ── MITARBEITER (Zuweisungs-Zeilen) ──
@@ -1040,8 +1149,13 @@ function handleSearch(val){
 function clearSearch(){document.getElementById('searchInput').value='';document.getElementById('searchClear').classList.remove('visible');currentSearch='';}
 
 // ── MODAL ──
-function openModal(html){document.getElementById('modalBox').innerHTML=html;document.getElementById('modalOverlay').style.display='flex';}
-function closeModal(){document.getElementById('modalOverlay').style.display='none';}
+let modalCloseGuard=null;
+function openModal(html){modalCloseGuard=null;document.getElementById('modalBox').innerHTML=html;document.getElementById('modalOverlay').style.display='flex';}
+function closeModal(){
+  if(modalCloseGuard&&!modalCloseGuard())return;
+  document.getElementById('modalOverlay').style.display='none';
+  modalCloseGuard=null;
+}
 document.getElementById('modalOverlay').addEventListener('click',e=>{if(e.target===document.getElementById('modalOverlay'))closeModal();});
 function openConfirm(msg,onYes){
   const o=document.createElement('div');
@@ -1280,7 +1394,7 @@ async function removeFahrzeugschein(autoId){
 
 // ── DIAGNOSE ──
 function emptyDiagnose(){
-  const d={km:'',tuev:'',fehlerspeicher:'',was_machen:'',hinweise:''};
+  const d={km:'',tuev:'',tuev_abgelaufen:false,fehlerspeicher:'',was_machen:'',hinweise:''};
   [...DIAG_ITEMS_LEFT,...DIAG_ITEMS_RIGHT,...DIAG_BREMSEN,...DIAG_REIFEN].forEach(k=>d[k]='');
   return d;
 }
@@ -1288,13 +1402,15 @@ function openDiagnose(autoId){
   const a=autos.find(x=>x.id===autoId);if(!a)return;
   // Diagnose aus DB sicherstellen
   if(!a.diagnose||typeof a.diagnose!=='object')a.diagnose=emptyDiagnose();
+  if(typeof a.diagnose.tuev_abgelaufen==='undefined')a.diagnose.tuev_abgelaufen=false;
   const d=a.diagnose;
 
   function statusBtns(key){
     const val=d[key]||'';
     return `<div class="diag-btns">
       <button class="diag-btn diag-btn-ok ${val==='ok'?'active':''}" data-key="${key}" data-val="ok">OK</button>
-      <button class="diag-btn diag-btn-nok ${val==='nok'?'active':''}" data-key="${key}" data-val="nok">!</button>
+      <button class="diag-btn diag-btn-nok ${val==='nok'?'active':''}" data-key="${key}" data-val="nok">✕</button>
+      <button class="diag-btn diag-btn-kein ${val==='kein_nachweis'?'active':''}" data-key="${key}" data-val="kein_nachweis">Kein Nachweis</button>
     </div>`;}
   function diagRow(label,key){
     return `<div class="diag-row"><span class="diag-row-label">${label}</span>${statusBtns(key)}</div>`;}
@@ -1305,10 +1421,18 @@ function openDiagnose(autoId){
       <button class="modal-close" onclick="closeModal()">✕</button>
     </div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:0 12px;margin-bottom:12px">
-      <div class="diag-input-row"><label>KM-Stand</label>
+      <div class="diag-input-row required"><label>KM-Stand <span class="diag-required">*</span></label>
         <input id="diag_km" value="${d.km||''}" placeholder="z.B. 125000"/></div>
-      <div class="diag-input-row"><label>TÜV</label>
-        <input id="diag_tuev" value="${d.tuev||''}" placeholder="z.B. 05/2026"/></div>
+      <div class="diag-input-row required"><label>TÜV <span class="diag-required">*</span></label>
+        <input id="diag_tuev" value="${d.tuev||''}" placeholder="z.B. 05/2026"/>
+        <label style="display:flex;align-items:center;gap:6px;margin-top:6px;font-size:12px;color:var(--text-dim);font-weight:600;text-transform:none;letter-spacing:normal">
+          <input type="checkbox" id="diag_tuev_abgelaufen" ${d.tuev_abgelaufen?'checked':''} style="width:auto"/> TÜV abgelaufen
+        </label>
+      </div>
+    </div>
+    <div id="diagWarnBanner" class="diag-warn-banner">
+      <span class="diag-warn-icon">⚠️</span>
+      <span>KM-Stand und TÜV müssen ausgefüllt sein, bevor du dieses Fenster schließen kannst.</span>
     </div>
     <div class="diag-section">
       <div class="diag-section-title">Allgemein</div>
@@ -1341,7 +1465,7 @@ function openDiagnose(autoId){
     </div>
   `);
 
-  // Event Listeners für Buttons (OK / !)
+  // Event Listeners für Buttons (OK / ✕ / Kein Nachweis)
   document.getElementById('modalBox').querySelectorAll('.diag-btn').forEach(btn=>{
     btn.addEventListener('click',()=>{
       const key=btn.dataset.key;const val=btn.dataset.val;
@@ -1351,6 +1475,7 @@ function openDiagnose(autoId){
       const row=btn.closest('.diag-btns');
       row.querySelectorAll('.diag-btn-ok').forEach(b=>b.classList.toggle('active',a.diagnose[key]==='ok'));
       row.querySelectorAll('.diag-btn-nok').forEach(b=>b.classList.toggle('active',a.diagnose[key]==='nok'));
+      row.querySelectorAll('.diag-btn-kein').forEach(b=>b.classList.toggle('active',a.diagnose[key]==='kein_nachweis'));
       saveDiagNow(a);
     });
   });
@@ -1359,12 +1484,54 @@ function openDiagnose(autoId){
   ['km','tuev','fehlerspeicher','was_machen','hinweise'].forEach(key=>{
     const el=document.getElementById('diag_'+key);
     if(el){
-      el.addEventListener('input',()=>{if(!a.diagnose)a.diagnose=emptyDiagnose();a.diagnose[key]=el.value;});
+      el.addEventListener('input',()=>{
+        if(!a.diagnose)a.diagnose=emptyDiagnose();
+        a.diagnose[key]=el.value;
+        if(key==='km'||key==='tuev')validateDiagnoseClose(a,false);
+      });
       el.addEventListener('blur',()=>saveDiagNow(a));
     }
   });
 
+  // TÜV abgelaufen Checkbox
+  const tuevAbgelaufen=document.getElementById('diag_tuev_abgelaufen');
+  if(tuevAbgelaufen){
+    tuevAbgelaufen.addEventListener('change',()=>{
+      if(!a.diagnose)a.diagnose=emptyDiagnose();
+      a.diagnose.tuev_abgelaufen=tuevAbgelaufen.checked;
+      saveDiagNow(a);
+    });
+  }
+
   document.getElementById('btnDiagPDF').addEventListener('click',()=>exportDiagnosePDF(autoId));
+
+  // Fenster darf erst geschlossen werden, wenn KM-Stand und TÜV ausgefüllt sind
+  modalCloseGuard=()=>validateDiagnoseClose(a,true);
+}
+
+function validateDiagnoseClose(a,showWarning){
+  const kmEl=document.getElementById('diag_km');
+  const tuevEl=document.getElementById('diag_tuev');
+  const kmVal=(kmEl?kmEl.value:(a.diagnose.km||'')).trim();
+  const tuevVal=(tuevEl?tuevEl.value:(a.diagnose.tuev||'')).trim();
+  const warnEl=document.getElementById('diagWarnBanner');
+  const ok=!!kmVal&&!!tuevVal;
+
+  if(kmEl)kmEl.closest('.diag-input-row').classList.toggle('error',!kmVal&&showWarning);
+  if(tuevEl)tuevEl.closest('.diag-input-row').classList.toggle('error',!tuevVal&&showWarning);
+
+  if(!ok){
+    if(showWarning&&warnEl){
+      warnEl.style.display='flex';
+      warnEl.classList.remove('shake');void warnEl.offsetWidth;warnEl.classList.add('shake');
+      if(typeof warnEl.scrollIntoView==='function')warnEl.scrollIntoView({behavior:'smooth',block:'center'});
+    }
+    return false;
+  }
+  if(warnEl)warnEl.style.display='none';
+  if(kmEl)kmEl.closest('.diag-input-row').classList.remove('error');
+  if(tuevEl)tuevEl.closest('.diag-input-row').classList.remove('error');
+  return true;
 }
 
 async function saveDiagNow(a){
@@ -1378,7 +1545,8 @@ function exportDiagnosePDF(autoId){
   const d=a.diagnose||emptyDiagnose();
   function badge(key){const v=d[key]||'';
     if(v==='ok')return '<span style="background:#14532d;color:#4ade80;padding:2px 8px;border-radius:3px;font-size:11px;font-weight:700">OK</span>';
-    if(v==='nok')return '<span style="background:#7f1d1d;color:#fca5a5;padding:2px 8px;border-radius:3px;font-size:11px;font-weight:700">!</span>';
+    if(v==='nok')return '<span style="background:#7f1d1d;color:#fca5a5;padding:2px 8px;border-radius:3px;font-size:11px;font-weight:700">✕</span>';
+    if(v==='kein_nachweis')return '<span style="background:#374151;color:#93c5fd;padding:2px 8px;border-radius:3px;font-size:11px;font-weight:700">Kein Nachweis</span>';
     return '<span style="color:#aaa;font-size:11px">—</span>';}
   function tbl(items,title){return `<table style="width:100%;border-collapse:collapse;margin-bottom:10px">
     <thead><tr><th colspan="2" style="background:#C0141C;color:#fff;padding:5px 8px;font-size:12px;text-align:left">${title}</th></tr></thead>
@@ -1393,7 +1561,7 @@ function exportDiagnosePDF(autoId){
     <div class="box"><div class="label">Kunde</div><div style="font-weight:700">${a.kunde||'—'}</div></div>
     <div class="box"><div class="label">Fahrzeug</div><div style="font-weight:700">${a.fahrzeug||'—'}</div></div>
     <div class="box"><div class="label">Kennzeichen</div><div style="font-weight:700">${a.kennzeichen||'—'}</div></div>
-    <div class="box"><div style="display:grid;grid-template-columns:1fr 1fr;gap:8px"><div><div class="label">KM-Stand</div><div style="font-weight:700">${d.km||'—'}</div></div><div><div class="label">TÜV</div><div style="font-weight:700">${d.tuev||'—'}</div></div></div></div>
+    <div class="box"><div style="display:grid;grid-template-columns:1fr 1fr;gap:8px"><div><div class="label">KM-Stand</div><div style="font-weight:700">${d.km||'—'}</div></div><div><div class="label">TÜV</div><div style="font-weight:700">${d.tuev||'—'}${d.tuev_abgelaufen?' <span style="color:#c0141c">(abgelaufen)</span>':''}</div></div></div></div>
   </div>
   <div class="two" style="margin-bottom:10px">
     ${tbl(DIAG_ITEMS_LEFT,'Allgemein (1)')}
@@ -1875,7 +2043,7 @@ async function doImportSFK(){
   const id=genId();
   const a={id,kennzeichen:sfkParsed.kennzeichen||'',fahrzeug:sfkParsed.fahrzeug||'',
     kunde:sfkParsed.kunde||'',auftragsnr:sfkParsed.auftragsnr||'',
-    platz:'',prioritaet:'Normal',status:'parkplatz',
+    platz:'',prioritaet:'Normal',status:'neue_auftraege',
     hinweise:(sfkParsed.arbeiten||[]).map(t=>({text:t,done:false})),
     arbeiten:[],
     material:(sfkParsed.material||[]).map(m=>({bezeichnung:m.bezeichnung||'',menge:m.menge||'',einheit:m.einheit||'Stk'})),
