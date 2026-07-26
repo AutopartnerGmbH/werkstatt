@@ -120,6 +120,14 @@ input,select,textarea,button{font-family:var(--font-body);}
 .card-actions button:last-child{border-right:none;}
 .card-actions button:hover{background:rgba(255,255,255,0.05);color:var(--text);}
 
+/* VERSCHIEBEN-BUTTON (nur mobil sichtbar — Ersatz für Drag&Drop auf Touch-Geräten) */
+.btn-move{display:none;}
+.move-options-grid{display:flex;flex-wrap:wrap;gap:8px;}
+.move-option{background:var(--bg3);border:1px solid var(--border2);border-radius:6px;
+  color:var(--text);padding:8px 12px;cursor:pointer;font-size:13px;font-weight:600;}
+.move-option:hover:not(:disabled){background:var(--bg4);border-color:var(--red);}
+.move-option:disabled{opacity:.35;cursor:default;}
+
 /* MITARBEITER */
 .ma-badge{display:inline-flex;align-items:center;gap:5px;background:rgba(192,20,28,0.15);
   border:1px solid rgba(192,20,28,0.4);border-radius:20px;padding:3px 10px 3px 6px;
@@ -393,6 +401,7 @@ input,select,textarea,button{font-family:var(--font-body);}
 
 /* MOBILE */
 @media(max-width:768px){
+  .btn-move{display:block;}
   body{overflow:auto;}
   #header{height:auto;flex-wrap:wrap;padding:8px 12px;gap:6px;}
   .hlogo{padding-right:12px;border-right:none;}
@@ -913,8 +922,17 @@ function performPtrDrop(x,y,drag){
     const maId=mabHalf.dataset.maId;
     const a=autos.find(v=>v.id===drag.id);
     if(a){
-      const maxPos=Math.max(0,...autos.filter(v=>v.zugewiesenAn===maId).map(v=>v.zuwPos||0));
-      a.zugewiesenAn=maId;a.zuwPos=maxPos+1;saveAuto(a);render();
+      // Zielposition anhand der Maus-/Fingerposition zwischen den vorhandenen Karten bestimmen
+      const karten=[...mabHalf.querySelectorAll('.mab-card')].filter(c=>c!==drag.el);
+      let einfuegeIndex=karten.length;
+      for(let idx=0;idx<karten.length;idx++){
+        const rect=karten[idx].getBoundingClientRect();
+        if(x<rect.left+rect.width/2){einfuegeIndex=idx;break;}
+      }
+      let liste=autos.filter(v=>v.zugewiesenAn===maId&&v.id!==a.id).sort((p,q)=>(p.zuwPos||0)-(q.zuwPos||0));
+      liste.splice(einfuegeIndex,0,a);
+      liste.forEach((item,idx)=>{item.zugewiesenAn=maId;item.zuwPos=idx+1;saveAuto(item);});
+      render();
     }
     return;
   }
@@ -1082,7 +1100,8 @@ function makeCard(a,s,autoCollapse,collapsed){
     const btnEdit=document.createElement('button');btnEdit.textContent='✎ Bearbeiten';btnEdit.addEventListener('click',e=>{e.stopPropagation();openEdit(a.id);});
     const btnDiag=document.createElement('button');btnDiag.textContent='📋 Diagnose';btnDiag.style.color='#fbbf24';btnDiag.addEventListener('click',e=>{e.stopPropagation();openDiagnose(a.id);});
     const btnArb=document.createElement('button');btnArb.textContent='📝 Arbeiten';btnArb.style.color='#AFA9EC';btnArb.addEventListener('click',e=>{e.stopPropagation();openArbeitenModal(a.id);});
-    actions.appendChild(btnEdit);actions.appendChild(btnDiag);actions.appendChild(btnArb);wrap.appendChild(actions);
+    const btnMove=document.createElement('button');btnMove.textContent='↔ Verschieben';btnMove.className='btn-move';btnMove.style.color='#67E8F9';btnMove.addEventListener('click',e=>{e.stopPropagation();openMoveMenu(a.id);});
+    actions.appendChild(btnEdit);actions.appendChild(btnDiag);actions.appendChild(btnArb);actions.appendChild(btnMove);wrap.appendChild(actions);
   }
   return wrap;
 }
@@ -1120,11 +1139,13 @@ function renderZoneButtons(){
             <button data-act="edit">✎ Bearbeiten</button>
             <button data-act="diag">📋 Diagnose</button>
             <button data-act="arbeit">📝 Arbeiten</button>
+            <button data-act="move" class="btn-move">↔ Verschieben</button>
           </div>`;
         wireDraggable(zc,'board',()=>a.id,()=>a.status);
         zc.querySelector('[data-act="edit"]').addEventListener('click',e=>{e.stopPropagation();openEdit(a.id);});
         zc.querySelector('[data-act="diag"]').addEventListener('click',e=>{e.stopPropagation();openDiagnose(a.id);});
         zc.querySelector('[data-act="arbeit"]').addEventListener('click',e=>{e.stopPropagation();openArbeitenModal(a.id);});
+        zc.querySelector('[data-act="move"]').addEventListener('click',e=>{e.stopPropagation();openMoveMenu(a.id);});
         dd.appendChild(zc);
       });
     }
@@ -1195,18 +1216,21 @@ function renderMitarbeiterZeilen(){
     zugewiesen.forEach((a,i)=>{
       const mc=document.createElement('div');mc.className='mab-card'+(i===0?' aktuell':'')+(a.istAufgabe?' mab-card-aufgabe':'');
       wireDraggable(mc,'assign',()=>a.id,()=>ma.id);
+
+      const moveBtn=document.createElement('button');moveBtn.className='mab-card-x btn-move';moveBtn.textContent='↔';moveBtn.title='Verschieben';
+      moveBtn.addEventListener('click',e=>{e.stopPropagation();openMoveMenu(a.id);});
       if(a.istAufgabe){
         const textEl=document.createElement('span');textEl.className='mab-card-aufgabetext';textEl.textContent='📌 '+(a.aufgabeText||'');
         const xBtn=document.createElement('button');xBtn.className='mab-card-x';xBtn.textContent='✕';xBtn.title='Aufgabe löschen';
         xBtn.addEventListener('click',e=>{e.stopPropagation();autos=autos.filter(v=>v.id!==a.id);deleteAuto(a.id);render();});
-        mc.appendChild(textEl);mc.appendChild(xBtn);
+        mc.appendChild(textEl);mc.appendChild(moveBtn);mc.appendChild(xBtn);
       }else{
         const kzEl=document.createElement('span');kzEl.className='mab-card-kz';kzEl.textContent=a.kennzeichen||'—';
         const fahrzeugEl=document.createElement('span');fahrzeugEl.className='mab-card-fahrzeug';fahrzeugEl.textContent=a.fahrzeug||'';
         const kundeEl=document.createElement('span');kundeEl.className='mab-card-kunde';kundeEl.textContent=a.kunde||'';
         const xBtn=document.createElement('button');xBtn.className='mab-card-x';xBtn.textContent='✕';xBtn.title='Zuweisung entfernen';
         xBtn.addEventListener('click',e=>{e.stopPropagation();a.zugewiesenAn=null;a.zuwPos=0;saveAuto(a);render();});
-        mc.appendChild(kzEl);mc.appendChild(fahrzeugEl);mc.appendChild(kundeEl);mc.appendChild(xBtn);
+        mc.appendChild(kzEl);mc.appendChild(fahrzeugEl);mc.appendChild(kundeEl);mc.appendChild(moveBtn);mc.appendChild(xBtn);
       }
       cardsWrap.appendChild(mc);
     });
@@ -1316,9 +1340,16 @@ function clearSearch(){document.getElementById('searchInput').value='';document.
 
 // ── MODAL ──
 let modalCloseGuard=null;
-function openModal(html){modalCloseGuard=null;const mb=document.getElementById('modalBox');mb.className='modal-box';mb.innerHTML=html;document.getElementById('modalOverlay').style.display='flex';}
+let modalReturnTo=null;
+function openModal(html){modalCloseGuard=null;modalReturnTo=null;const mb=document.getElementById('modalBox');mb.className='modal-box';mb.innerHTML=html;document.getElementById('modalOverlay').style.display='flex';}
 function closeModal(){
   if(modalCloseGuard&&!modalCloseGuard())return;
+  if(modalReturnTo){
+    const zurueck=modalReturnTo;
+    modalReturnTo=null;
+    zurueck();
+    return;
+  }
   document.getElementById('modalOverlay').style.display='none';
   modalCloseGuard=null;
 }
@@ -1504,8 +1535,8 @@ function setupFormListeners(a,isEdit){
   const sfkReplaceFile = document.getElementById('sfk_replace_file');
   if(sfkOeffnen){
     const sfk = a.dateien?.find(d=>d.typ==='sfk_auftrag');
-    sfkOeffnen.addEventListener('click',()=>openPdfViewer(sfk.url,sfk.name));
-    sfkDrucken.addEventListener('click',()=>openPdfViewer(sfk.url,sfk.name,true));
+    sfkOeffnen.addEventListener('click',()=>{openPdfViewer(sfk.url,sfk.name);modalReturnTo=()=>openEdit(a.id);});
+    sfkDrucken.addEventListener('click',()=>{openPdfViewer(sfk.url,sfk.name,true);modalReturnTo=()=>openEdit(a.id);});
     sfkExport.addEventListener('click',()=>{
       const lnk=document.createElement('a');lnk.href=sfk.url;lnk.download=sfk.name;
       document.body.appendChild(lnk);lnk.click();document.body.removeChild(lnk);
@@ -1537,7 +1568,7 @@ function setupFormListeners(a,isEdit){
   const btnOeffnenFschein=document.getElementById('btnOeffnenFschein');
   if(btnOeffnenFschein){
     const fschein=a.dateien?.find(d=>d.typ==='fahrzeugschein');
-    btnOeffnenFschein.addEventListener('click',()=>openPdfViewer(fschein.url,fschein.name));
+    btnOeffnenFschein.addEventListener('click',()=>{openPdfViewer(fschein.url,fschein.name);modalReturnTo=()=>openEdit(a.id);});
   }
 }
 
@@ -1820,9 +1851,74 @@ function exportDiagnosePDF(autoId){
   </div>
   </body></html>`;
   openHtmlPreview(html,'Diagnose — '+(a.kennzeichen||''));
+  modalReturnTo=()=>openDiagnose(autoId);
 }
 
 // ── ARBEITEN MODAL ──
+// ── VERSCHIEBEN-MENÜ (Alternative zu Drag&Drop, v.a. für Touch/Mobile) ──
+function openMoveMenu(autoId){
+  const a=autos.find(x=>x.id===autoId);if(!a)return;
+  const statusSection=a.istAufgabe?'':`
+    <div class="section-label">Status ändern</div>
+    <div class="move-options-grid">
+      ${STATI.filter(s=>!s.hidden).map(s=>`<button class="move-option" data-type="status" data-value="${s.id}" ${a.status===s.id?'disabled':''} style="border-color:${s.accent}55">${s.icon} ${s.label}</button>`).join('')}
+    </div>`;
+  const mitarbeiterButtons=MITARBEITERLISTE.map(m=>`<button class="move-option" data-type="mitarbeiter" data-value="${m.id}" ${a.zugewiesenAn===m.id?'disabled':''}>👤 ${m.name}</button>`).join('');
+  const entfernenBtn=`<button class="move-option" data-type="mitarbeiter" data-value="" ${!a.zugewiesenAn?'disabled':''}>✕ Zuweisung entfernen</button>`;
+
+  let reihenfolgeSection='';
+  if(a.zugewiesenAn){
+    const zugewieseneMa=MITARBEITERLISTE.find(m=>m.id===a.zugewiesenAn);
+    const andere=autos.filter(v=>v.zugewiesenAn===a.zugewiesenAn&&v.id!==a.id).sort((p,q)=>(p.zuwPos||0)-(q.zuwPos||0));
+    if(andere.length>0){
+      const vorButtons=andere.map(v=>`<button class="move-option" data-type="reorder" data-value="${v.id}">⬆ Vor: ${v.kennzeichen||v.aufgabeText||'Eintrag'}</button>`).join('');
+      const ansEndeBtn=`<button class="move-option" data-type="reorder" data-value="">⬇ Ans Ende stellen</button>`;
+      reihenfolgeSection=`
+        <div class="section-label" style="margin-top:14px">Reihenfolge bei ${zugewieseneMa?zugewieseneMa.name:'Mitarbeiter'}</div>
+        <div class="move-options-grid">${vorButtons}${ansEndeBtn}</div>`;
+    }
+  }
+
+  openModal(`
+    <div class="modal-header">
+      <span class="modal-title">↔ Verschieben — ${a.kennzeichen||a.aufgabeText||'Auftrag'}</span>
+      <button class="modal-close" onclick="closeModal()">✕</button>
+    </div>
+    ${statusSection}
+    <div class="section-label" style="margin-top:14px">Mitarbeiter zuweisen</div>
+    <div class="move-options-grid">
+      ${mitarbeiterButtons||'<div style="color:var(--text-muted);font-size:12px">Noch keine Mitarbeiter angelegt</div>'}
+      ${MITARBEITERLISTE.length?entfernenBtn:''}
+    </div>
+    ${reihenfolgeSection}
+  `);
+  document.getElementById('modalBox').querySelectorAll('.move-option').forEach(btn=>{
+    btn.addEventListener('click',()=>{
+      if(btn.dataset.type==='status'){
+        a.status=btn.dataset.value;a.statusSeit=uhrzeit();
+        saveAuto(a);closeModal();render();
+      }else if(btn.dataset.type==='mitarbeiter'){
+        const maId=btn.dataset.value;
+        if(maId){
+          const maxPos=Math.max(0,...autos.filter(v=>v.zugewiesenAn===maId).map(v=>v.zuwPos||0));
+          a.zugewiesenAn=maId;a.zuwPos=maxPos+1;
+        }else{
+          a.zugewiesenAn=null;a.zuwPos=0;
+        }
+        saveAuto(a);closeModal();render();
+      }else if(btn.dataset.type==='reorder'){
+        const vorId=btn.dataset.value||null;
+        let liste=autos.filter(v=>v.zugewiesenAn===a.zugewiesenAn&&v.id!==a.id).sort((p,q)=>(p.zuwPos||0)-(q.zuwPos||0));
+        let einfuegeIndex=liste.length;
+        if(vorId){const idx=liste.findIndex(v=>v.id===vorId);if(idx>=0)einfuegeIndex=idx;}
+        liste.splice(einfuegeIndex,0,a);
+        liste.forEach((item,idx)=>{item.zugewiesenAn=a.zugewiesenAn;item.zuwPos=idx+1;saveAuto(item);});
+        closeModal();render();
+      }
+    });
+  });
+}
+
 function openArbeitenModal(autoId){
   const a=autos.find(x=>x.id===autoId);if(!a)return;
   openModal(`
@@ -1941,7 +2037,7 @@ function renderLSList(autoId){
     row.innerHTML=`<span style="font-size:16px">${ls.typ==='pdf'?'📄':'🖼'}</span><span style="flex:1;font-size:13px;color:var(--text)">${ls.name}</span>`;
     const link=document.createElement('button');
     link.textContent='Öffnen';link.style.cssText='background:none;border:none;color:var(--red);font-size:12px;font-weight:600;text-decoration:none;cursor:pointer;padding:0';
-    link.addEventListener('click',()=>openPdfViewer(ls.url,ls.name));
+    link.addEventListener('click',()=>{openPdfViewer(ls.url,ls.name);modalReturnTo=()=>openArbeitenModal(autoId);});
     const del=document.createElement('button');del.style.cssText='background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:14px;padding:0 4px';del.textContent='✕';
     del.addEventListener('click',()=>{a.lieferscheine.splice(i,1);saveAuto(a);renderLSList(autoId);});
     row.appendChild(link);row.appendChild(del);el.appendChild(row);
@@ -1964,7 +2060,7 @@ function renderMaterialKosten(autoId){
     dd.onchange=()=>{
       if(dd.value==='')return;
       const ls=a.lieferscheine[dd.value];
-      if(ls)openPdfViewer(ls.url,ls.name);
+      if(ls){openPdfViewer(ls.url,ls.name);modalReturnTo=()=>openArbeitenModal(autoId);}
       dd.value='';
     };
   }
@@ -2093,6 +2189,7 @@ function openRechnungskontrolle(autoId){
   </div>
   </body></html>`;
   openHtmlPreview(html,'Rechnungskontrolle — '+(a.kennzeichen||''));
+  modalReturnTo=()=>openArbeitenModal(autoId);
 }
 
 // ── DIKTIEREN ──
