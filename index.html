@@ -27,8 +27,9 @@
   --silver:#444444;--silver-dim:#888888;
 }
 *{box-sizing:border-box;margin:0;padding:0;}
-html,body{height:100%;}
-body{background:var(--bg);color:var(--text);font-family:var(--font-body);display:flex;flex-direction:column;overflow:hidden;}
+html,body{height:100%;height:100dvh;}
+body{background:var(--bg);color:var(--text);font-family:var(--font-body);display:flex;flex-direction:column;overflow:hidden;
+  padding-bottom:env(safe-area-inset-bottom,0px);}
 input,select,textarea,button{font-family:var(--font-body);}
 
 /* HEADER */
@@ -360,7 +361,7 @@ input,select,textarea,button{font-family:var(--font-body);}
 
 /* MITARBEITERBOARD */
 #mitarbeiterBoard{border-top:2px solid var(--red);background:var(--bg2);flex-shrink:0;
-  padding:10px 12px;height:52vh;overflow-y:auto;position:relative;--mab-scale:1;}
+  padding:10px 12px;height:52vh;height:52dvh;overflow-y:auto;position:relative;--mab-scale:1;}
 #mabResizeGrip{position:fixed;right:190px;width:52px;height:26px;border-radius:6px;
   background:var(--bg4);border:1px solid var(--red);color:var(--red);z-index:250;
   display:flex;align-items:center;justify-content:center;font-size:16px;letter-spacing:1px;
@@ -373,7 +374,7 @@ input,select,textarea,button{font-family:var(--font-body);}
 .mab-half.ptr-drop-target{background:rgba(192,20,28,0.08);}
 .mab-half.empty-slot{visibility:hidden;}
 .mab-divider{width:1px;background:var(--border2);flex-shrink:0;}
-.mab-name{width:calc(110px * var(--mab-scale));flex-shrink:0;font-family:var(--font-head);font-size:calc(19px * var(--mab-scale));font-weight:600;
+.mab-name{width:calc(150px * var(--mab-scale));flex-shrink:0;font-family:var(--font-head);font-size:calc(19px * var(--mab-scale));font-weight:600;
   letter-spacing:.03em;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 .mab-cards{display:flex;gap:calc(8px * var(--mab-scale));flex:1;overflow-x:auto;min-height:calc(40px * var(--mab-scale));align-items:center;min-width:0;}
 .mab-card{display:flex;align-items:center;gap:calc(7px * var(--mab-scale));border-radius:6px;padding:calc(7px * var(--mab-scale)) calc(11px * var(--mab-scale));flex-shrink:0;
@@ -419,7 +420,7 @@ input,select,textarea,button{font-family:var(--font-body);}
   .board-grid{display:block !important;min-width:unset !important;}
   .lane{display:none;}
   .lane.mobile-active{display:flex;}
-  #mitarbeiterBoard{height:auto;max-height:60vh;}
+  #mitarbeiterBoard{height:auto;max-height:60vh;max-height:60dvh;}
   #mabResizeGrip{display:none;}
   .mab-row-pair{flex-direction:column;}
   .mab-divider{width:100%;height:1px;}
@@ -1247,7 +1248,7 @@ function applyMitarbeiterzeileHoehe(vh,positionieren){
   mitarbeiterzeileHoeheVh=Math.max(20,Math.min(80,vh));
   const el=document.getElementById('mitarbeiterBoard');
   if(el){
-    el.style.height=mitarbeiterzeileHoeheVh+'vh';
+    el.style.height=mitarbeiterzeileHoeheVh+'dvh';
     el.style.setProperty('--mab-scale',(mitarbeiterzeileHoeheVh/MAB_HOEHE_BASIS).toFixed(3));
   }
   if(positionieren!==false)positionMabResizeGrip();
