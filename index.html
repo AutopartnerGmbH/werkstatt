@@ -543,7 +543,7 @@ async function callClaude(system,content){
       'anthropic-version':'2023-06-01',
       'anthropic-dangerous-direct-browser-access':'true'
     },
-    body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1000,system,messages})
+    body:JSON.stringify({model:'claude-sonnet-5',max_tokens:1000,system,messages})
   });
   if(!res.ok){
     const t=await res.text().catch(()=>'');
@@ -1217,6 +1217,7 @@ document.addEventListener('click',e=>{
 // ── MITARBEITER (Zuweisungs-Zeilen) — auf allen Geräten live synchronisiert über die Datenbank ──
 let MITARBEITERLISTE = [];
 let mitarbeiterDbVerfuegbar = true;
+let mitarbeiterSyncWarnung=false;
 async function loadMitarbeiterliste(){
   try{
     const data=await sbFetch('/rest/v1/mitarbeiter?order=position.asc');
@@ -1225,8 +1226,19 @@ async function loadMitarbeiterliste(){
     if(hoeheEintrag){
       try{const cfg=JSON.parse(hoeheEintrag.name);if(cfg&&typeof cfg.vh==='number')applyMitarbeiterzeileHoehe(cfg.vh,false);}catch(e){}
     }
-    MITARBEITERLISTE=data.filter(r=>r.id!==MAB_HOEHE_SENTINEL_ID).map(r=>({id:r.id,name:r.name,position:typeof r.position==='number'?r.position:0}));
-    localStorage.setItem('werkstatt-mitarbeiterliste-cache',JSON.stringify(MITARBEITERLISTE));
+    const geladen=data.filter(r=>r.id!==MAB_HOEHE_SENTINEL_ID).map(r=>({id:r.id,name:r.name,position:typeof r.position==='number'?r.position:0}));
+    const vorherigerCache=localStorage.getItem('werkstatt-mitarbeiterliste-cache');
+    if(geladen.length===0&&vorherigerCache){
+      // Datenbank liefert (noch) nichts zurück, obwohl lokal schon Mitarbeiter bekannt sind —
+      // das deutet auf ein Speicherproblem hin (z.B. fehlende Schreibrechte/RLS in Supabase).
+      // Lokalen Stand NICHT überschreiben, damit nichts verschwindet.
+      console.warn('Datenbank liefert eine leere Mitarbeiterliste, obwohl lokal bereits Mitarbeiter bekannt sind. Vermutlich schlägt das Speichern in der Datenbank fehl (z.B. Row-Level-Security). Behalte den lokalen Stand.');
+      mitarbeiterSyncWarnung=true;
+      try{MITARBEITERLISTE=JSON.parse(vorherigerCache);}catch(e2){MITARBEITERLISTE=geladen;}
+    }else{
+      MITARBEITERLISTE=geladen;
+      localStorage.setItem('werkstatt-mitarbeiterliste-cache',JSON.stringify(MITARBEITERLISTE));
+    }
     render();
   }catch(e){
     console.error('Mitarbeiterliste konnte nicht aus der Datenbank geladen werden — Tabelle "mitarbeiter" evtl. noch nicht angelegt. Nutze lokalen Zwischenspeicher als Sicherheitsnetz.',e);
@@ -2594,6 +2606,7 @@ function showAdminPanel(){
     </div>
     <div class="admin-section">
       <div class="admin-section-title">👥 Mitarbeiterverwaltung</div>
+      ${mitarbeiterSyncWarnung?`<div style="background:#7f1d1d;border:1px solid var(--red);border-radius:6px;padding:10px 12px;margin-bottom:10px;font-size:12px;color:#fff">⚠️ Die Datenbank meldet gerade keine gespeicherten Mitarbeiter zurück, obwohl hier lokal welche bekannt sind. Vermutlich fehlen Schreibrechte für die Tabelle "mitarbeiter" in Supabase (z.B. Row-Level-Security). Deine Namen bleiben vorerst nur lokal auf diesem Gerät erhalten.</div>`:''}
       <div id="mitarbeiterManager">${renderMitarbeiterManagerHTML()}</div>
       <div class="admin-row-sub" style="margin:-4px 0 10px">Änderungen werden erst mit "Speichern" übernommen und auf allen Geräten synchronisiert.</div>
       <button class="btn-secondary" id="btnAddMitarbeiter" style="width:100%;margin-top:6px">+ Mitarbeiter hinzufügen</button>
