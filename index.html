@@ -361,7 +361,7 @@ input,select,textarea,button{font-family:var(--font-body);}
 
 /* MITARBEITERBOARD */
 #mitarbeiterBoard{border-top:2px solid var(--red);background:var(--bg2);flex-shrink:0;
-  padding:10px 12px;height:30vh;height:30dvh;overflow-y:auto;position:relative;--mab-scale:1;}
+  padding:10px 12px;height:auto;max-height:30vh;max-height:30dvh;overflow-y:auto;position:relative;--mab-scale:1;}
 #mabResizeGrip{position:fixed;right:190px;width:52px;height:26px;border-radius:6px;
   background:var(--bg4);border:1px solid var(--red);color:var(--red);z-index:250;
   display:flex;align-items:center;justify-content:center;font-size:16px;letter-spacing:1px;
@@ -1275,7 +1275,8 @@ function applyMitarbeiterzeileHoehe(vh,positionieren){
   mitarbeiterzeileHoeheVh=Math.max(20,Math.min(80,vh));
   const el=document.getElementById('mitarbeiterBoard');
   if(el){
-    el.style.height=mitarbeiterzeileHoeheVh+'dvh';
+    el.style.height='auto';
+    el.style.maxHeight=mitarbeiterzeileHoeheVh+'dvh';
     el.style.setProperty('--mab-scale',(mitarbeiterzeileHoeheVh/MAB_HOEHE_BASIS).toFixed(3));
   }
   if(positionieren!==false)positionMabResizeGrip();
