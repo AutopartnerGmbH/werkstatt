@@ -835,6 +835,7 @@ async function uploadFile(file,pfad){
 function startRealtime(){
   setInterval(async()=>{
     if(aufgabeInputOffenFuer)return; // nicht aktualisieren, solange jemand eine Aufgabe eintippt
+    if(adminMitarbeiterOffen)return; // nicht aktualisieren, solange die Mitarbeiterverwaltung bearbeitet wird
     if(ptrDrag)return; // nicht aktualisieren, solange gerade eine Karte gezogen wird
     try{
       const data=await sbFetch('/rest/v1/auftraege?select=id,geaendert_am&order=erstellt_am.asc');
@@ -2558,10 +2559,12 @@ function showAdminPanel(){
   const heute=datumKurz();
   const echteAuftraege=autos.filter(a=>!a.istAufgabe);
   const gesamtStd=echteAuftraege.reduce((s,a)=>s+(a.arbeiten||[]).reduce((ss,ar)=>ss+(parseFloat(ar.stunden)||0),0),0);
+  initMitarbeiterEntwurf();
+  adminMitarbeiterOffen=true;
   openModal(`
     <div class="modal-header">
       <span class="modal-title">⚙️ Adminbereich</span>
-      <button class="modal-close" onclick="closeModal();adminUnlocked=false">✕</button>
+      <button class="modal-close" onclick="closeModal();adminUnlocked=false;adminMitarbeiterOffen=false;">✕</button>
     </div>
     <div class="admin-section">
       <div class="admin-section-title">📊 Statistiken</div>
@@ -2592,8 +2595,12 @@ function showAdminPanel(){
     <div class="admin-section">
       <div class="admin-section-title">👥 Mitarbeiterverwaltung</div>
       <div id="mitarbeiterManager">${renderMitarbeiterManagerHTML()}</div>
-      <div class="admin-row-sub" style="margin:-4px 0 10px">Mitarbeiterliste wird auf allen Geräten live synchronisiert.</div>
-      <button class="btn-secondary" id="btnAddMitarbeiter" style="width:100%;margin-top:10px">+ Mitarbeiter hinzufügen</button>
+      <div class="admin-row-sub" style="margin:-4px 0 10px">Änderungen werden erst mit "Speichern" übernommen und auf allen Geräten synchronisiert.</div>
+      <button class="btn-secondary" id="btnAddMitarbeiter" style="width:100%;margin-top:6px">+ Mitarbeiter hinzufügen</button>
+      <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:10px">
+        <span id="mitarbeiterSaved" style="font-size:12px;color:#4ade80;align-self:center;display:none">✓ Gespeichert</span>
+        <button class="btn-primary" id="btnSaveMitarbeiter">💾 Speichern</button>
+      </div>
     </div>
     <div class="admin-section">
       <div class="admin-section-title">📋 Spaltenverwaltung</div>
@@ -2617,6 +2624,17 @@ function showAdminPanel(){
     </div>
   `);
   document.getElementById('btnAdminPin').addEventListener('click',()=>{closeModal();openPinAendern();});
+  document.getElementById('btnAddMitarbeiter').addEventListener('click',()=>{
+    mitarbeiterEntwurf.push({id:genId(),name:'Neuer Mitarbeiter',position:mitarbeiterEntwurf.length});
+    refreshMitarbeiterManager();
+    setTimeout(()=>{
+      const inputs=document.querySelectorAll('#mitarbeiterManager .ma-name-input');
+      const letztes=inputs[inputs.length-1];
+      if(letztes){letztes.focus();letztes.select();}
+    },0);
+  });
+  document.getElementById('btnSaveMitarbeiter').addEventListener('click',commitMitarbeiterEntwurf);
+  setupMitarbeiterManagerListeners();
   document.getElementById('btnSaveAnthropicKey').addEventListener('click',()=>{
     localStorage.setItem('werkstatt-anthropic-key',document.getElementById('anthropicKeyInput').value.trim());
     const el=document.getElementById('anthropicKeySaved');
@@ -2629,15 +2647,24 @@ function showAdminPanel(){
   setupMitarbeiterManagerListeners();
 }
 
+let mitarbeiterEntwurf=[];
+let mitarbeiterEntwurfGeloescht=[];
+let adminMitarbeiterOffen=false;
+
+function initMitarbeiterEntwurf(){
+  mitarbeiterEntwurf=MITARBEITERLISTE.map(m=>({...m}));
+  mitarbeiterEntwurfGeloescht=[];
+}
+
 function renderMitarbeiterManagerHTML(){
-  if(MITARBEITERLISTE.length===0){
+  if(mitarbeiterEntwurf.length===0){
     return '<div style="color:var(--text-muted);font-size:12px;padding:6px 2px">Noch keine Mitarbeiter angelegt.</div>';
   }
-  return MITARBEITERLISTE.map((ma,i)=>`
+  return mitarbeiterEntwurf.map((ma,i)=>`
     <div class="mab-admin-row" data-ma-id="${ma.id}">
       <input class="ma-name-input" data-id="${ma.id}" value="${ma.name}"/>
       <button class="ma-up mab-admin-btn" data-id="${ma.id}" title="Nach oben" ${i===0?'disabled style="opacity:0.3"':''}>▲</button>
-      <button class="ma-down mab-admin-btn" data-id="${ma.id}" title="Nach unten" ${i===MITARBEITERLISTE.length-1?'disabled style="opacity:0.3"':''}>▼</button>
+      <button class="ma-down mab-admin-btn" data-id="${ma.id}" title="Nach unten" ${i===mitarbeiterEntwurf.length-1?'disabled style="opacity:0.3"':''}>▼</button>
       <button class="ma-del mab-admin-btn" data-id="${ma.id}" title="Löschen" style="border-color:var(--red);color:var(--red)">✕</button>
     </div>`).join('');
 }
@@ -2645,53 +2672,56 @@ function renderMitarbeiterManagerHTML(){
 function refreshMitarbeiterManager(){
   const c=document.getElementById('mitarbeiterManager');
   if(c){ c.innerHTML=renderMitarbeiterManagerHTML(); setupMitarbeiterManagerListeners(); }
+  const saved=document.getElementById('mitarbeiterSaved');
+  if(saved)saved.style.display='none';
 }
 
 function setupMitarbeiterManagerListeners(){
   const container=document.getElementById('mitarbeiterManager');
   if(!container) return;
 
+  // Reine Entwurfs-Bearbeitung — nichts davon wird gespeichert oder live übernommen,
+  // solange nicht ausdrücklich auf "Speichern" geklickt wird.
   container.querySelectorAll('.ma-name-input').forEach(inp=>{
     inp.addEventListener('input',()=>{
-      const ma=MITARBEITERLISTE.find(x=>x.id===inp.dataset.id);
-      if(ma){ ma.name=inp.value; saveMitarbeiterliste(); render(); }
+      const ma=mitarbeiterEntwurf.find(x=>x.id===inp.dataset.id);
+      if(ma)ma.name=inp.value;
     });
   });
   container.querySelectorAll('.ma-up').forEach(btn=>{
     btn.addEventListener('click',()=>{
-      const idx=MITARBEITERLISTE.findIndex(x=>x.id===btn.dataset.id);
-      if(idx>0){ [MITARBEITERLISTE[idx-1],MITARBEITERLISTE[idx]]=[MITARBEITERLISTE[idx],MITARBEITERLISTE[idx-1]]; saveMitarbeiterliste(); refreshMitarbeiterManager(); render(); }
+      const idx=mitarbeiterEntwurf.findIndex(x=>x.id===btn.dataset.id);
+      if(idx>0){ [mitarbeiterEntwurf[idx-1],mitarbeiterEntwurf[idx]]=[mitarbeiterEntwurf[idx],mitarbeiterEntwurf[idx-1]]; refreshMitarbeiterManager(); }
     });
   });
   container.querySelectorAll('.ma-down').forEach(btn=>{
     btn.addEventListener('click',()=>{
-      const idx=MITARBEITERLISTE.findIndex(x=>x.id===btn.dataset.id);
-      if(idx<MITARBEITERLISTE.length-1){ [MITARBEITERLISTE[idx+1],MITARBEITERLISTE[idx]]=[MITARBEITERLISTE[idx],MITARBEITERLISTE[idx+1]]; saveMitarbeiterliste(); refreshMitarbeiterManager(); render(); }
+      const idx=mitarbeiterEntwurf.findIndex(x=>x.id===btn.dataset.id);
+      if(idx<mitarbeiterEntwurf.length-1){ [mitarbeiterEntwurf[idx+1],mitarbeiterEntwurf[idx]]=[mitarbeiterEntwurf[idx],mitarbeiterEntwurf[idx+1]]; refreshMitarbeiterManager(); }
     });
   });
   container.querySelectorAll('.ma-del').forEach(btn=>{
     btn.addEventListener('click',()=>{
-      const ma=MITARBEITERLISTE.find(x=>x.id===btn.dataset.id);
-      openConfirm(`Mitarbeiter "${ma.name}" wirklich löschen? Zugewiesene Aufträge werden freigegeben.`,()=>{
-        autos.forEach(a=>{ if(a.zugewiesenAn===btn.dataset.id){ a.zugewiesenAn=null; a.zuwPos=0; saveAuto(a); } });
-        MITARBEITERLISTE=MITARBEITERLISTE.filter(x=>x.id!==btn.dataset.id);
-        deleteMitarbeiterRemote(btn.dataset.id);
-        saveMitarbeiterliste();
+      const ma=mitarbeiterEntwurf.find(x=>x.id===btn.dataset.id);
+      openConfirm(`Mitarbeiter "${ma.name}" wirklich löschen? Zugewiesene Aufträge werden freigegeben. Wird erst mit "Speichern" endgültig übernommen.`,()=>{
+        mitarbeiterEntwurf=mitarbeiterEntwurf.filter(x=>x.id!==btn.dataset.id);
+        mitarbeiterEntwurfGeloescht.push(btn.dataset.id);
         refreshMitarbeiterManager();
-        render();
       });
     });
   });
+}
 
-  const addBtn=document.getElementById('btnAddMitarbeiter');
-  if(addBtn){
-    addBtn.addEventListener('click',()=>{
-      MITARBEITERLISTE.push({id:genId(),name:'Neuer Mitarbeiter'});
-      saveMitarbeiterliste();
-      refreshMitarbeiterManager();
-      render();
-    });
-  }
+function commitMitarbeiterEntwurf(){
+  mitarbeiterEntwurfGeloescht.forEach(id=>{
+    autos.forEach(a=>{ if(a.zugewiesenAn===id){ a.zugewiesenAn=null; a.zuwPos=0; saveAuto(a); } });
+    deleteMitarbeiterRemote(id);
+  });
+  MITARBEITERLISTE=mitarbeiterEntwurf.map(m=>({...m}));
+  saveMitarbeiterliste();
+  render();
+  const saved=document.getElementById('mitarbeiterSaved');
+  if(saved){ saved.style.display='inline'; clearTimeout(saved._t); saved._t=setTimeout(()=>saved.style.display='none',2000); }
 }
 
 function renderSpaltenManagerHTML(){
