@@ -361,7 +361,7 @@ input,select,textarea,button{font-family:var(--font-body);}
 
 /* MITARBEITERBOARD */
 #mitarbeiterBoard{border-top:2px solid var(--red);background:var(--bg2);flex-shrink:0;
-  padding:10px 12px;height:52vh;height:52dvh;overflow-y:auto;position:relative;--mab-scale:1;}
+  padding:10px 12px;height:30vh;height:30dvh;overflow-y:auto;position:relative;--mab-scale:1;}
 #mabResizeGrip{position:fixed;right:190px;width:52px;height:26px;border-radius:6px;
   background:var(--bg4);border:1px solid var(--red);color:var(--red);z-index:250;
   display:flex;align-items:center;justify-content:center;font-size:16px;letter-spacing:1px;
@@ -374,14 +374,14 @@ input,select,textarea,button{font-family:var(--font-body);}
 .mab-half.ptr-drop-target{background:rgba(192,20,28,0.08);}
 .mab-half.empty-slot{visibility:hidden;}
 .mab-divider{width:1px;background:var(--border2);flex-shrink:0;}
-.mab-name{width:calc(150px * var(--mab-scale));flex-shrink:0;font-family:var(--font-head);font-size:calc(19px * var(--mab-scale));font-weight:600;
+.mab-name{width:max(150px, calc(150px * var(--mab-scale)));flex-shrink:0;font-family:var(--font-head);font-size:max(22px, calc(22px * var(--mab-scale)));font-weight:600;
   letter-spacing:.03em;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 .mab-cards{display:flex;gap:calc(8px * var(--mab-scale));flex:1;overflow-x:auto;min-height:calc(40px * var(--mab-scale));align-items:center;min-width:0;}
 .mab-card{display:flex;align-items:center;gap:calc(7px * var(--mab-scale));border-radius:6px;padding:calc(7px * var(--mab-scale)) calc(11px * var(--mab-scale));flex-shrink:0;
   background:var(--bg4);border:1px solid var(--border2);cursor:grab;position:relative;white-space:nowrap;}
 .mab-card.aktuell{border-color:#E8454D;box-shadow:0 0 8px rgba(192,20,28,0.18);}
 .mab-card:not(.aktuell){opacity:.65;}
-.mab-card-kz{font-family:var(--font-head);font-size:calc(15px * var(--mab-scale));font-weight:700;color:var(--text-dim);}
+.mab-card-kz{font-family:var(--font-head);font-size:max(17px, calc(17px * var(--mab-scale)));font-weight:700;color:var(--text-dim);}
 .mab-card.aktuell .mab-card-kz{color:#E8454D;}
 .mab-card-fahrzeug{font-size:calc(12px * var(--mab-scale));color:var(--silver);}
 .mab-card-kunde{font-size:calc(12px * var(--mab-scale));color:var(--text-dim);}
@@ -1215,24 +1215,38 @@ document.addEventListener('click',e=>{
 
 // ── MITARBEITER (Zuweisungs-Zeilen) — auf allen Geräten live synchronisiert über die Datenbank ──
 let MITARBEITERLISTE = [];
+let mitarbeiterDbVerfuegbar = true;
 async function loadMitarbeiterliste(){
   try{
     const data=await sbFetch('/rest/v1/mitarbeiter?order=position.asc');
+    mitarbeiterDbVerfuegbar=true;
     const hoeheEintrag=data.find(r=>r.id===MAB_HOEHE_SENTINEL_ID);
     if(hoeheEintrag){
       try{const cfg=JSON.parse(hoeheEintrag.name);if(cfg&&typeof cfg.vh==='number')applyMitarbeiterzeileHoehe(cfg.vh,false);}catch(e){}
     }
     MITARBEITERLISTE=data.filter(r=>r.id!==MAB_HOEHE_SENTINEL_ID).map(r=>({id:r.id,name:r.name,position:typeof r.position==='number'?r.position:0}));
+    localStorage.setItem('werkstatt-mitarbeiterliste-cache',JSON.stringify(MITARBEITERLISTE));
     render();
-  }catch(e){console.error('Mitarbeiterliste konnte nicht geladen werden:',e);}
+  }catch(e){
+    console.error('Mitarbeiterliste konnte nicht aus der Datenbank geladen werden — Tabelle "mitarbeiter" evtl. noch nicht angelegt. Nutze lokalen Zwischenspeicher als Sicherheitsnetz.',e);
+    mitarbeiterDbVerfuegbar=false;
+    const cache=localStorage.getItem('werkstatt-mitarbeiterliste-cache');
+    if(cache){try{MITARBEITERLISTE=JSON.parse(cache);}catch(e2){}}
+    render();
+  }
 }
 async function saveMitarbeiterliste(){
+  localStorage.setItem('werkstatt-mitarbeiterliste-cache',JSON.stringify(MITARBEITERLISTE));
   for(let i=0;i<MITARBEITERLISTE.length;i++){
     const ma=MITARBEITERLISTE[i];
     try{
       await sbFetch('/rest/v1/mitarbeiter',{method:'POST',headers:{'Prefer':'resolution=merge-duplicates,return=representation'},
         body:JSON.stringify({id:ma.id,name:ma.name,position:i,geaendert_am:new Date().toISOString()})});
-    }catch(e){console.error('Mitarbeiter konnte nicht gespeichert werden:',e);}
+      mitarbeiterDbVerfuegbar=true;
+    }catch(e){
+      console.error('Mitarbeiter konnte nicht in der Datenbank gespeichert werden — bleibt vorerst nur lokal auf diesem Gerät:',e);
+      mitarbeiterDbVerfuegbar=false;
+    }
   }
 }
 async function deleteMitarbeiterRemote(id){
@@ -1242,7 +1256,7 @@ async function deleteMitarbeiterRemote(id){
 // ── HÖHE DER MITARBEITERZEILE (per Ziehgriff verstellbar, live auf allen Geräten synchronisiert) ──
 const MAB_HOEHE_SENTINEL_ID='__mab_hoehe__';
 const MAB_HOEHE_BASIS=52; // vh-Wert, bei dem der Skalierungsfaktor 1 entspricht
-let mitarbeiterzeileHoeheVh=MAB_HOEHE_BASIS;
+let mitarbeiterzeileHoeheVh=parseFloat(localStorage.getItem('werkstatt-mab-hoehe-cache'))||30;
 
 function applyMitarbeiterzeileHoehe(vh,positionieren){
   mitarbeiterzeileHoeheVh=Math.max(20,Math.min(80,vh));
@@ -1263,10 +1277,11 @@ function positionMabResizeGrip(){
 window.addEventListener('resize',positionMabResizeGrip);
 
 async function saveMitarbeiterzeileHoehe(vh){
+  localStorage.setItem('werkstatt-mab-hoehe-cache',vh);
   try{
     await sbFetch('/rest/v1/mitarbeiter',{method:'POST',headers:{'Prefer':'resolution=merge-duplicates,return=representation'},
       body:JSON.stringify({id:MAB_HOEHE_SENTINEL_ID,name:JSON.stringify({vh}),position:-1,geaendert_am:new Date().toISOString()})});
-  }catch(e){console.error('Höhe konnte nicht gespeichert werden:',e);}
+  }catch(e){console.error('Höhe konnte nicht in der Datenbank gespeichert werden — bleibt vorerst nur lokal auf diesem Gerät:',e);}
 }
 
 (function initMabResizeGrip(){
