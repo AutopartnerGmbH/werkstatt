@@ -310,6 +310,11 @@ input,select,textarea,button{font-family:var(--font-body);}
 .field input:focus,.field select:focus,.field textarea:focus{border-color:var(--red);}
 .field textarea{resize:vertical;}
 .form-footer{display:flex;justify-content:flex-end;gap:10px;margin-top:8px;}
+.ls-manual-row{display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap;}
+.ls-manual-row input{flex:1;min-width:110px;background:var(--bg3);border:1px solid var(--border2);
+  border-radius:4px;color:var(--text);padding:9px 10px;font-size:13px;outline:none;}
+.ls-manual-row input:focus{border-color:var(--red);}
+.ls-manual-row button{flex-shrink:0;white-space:nowrap;}
 .section-label{color:var(--red);font-size:11px;font-weight:700;letter-spacing:.1em;
   font-family:var(--font-head);text-transform:uppercase;margin-bottom:10px;
   padding-bottom:6px;border-bottom:1px solid var(--border);}
@@ -1756,7 +1761,11 @@ async function uploadSfkAuftrag(autoId,input,useKI){
       }
     }
     await saveAuto(a);setSync('ok','Live');openEdit(autoId);
-  }catch(e){setSync('error','Fehler');}
+  }catch(e){
+    setSync('error','Fehler');
+    console.error('SFK-Ersetzen fehlgeschlagen:',e);
+    alert('Der Werkstattauftrag konnte nicht ersetzt werden:\n\n'+e.message+'\n\nBitte diese Meldung an den Support weitergeben.');
+  }
 }
 async function saveForm(id,isEdit){
   const kz=document.getElementById('f_kz').value.trim().toUpperCase();
@@ -2079,6 +2088,7 @@ function openArbeitenModal(autoId){
     </div>
     <div id="diktierPreview_material" class="diktier-preview" style="display:none;margin-bottom:8px"></div>
     <div id="materialList" style="margin-bottom:8px"></div>
+    <div id="materialFehlendHinweis" style="display:none;background:#7f1d1d;border:1px solid var(--red);border-radius:6px;padding:12px 14px;margin-bottom:12px;color:#fff;font-size:13px"></div>
     <button class="btn-secondary" id="btnAddMaterial" style="width:100%;margin-bottom:16px">+ Material hinzufügen</button>
 
     <div id="materialKostenZeile" style="display:flex;align-items:center;gap:10px;background:var(--bg3);
@@ -2094,6 +2104,12 @@ function openArbeitenModal(autoId){
 
     <div class="section-label">Lieferscheine</div>
     <div id="lsList" style="margin-bottom:8px"></div>
+    <div class="ls-manual-row">
+      <input type="text" id="lsManualLieferant" placeholder="Lieferant"/>
+      <input type="text" id="lsManualDatum" placeholder="Datum (TT.MM.JJJJ)"/>
+      <input type="number" step="0.01" id="lsManualBetrag" placeholder="Betrag netto"/>
+      <button class="btn-secondary" id="btnLsManualAdd">+ Hinzufügen</button>
+    </div>
     <div id="ls_drop" style="border:2px dashed var(--border2);border-radius:8px;padding:18px;text-align:center;cursor:pointer;background:var(--bg3);margin-bottom:8px">
       <div style="font-size:20px;margin-bottom:4px">📎</div>
       <div style="color:var(--text-dim);font-size:12px">Lieferschein ablegen oder klicken · Foto, PDF</div>
@@ -2110,6 +2126,7 @@ function openArbeitenModal(autoId){
   renderMaterialList(autoId);
   renderLSList(autoId);
   renderMaterialKosten(autoId);
+  pruefeFehlendeTeile(autoId);
 
   // Alle Event Listeners sauber setzen
   document.getElementById('btnAddArbeit').addEventListener('click',()=>addArbeit(autoId));
@@ -2125,6 +2142,21 @@ function openArbeitenModal(autoId){
   lsDrop.addEventListener('dragleave',()=>{lsDrop.style.borderColor='';lsDrop.style.background='var(--bg3)';});
   lsDrop.addEventListener('drop',e=>{e.preventDefault();lsDrop.style.borderColor='';lsDrop.style.background='var(--bg3)';if(e.dataTransfer.files[0])uploadLS(autoId,{files:e.dataTransfer.files});});
   lsFile.addEventListener('change',()=>uploadLS(autoId,lsFile));
+
+  document.getElementById('btnLsManualAdd').addEventListener('click',()=>{
+    const lieferant=document.getElementById('lsManualLieferant').value.trim();
+    const datumLs=document.getElementById('lsManualDatum').value.trim();
+    const betrag=parseFloat(document.getElementById('lsManualBetrag').value)||0;
+    if(!lieferant){alert('Bitte mindestens den Lieferanten angeben.');return;}
+    const a=autos.find(x=>x.id===autoId);if(!a)return;
+    a.lieferscheine.push({typ:'manuell',lieferant,datumLs,betrag,waehrung:'EUR',datum:datumKurz()});
+    saveAuto(a);
+    renderLSList(autoId);renderMaterialKosten(autoId);
+    document.getElementById('lsManualLieferant').value='';
+    document.getElementById('lsManualDatum').value='';
+    document.getElementById('lsManualBetrag').value='';
+    document.getElementById('lsManualLieferant').focus();
+  });
 }
 
 function showArbSaved(){const el=document.getElementById('arbSaved');if(!el)return;el.style.display='block';clearTimeout(el._t);el._t=setTimeout(()=>el.style.display='none',2000);}
@@ -2157,11 +2189,11 @@ function renderMaterialList(autoId){
     const row=document.createElement('div');
     row.style.cssText='display:grid;grid-template-columns:2fr 1fr 1fr auto;gap:6px;margin-bottom:6px;align-items:center';
     const s='background:var(--bg3);border:1px solid var(--border2);border-radius:4px;color:var(--text);padding:8px;font-size:13px;outline:none';
-    const i1=document.createElement('input');i1.value=m.bezeichnung||'';i1.placeholder='Bezeichnung';i1.style.cssText=s;i1.addEventListener('input',()=>{m.bezeichnung=i1.value;saveAuto(a);showArbSaved();});
+    const i1=document.createElement('input');i1.value=m.bezeichnung||'';i1.placeholder='Bezeichnung';i1.style.cssText=s;i1.addEventListener('input',()=>{m.bezeichnung=i1.value;saveAuto(a);showArbSaved();pruefeFehlendeTeile(autoId);});
     const i2=document.createElement('input');i2.value=m.menge||'';i2.placeholder='Menge';i2.style.cssText=s;i2.addEventListener('input',()=>{m.menge=i2.value;saveAuto(a);showArbSaved();});
     const i3=document.createElement('input');i3.value=m.einheit||'';i3.placeholder='Stk/Ltr';i3.style.cssText=s;i3.addEventListener('input',()=>{m.einheit=i3.value;saveAuto(a);showArbSaved();});
     const del=document.createElement('button');del.style.cssText='background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:16px;padding:0 4px';del.textContent='✕';
-    del.addEventListener('click',()=>{a.material.splice(i,1);saveAuto(a);renderMaterialList(autoId);});
+    del.addEventListener('click',()=>{a.material.splice(i,1);saveAuto(a);renderMaterialList(autoId);pruefeFehlendeTeile(autoId);});
     row.appendChild(i1);row.appendChild(i2);row.appendChild(i3);row.appendChild(del);el.appendChild(row);
   });
 }
@@ -2173,13 +2205,19 @@ function renderLSList(autoId){
   (a.lieferscheine||[]).forEach((ls,i)=>{
     const row=document.createElement('div');
     row.style.cssText='display:flex;align-items:center;gap:8px;margin-bottom:6px;background:var(--bg3);border-radius:4px;padding:8px 10px';
-    row.innerHTML=`<span style="font-size:16px">${ls.typ==='pdf'?'📄':'🖼'}</span><span style="flex:1;font-size:13px;color:var(--text)">${ls.name}</span>`;
-    const link=document.createElement('button');
-    link.textContent='Öffnen';link.style.cssText='background:none;border:none;color:var(--red);font-size:12px;font-weight:600;text-decoration:none;cursor:pointer;padding:0';
-    link.addEventListener('click',()=>{openPdfViewer(ls.url,ls.name);modalReturnTo=()=>openArbeitenModal(autoId);});
     const del=document.createElement('button');del.style.cssText='background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:14px;padding:0 4px';del.textContent='✕';
-    del.addEventListener('click',()=>{a.lieferscheine.splice(i,1);saveAuto(a);renderLSList(autoId);});
-    row.appendChild(link);row.appendChild(del);el.appendChild(row);
+    del.addEventListener('click',()=>{a.lieferscheine.splice(i,1);saveAuto(a);renderLSList(autoId);renderMaterialKosten(autoId);});
+    if(ls.typ==='manuell'){
+      row.innerHTML=`<span style="font-size:16px">🧾</span><span style="flex:1;font-size:13px;color:var(--text)">${ls.lieferant||'Lieferant'} · ${ls.datumLs||'—'} · ${(parseFloat(ls.betrag)||0).toFixed(2)} ${ls.waehrung||'EUR'}</span>`;
+      row.appendChild(del);
+    }else{
+      row.innerHTML=`<span style="font-size:16px">${ls.typ==='pdf'?'📄':'🖼'}</span><span style="flex:1;font-size:13px;color:var(--text)">${ls.name}</span>`;
+      const link=document.createElement('button');
+      link.textContent='Öffnen';link.style.cssText='background:none;border:none;color:var(--red);font-size:12px;font-weight:600;text-decoration:none;cursor:pointer;padding:0';
+      link.addEventListener('click',()=>{openPdfViewer(ls.url,ls.name);modalReturnTo=()=>openArbeitenModal(autoId);});
+      row.appendChild(link);row.appendChild(del);
+    }
+    el.appendChild(row);
   });
 }
 
@@ -2199,14 +2237,14 @@ function renderMaterialKosten(autoId){
     dd.onchange=()=>{
       if(dd.value==='')return;
       const ls=a.lieferscheine[dd.value];
-      if(ls){openPdfViewer(ls.url,ls.name);modalReturnTo=()=>openArbeitenModal(autoId);}
+      if(ls&&ls.typ!=='manuell'){openPdfViewer(ls.url,ls.name);modalReturnTo=()=>openArbeitenModal(autoId);}
       dd.value='';
     };
   }
 }
 
 function addArbeit(autoId){const a=autos.find(x=>x.id===autoId);if(!a)return;a.arbeiten.push({beschreibung:'',stunden:'',wer:myName||''});saveAuto(a);renderArbeitenList(autoId);}
-function addMaterial(autoId){const a=autos.find(x=>x.id===autoId);if(!a)return;a.material.push({bezeichnung:'',menge:'',einheit:'Stk'});saveAuto(a);renderMaterialList(autoId);}
+function addMaterial(autoId){const a=autos.find(x=>x.id===autoId);if(!a)return;a.material.push({bezeichnung:'',menge:'',einheit:'Stk'});saveAuto(a);renderMaterialList(autoId);pruefeFehlendeTeile(autoId);}
 async function uploadLS(autoId,input){
   const file=input.files[0];if(!file)return;
   const a=autos.find(x=>x.id===autoId);if(!a)return;
@@ -2233,8 +2271,8 @@ async function erkenneLieferschein(autoId, lsIndex, file){
   const docType = file.type.includes('pdf') ? 'document' : 'image';
 
   const system = `Analysiere diesen Lieferschein/diese Rechnung. Antworte NUR mit JSON ohne Markdown:
-{"lieferant":"Firmenname","nummer":"Lieferschein- oder Bestellnummer","datum":"TT.MM.JJJJ","betrag":Zahl,"waehrung":"EUR oder USD"}
-Wichtig: betrag ist immer der NETTO-Betrag (ohne MwSt). Falls nur Brutto sichtbar ist, schätze den Netto-Betrag (Brutto / 1.19). Erkenne die Währung am Symbol (€ = EUR, $ = USD).`;
+{"lieferant":"Firmenname","nummer":"Lieferschein- oder Bestellnummer","datum":"TT.MM.JJJJ","betrag":Zahl,"waehrung":"EUR oder USD","positionen":["kurze Bezeichnung jedes einzelnen Ersatzteils/Artikels, max 5 Wörter pro Position"]}
+Wichtig: betrag ist immer der NETTO-Betrag (ohne MwSt). Falls nur Brutto sichtbar ist, schätze den Netto-Betrag (Brutto / 1.19). Erkenne die Währung am Symbol (€ = EUR, $ = USD). Liste in "positionen" jede einzelne Artikelzeile des Lieferscheins auf (nicht Gebühren/Versand/Rabatte).`;
 
   const result = await callClaude(system, [
     { type: docType, source: { type: 'base64', media_type: mediaType, data: b64 } },
@@ -2246,9 +2284,83 @@ Wichtig: betrag ist immer der NETTO-Betrag (ohne MwSt). Falls nur Brutto sichtba
   ls.datumLs   = parsed.datum || '';
   ls.betrag    = parseFloat(parsed.betrag) || 0;
   ls.waehrung  = parsed.waehrung === 'USD' ? 'USD' : 'EUR';
+  ls.positionen = Array.isArray(parsed.positionen) ? parsed.positionen.filter(p=>p&&p.trim()) : [];
+
+  // Erkannte Positionen automatisch ins verbrauchte Material übernehmen (Duplikate überspringen)
+  a.material = a.material || [];
+  let neuHinzugefuegt = 0;
+  ls.positionen.forEach(pos=>{
+    const bereitsVorhanden = a.material.some(m=>textAehnlich(pos, m.bezeichnung));
+    if(!bereitsVorhanden){
+      a.material.push({bezeichnung:pos, menge:'', einheit:'Stk'});
+      neuHinzugefuegt++;
+    }
+  });
+
   await saveAuto(a);
   renderLSList(autoId);
   renderMaterialKosten(autoId);
+  renderMaterialList(autoId);
+  zeigeAutoMaterialHinweis(autoId, neuHinzugefuegt);
+  return;
+}
+
+// ── ABGLEICH: Positionen auf Lieferscheinen vs. eingetragenes Material ──
+function textAehnlich(a,b){
+  const norm=s=>(s||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9äöüß ]/g,'').trim();
+  const na=norm(a),nb=norm(b);
+  if(!na||!nb)return false;
+  if(na===nb)return true;
+  if(na.includes(nb)||nb.includes(na))return true;
+  // Grobe Wort-Überschneidung: mind. die Hälfte der (längeren) Wörter kommt auch im anderen Text vor
+  const wa=na.split(' ').filter(w=>w.length>2), wb=nb.split(' ').filter(w=>w.length>2);
+  if(wa.length===0||wb.length===0)return false;
+  const treffer=wa.filter(w=>wb.some(w2=>w2.includes(w)||w.includes(w2))).length;
+  return treffer/Math.max(wa.length,wb.length)>=0.5;
+}
+function zeigeAutoMaterialHinweis(autoId,anzahl){
+  const el=document.getElementById('materialFehlendHinweis');
+  if(!el)return;
+  if(anzahl>0){
+    el.style.display='block';
+    el.style.background='#14532d';
+    el.style.borderColor='#4ade80';
+    el.innerHTML=`✅ ${anzahl} Position${anzahl>1?'en':''} aus dem Lieferschein automatisch ins verbrauchte Material übernommen. Bitte Menge prüfen/ergänzen.`;
+    clearTimeout(el._autoT);
+    el._autoT=setTimeout(()=>{
+      el.style.background='#7f1d1d';
+      el.style.borderColor='var(--red)';
+      pruefeFehlendeTeile(autoId);
+    },4000);
+  }else{
+    pruefeFehlendeTeile(autoId);
+  }
+}
+function pruefeFehlendeTeile(autoId){
+  const a=autos.find(x=>x.id===autoId);if(!a)return;
+  const alleLsPositionen=(a.lieferscheine||[]).flatMap(ls=>(ls.positionen||[]).map(p=>({text:p,lieferant:ls.lieferant||'Lieferschein'})));
+  const materialTexte=(a.material||[]).map(m=>m.bezeichnung||'');
+  const fehlend=alleLsPositionen.filter(pos=>!materialTexte.some(mt=>textAehnlich(pos.text,mt)));
+  const el=document.getElementById('materialFehlendHinweis');
+  if(!el)return;
+  if(fehlend.length===0){el.style.display='none';el.innerHTML='';return;}
+  el.style.display='block';
+  el.innerHTML=`<div style="font-weight:700;margin-bottom:6px">⚠️ Eventuell vergessenes Material</div>
+    <div style="font-size:12px;color:#fecaca;margin-bottom:8px">Diese Positionen stehen auf einem Lieferschein, tauchen aber nicht im verbrauchten Material auf – bitte prüfen, ob sie vergessen wurden:</div>
+    ${fehlend.map((f,i)=>`<div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">
+      <span style="flex:1;font-size:13px">"${f.text}" <span style="color:#fca5a5;font-size:11px">(${f.lieferant})</span></span>
+      <button class="btn-secondary" data-fehlend-idx="${i}" style="font-size:11px;padding:4px 8px">+ Übernehmen</button>
+    </div>`).join('')}`;
+  el.querySelectorAll('[data-fehlend-idx]').forEach(btn=>{
+    btn.addEventListener('click',()=>{
+      const f=fehlend[btn.dataset.fehlendIdx];
+      a.material=a.material||[];
+      a.material.push({bezeichnung:f.text,menge:'',einheit:'Stk'});
+      saveAuto(a);
+      renderMaterialList(autoId);
+      pruefeFehlendeTeile(autoId);
+    });
+  });
 }
 
 // ── RECHNUNGSKONTROLLE ──
@@ -2308,8 +2420,8 @@ function openRechnungskontrolle(autoId){
     <div class="label" style="margin-bottom:6px">Lieferscheine (${a.lieferscheine.length})</div>
     ${a.lieferscheine.map(ls=>`
       <div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid #eee;font-size:12px">
-        <span>${ls.typ==='pdf'?'📄':'🖼'} ${ls.name}</span>
-        <span style="color:#888">${ls.datum||''}</span>
+        <span>${ls.typ==='manuell'?`🧾 ${ls.lieferant||'Lieferant'} (manuell)`:`${ls.typ==='pdf'?'📄':'🖼'} ${ls.name}`}</span>
+        <span style="color:#888">${ls.typ==='manuell'?(ls.datumLs||''):(ls.datum||'')}</span>
       </div>`).join('')}
   </div>`:''}
 
