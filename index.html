@@ -401,6 +401,9 @@ input,select,textarea,button{font-family:var(--font-body);}
 .mab-card-x{background:none;border:none;color:var(--text-muted);
   cursor:pointer;font-size:calc(13px * var(--mab-scale));padding:0 0 0 2px;line-height:1;flex-shrink:0;}
 .mab-card-x:hover{color:var(--red);}
+.mab-card-move{background:none;border:none;color:var(--text-muted);
+  cursor:pointer;font-size:calc(13px * var(--mab-scale));padding:0 0 0 2px;line-height:1;flex-shrink:0;}
+.mab-card-move:hover{color:var(--red);}
 .mab-empty-text{flex:1;font-size:11px;color:var(--text-muted);font-family:var(--font-head);
   letter-spacing:.05em;text-transform:uppercase;white-space:nowrap;}
 .mab-admin-row{display:flex;align-items:center;gap:6px;margin-bottom:6px;}
@@ -1362,7 +1365,7 @@ function renderMitarbeiterZeilen(){
       const mc=document.createElement('div');mc.className='mab-card'+(i===0?' aktuell':'')+(a.istAufgabe?' mab-card-aufgabe':'');
       wireDraggable(mc,'assign',()=>a.id,()=>ma.id);
 
-      const moveBtn=document.createElement('button');moveBtn.className='mab-card-x btn-move';moveBtn.textContent='↔';moveBtn.title='Verschieben';
+      const moveBtn=document.createElement('button');moveBtn.className='mab-card-move btn-move';moveBtn.textContent='↔';moveBtn.title='Verschieben';
       moveBtn.addEventListener('click',e=>{e.stopPropagation();openMoveMenu(a.id);});
       if(a.istAufgabe){
         const textEl=document.createElement('span');textEl.className='mab-card-aufgabetext';textEl.textContent='📌 '+(a.aufgabeText||'');
@@ -1461,6 +1464,32 @@ async function removeMitarbeiter(autoId,name){
 }
 
 // ── SUCHE ──
+function flashAuftrag(a){
+  const s=STATI.find(x=>x.id===a.status);
+  let gefunden=false;
+  document.querySelectorAll('.card-top-kz').forEach(el=>{
+    if(el.textContent.trim()===(a.kennzeichen||'—')){
+      const wrap=el.closest('.card-wrap');
+      if(wrap){
+        gefunden=true;
+        wrap.scrollIntoView({behavior:'smooth',block:'center'});
+        wrap.style.setProperty('--flash-color',s?.accent||'#fff');
+        wrap.classList.remove('card-flash');void wrap.offsetWidth;wrap.classList.add('card-flash');
+        wrap.addEventListener('animationend',()=>wrap.classList.remove('card-flash'),{once:true});
+      }
+    }
+  });
+  if(!gefunden&&s?.headerZone){
+    const wrap=document.querySelector(`.zone-btn-wrap[data-zone-id="${a.status}"]`);
+    if(wrap){
+      const btn=wrap.querySelector('.zone-btn');
+      btn.scrollIntoView({behavior:'smooth',block:'center',inline:'center'});
+      btn.style.setProperty('--flash-color',s?.accent||'#fff');
+      btn.classList.remove('card-flash');void btn.offsetWidth;btn.classList.add('card-flash');
+      btn.addEventListener('animationend',()=>btn.classList.remove('card-flash'),{once:true});
+    }
+  }
+}
 function handleSearch(val){
   currentSearch=val.trim().toLowerCase();
   document.getElementById('searchClear').classList.toggle('visible',currentSearch.length>0);
@@ -1469,17 +1498,7 @@ function handleSearch(val){
   if(!hits.length)return;
   hits.forEach(a=>{if(autos.filter(x=>x.status===a.status).length>=COLLAPSE_AT)expandedCards.add(a.id);else collapsedCards.delete(a.id);});
   render();
-  setTimeout(()=>{
-    hits.forEach(a=>{
-      const s=STATI.find(x=>x.id===a.status);
-      document.querySelectorAll('.card-top-kz').forEach(el=>{
-        if(el.textContent.trim()===(a.kennzeichen||'—')){
-          const wrap=el.closest('.card-wrap');
-          if(wrap){wrap.style.setProperty('--flash-color',s?.accent||'#fff');wrap.classList.remove('card-flash');void wrap.offsetWidth;wrap.classList.add('card-flash');wrap.addEventListener('animationend',()=>wrap.classList.remove('card-flash'),{once:true});}
-        }
-      });
-    });
-  },50);
+  setTimeout(()=>{hits.forEach(a=>flashAuftrag(a));},50);
 }
 function clearSearch(){document.getElementById('searchInput').value='';document.getElementById('searchClear').classList.remove('visible');currentSearch='';}
 
@@ -1754,6 +1773,11 @@ async function uploadSfkAuftrag(autoId,input,useKI){
         if(parsed.auftragsnr)a.auftragsnr=parsed.auftragsnr;
         if(Array.isArray(parsed.arbeiten)&&parsed.arbeiten.length>0){
           a.hinweise=parsed.arbeiten.map(t=>({text:t,done:false}));
+          a.arbeiten=a.arbeiten||[];
+          parsed.arbeiten.forEach(t=>{
+            const bereitsVorhanden=a.arbeiten.some(ar=>textAehnlich(t,ar.beschreibung));
+            if(!bereitsVorhanden)a.arbeiten.push({beschreibung:t,stunden:'',wer:''});
+          });
         }
       }catch(kiErr){
         console.warn('KI-Erkennung beim Ersetzen fehlgeschlagen:',kiErr.message);
@@ -2258,8 +2282,17 @@ async function uploadLS(autoId,input){
     renderLSList(autoId);renderMaterialKosten(autoId);
 
     // KI-Erkennung versuchen (funktioniert sobald API-Key hinterlegt ist)
-    try { await erkenneLieferschein(autoId, a.lieferscheine.length-1, file); } catch(e){ console.warn('Lieferschein-KI-Erkennung übersprungen:', e.message); }
-  }catch(e){setSync('error','Upload-Fehler');}
+    try {
+      await erkenneLieferschein(autoId, a.lieferscheine.length-1, file);
+    } catch(e){
+      console.warn('Lieferschein-KI-Erkennung fehlgeschlagen:', e.message);
+      alert('Der Lieferschein wurde hochgeladen, konnte aber von der KI nicht automatisch ausgelesen werden:\n\n'+e.message+'\n\nBitte Lieferant, Datum und Betrag ggf. manuell eintragen bzw. die Fehlermeldung an den Support weitergeben.');
+    }
+  }catch(e){
+    setSync('error','Upload-Fehler');
+    console.error('Lieferschein-Upload fehlgeschlagen:',e);
+    alert('Der Lieferschein konnte nicht hochgeladen werden:\n\n'+e.message);
+  }
 }
 
 async function erkenneLieferschein(autoId, lsIndex, file){
@@ -2508,7 +2541,7 @@ async function openBarcodeScanner(){
     <button class="btn-secondary" id="scanClose">Abbrechen</button>`;
   document.body.appendChild(overlay);
   const close=s=>{if(s)s.getTracks().forEach(t=>t.stop());document.body.removeChild(overlay);};
-  const doSearch=nr=>{const a=autos.find(x=>x.auftragsnr===nr||x.kennzeichen===nr.toUpperCase());if(a){close(null);activeMobileTab=a.status;const s=STATI.find(x=>x.id===a.status);expandedCards.add(a.id);collapsedCards.delete(a.id);render();setTimeout(()=>{document.querySelectorAll('.card-top-kz').forEach(el=>{if(el.textContent.trim()===(a.kennzeichen||'—')){const w=el.closest('.card-wrap');if(w){w.scrollIntoView({behavior:'smooth',block:'center'});w.style.setProperty('--flash-color',s?.accent||'#fff');w.classList.add('card-flash');w.addEventListener('animationend',()=>w.classList.remove('card-flash'),{once:true});}}});},300);}else{document.getElementById('scanStatus').textContent=`⚠ Auftrag "${nr}" nicht gefunden`;document.getElementById('scanStatus').style.color='var(--red)';}};
+  const doSearch=nr=>{const a=autos.find(x=>x.auftragsnr===nr||x.kennzeichen===nr.toUpperCase());if(a){close(null);activeMobileTab=a.status;expandedCards.add(a.id);collapsedCards.delete(a.id);render();setTimeout(()=>flashAuftrag(a),300);}else{document.getElementById('scanStatus').textContent=`⚠ Auftrag "${nr}" nicht gefunden`;document.getElementById('scanStatus').style.color='var(--red)';}};
   overlay.querySelector('#manualBtn').addEventListener('click',()=>doSearch(overlay.querySelector('#manualNr').value.trim()));
   overlay.querySelector('#manualNr').addEventListener('keydown',e=>{if(e.key==='Enter')doSearch(overlay.querySelector('#manualNr').value.trim());});
   overlay.querySelector('#scanClose').addEventListener('click',()=>close(null));
@@ -2619,7 +2652,7 @@ async function doImportSFK(){
     kunde:sfkParsed.kunde||'',auftragsnr:sfkParsed.auftragsnr||'',
     platz:'',prioritaet:'Normal',status:'neue_auftraege',
     hinweise:(sfkParsed.arbeiten||[]).map(t=>({text:t,done:false})),
-    arbeiten:[],
+    arbeiten:(sfkParsed.arbeiten||[]).map(t=>({beschreibung:t,stunden:'',wer:''})),
     material:(sfkParsed.material||[]).map(m=>({bezeichnung:m.bezeichnung||'',menge:m.menge||'',einheit:m.einheit||'Stk'})),
     lieferscheine:[],dateien:[],zugewiesenAn:null,zuwPos:0,
     eingang:uhrzeit(),datum:datumKurz(),statusSeit:uhrzeit()};
