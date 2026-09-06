@@ -378,12 +378,11 @@ input,select,textarea,button{font-family:var(--font-body);}
 #mitarbeiterBoard{border-top:2px solid var(--red);background:var(--bg2);flex-shrink:0;
   padding:10px 12px;height:auto;max-height:30vh;max-height:30dvh;overflow-y:auto;position:relative;--mab-scale:1;}
 #mabCollapseToggle{display:none;}
-#btnAnsichtUmschalten{position:fixed;left:12px;bottom:12px;z-index:260;background:var(--bg3);
-  border:1px solid var(--red);border-radius:20px;color:var(--red);font-size:12px;font-weight:700;
-  padding:9px 14px;cursor:pointer;box-shadow:0 4px 14px rgba(0,0,0,.5);font-family:var(--font-head);
+#btnAnsichtUmschalten{margin-top:6px;background:var(--bg3);
+  border:1px solid var(--red);border-radius:20px;color:var(--red);font-size:11px;font-weight:700;
+  padding:6px 12px;cursor:pointer;font-family:var(--font-head);
   letter-spacing:.04em;}
 #btnAnsichtUmschalten:hover{background:var(--bg4);}
-html.mobile-ansicht #btnAnsichtUmschalten{bottom:76px;}
 #mabResizeGrip{position:fixed;right:190px;width:52px;height:26px;border-radius:6px;
   background:var(--bg4);border:1px solid var(--red);color:var(--red);z-index:250;
   display:flex;align-items:center;justify-content:center;font-size:16px;letter-spacing:1px;
@@ -436,7 +435,7 @@ html.mobile-ansicht #btnAnsichtUmschalten{bottom:76px;}
   html.mobile-ansicht body{overflow:auto;}
   html.mobile-ansicht #header{height:auto;flex-wrap:wrap;padding:8px 12px;gap:6px;}
   html.mobile-ansicht .hlogo{padding-right:12px;border-right:none;}
-  html.mobile-ansicht .hlogo-sub,html.mobile-ansicht .hlogo-date{display:none;}
+  html.mobile-ansicht .hlogo-sub{display:none;}
   html.mobile-ansicht #myNameBadge span{display:none;}
   html.mobile-ansicht .hstat{padding:0 8px;}
   html.mobile-ansicht .hstat-val{font-size:20px;}
@@ -537,6 +536,7 @@ html.mobile-ansicht #btnAnsichtUmschalten{bottom:76px;}
       <div class="hlogo-title">Werkstatt</div>
       <div class="hlogo-sub">Autopartner GmbH</div>
       <div class="hlogo-date" id="clockEl"></div>
+      <button id="btnAnsichtUmschalten" onclick="ansichtUmschalten()" title="Ansicht umschalten">📱 Mobile-Ansicht</button>
     </div>
   </div>
   <div id="myNameBadge" onclick="changeMyName()" title="Namen ändern">
@@ -578,8 +578,6 @@ html.mobile-ansicht #btnAnsichtUmschalten{bottom:76px;}
     <span id="trash-label">Löschen</span>
   </div>
 </div>
-
-<button id="btnAnsichtUmschalten" onclick="ansichtUmschalten()" title="Ansicht umschalten">📱 Mobile-Ansicht</button>
 
 <div id="mabResizeGrip" title="Höhe der Mitarbeiterzeile ändern">⋮⋮</div>
 <div id="mitarbeiterBoard">
