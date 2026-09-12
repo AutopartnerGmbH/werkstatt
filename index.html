@@ -459,6 +459,7 @@ input,select,textarea,button{font-family:var(--font-body);}
   html.mobile-ansicht .search-wrap.mobile-offen input{flex:1;}
   html.mobile-ansicht .hicon-btn{display:flex;width:44px;height:44px;font-size:19px;}
   html.mobile-ansicht .theme-toggle,html.mobile-ansicht .hactions>.btn-secondary[onclick="openAdmin()"]{display:none;}
+  html.mobile-ansicht .nur-desktop{display:none;}
   html.mobile-ansicht .more-menu-wrap{display:block;}
   html.mobile-ansicht .more-menu-dropdown button{min-height:44px;}
 
@@ -467,7 +468,9 @@ input,select,textarea,button{font-family:var(--font-body);}
   html.mobile-ansicht .card-actions button{padding:12px 4px;font-size:12px;}
   html.mobile-ansicht .zone-card-actions button{padding:10px 8px;font-size:12px;}
   html.mobile-ansicht .mab-add-btn{width:36px;height:36px;}
-  html.mobile-ansicht .mab-card-x,html.mobile-ansicht .mab-card-move{font-size:18px;padding:4px 6px;}
+  html.mobile-ansicht .mab-card-aufgabe .mab-card-x,html.mobile-ansicht .mab-card-aufgabe .mab-card-move{font-size:18px;padding:4px 6px;}
+  html.mobile-ansicht .mab-card:not(.mab-card-aufgabe) .mab-card-x,html.mobile-ansicht .mab-card:not(.mab-card-aufgabe) .mab-card-move{display:none;}
+  html.mobile-ansicht .mab-card:not(.mab-card-aufgabe){cursor:pointer;}
   html.mobile-ansicht .diag-btn{min-height:40px;}
 
   /* Formulare einspaltig statt eng nebeneinander */
@@ -479,8 +482,8 @@ input,select,textarea,button{font-family:var(--font-body);}
   html.mobile-ansicht #board{padding:8px;overflow:visible;}
   html.mobile-ansicht .board-grid{display:none;}
   html.mobile-ansicht #mobileStatusPicker{display:block;width:100%;margin:8px 12px;padding:12px 14px;
-    background:var(--bg3);border:1px solid var(--border2);border-radius:8px;color:var(--text);
-    font-size:15px;font-family:var(--font-head);font-weight:600;}
+    background:var(--bg3);border:2px solid var(--border2);border-radius:8px;color:var(--text);
+    font-size:16px;font-family:var(--font-head);font-weight:700;}
   html.mobile-ansicht #mobileOrderList{display:flex;flex-direction:column;gap:8px;padding:0 4px 12px;}
   html.mobile-ansicht .mobile-order-row{display:flex;flex-direction:column;gap:2px;background:var(--bg3);
     border:1px solid var(--border2);border-left:4px solid var(--row-accent,var(--red));border-radius:8px;
@@ -590,8 +593,8 @@ input,select,textarea,button{font-family:var(--font-body);}
       <span id="themeIcon">🌙</span>
     </button>
     <button class="btn-secondary" onclick="openAdmin()" style="padding:7px 10px">⚙️</button>
-    <button class="btn-secondary" onclick="openBarcodeScanner()" style="padding:7px 10px">⬛ Scan</button>
-    <button class="btn-secondary" onclick="openSFKImport()">↑ SFK</button>
+    <button class="btn-secondary nur-desktop" onclick="openBarcodeScanner()" style="padding:7px 10px">⬛ Scan</button>
+    <button class="btn-secondary nur-desktop" onclick="openSFKImport()">↑ SFK</button>
     <button class="btn-primary" onclick="openNeu()">+ Fahrzeug</button>
     <div class="more-menu-wrap" id="moreMenuWrap">
       <button class="hicon-btn" id="btnMoreMenu" title="Mehr">⋯</button>
@@ -1151,7 +1154,11 @@ function renderMobileStatusPicker(){
     const anzahl=autos.filter(a=>a.status===s.id).length;
     return `<option value="${s.id}" ${s.id===activeMobileTab?'selected':''}>${s.icon} ${s.label} (${anzahl})</option>`;
   }).join('');
-  el.onchange=()=>{activeMobileTab=el.value;renderMobileOrderList();};
+  el.value=activeMobileTab;
+  const aktuell=STATI.find(s=>s.id===activeMobileTab);
+  el.style.borderColor=aktuell?.accent||'var(--border2)';
+  el.style.color=aktuell?.accent||'var(--text)';
+  el.onchange=()=>{activeMobileTab=el.value;renderMobileOrderList();renderMobileStatusPicker();};
 }
 function renderMobileOrderList(){
   const el=document.getElementById('mobileOrderList');if(!el)return;
@@ -1186,6 +1193,7 @@ function openMobileActionSheet(autoId){
       <button id="sheetBearbeiten">✎ Bearbeiten</button>
       <button id="sheetDiagnose" style="color:#fbbf24">📋 Diagnose</button>
       <button id="sheetArbeiten" style="color:#AFA9EC">📝 Arbeiten</button>
+      <button id="sheetMitarbeiter" style="color:#86EFAC">👤 Mitarbeiter zuweisen</button>
       <button id="sheetVerschieben" style="color:#67E8F9">↔ Verschieben nach …</button>
       <button id="sheetAbbrechen">Abbrechen</button>
     </div>`;
@@ -1194,6 +1202,7 @@ function openMobileActionSheet(autoId){
   overlay.querySelector('#sheetBearbeiten').addEventListener('click',()=>{close();openEdit(autoId);});
   overlay.querySelector('#sheetDiagnose').addEventListener('click',()=>{close();openDiagnose(autoId);});
   overlay.querySelector('#sheetArbeiten').addEventListener('click',()=>{close();openArbeitenModal(autoId);});
+  overlay.querySelector('#sheetMitarbeiter').addEventListener('click',()=>{close();openMoveMenu(autoId);});
   overlay.querySelector('#sheetVerschieben').addEventListener('click',()=>{close();openMoveMenu(autoId);});
   overlay.querySelector('#sheetAbbrechen').addEventListener('click',close);
 }
@@ -1253,12 +1262,23 @@ function toggleCard(id,autoCollapse){
 
 // ── RENDER ──
 function render(){
-  const grid=document.getElementById('boardGrid');grid.innerHTML='';
+  const grid=document.getElementById('boardGrid');
+  const vorherigeScrollPositionen={};
+  grid.querySelectorAll('.lane').forEach(l=>{
+    const body=l.querySelector('.lane-body');
+    if(body)vorherigeScrollPositionen[l.dataset.status]=body.scrollTop;
+  });
+  grid.innerHTML='';
   const sichtbareSpalten = STATI.filter(s=>!s.hidden && !s.headerZone);
   grid.style.gridTemplateColumns = `repeat(${sichtbareSpalten.length}, 1fr)`;
   grid.style.minWidth = (sichtbareSpalten.length * 190) + 'px';
 
   sichtbareSpalten.forEach(s=>grid.appendChild(buildLane(s)));
+
+  grid.querySelectorAll('.lane').forEach(l=>{
+    const body=l.querySelector('.lane-body');
+    if(body&&vorherigeScrollPositionen[l.dataset.status]!==undefined)body.scrollTop=vorherigeScrollPositionen[l.dataset.status];
+  });
 
   renderMobileTabs();updateMobileLanes();
   renderMobileStatusPicker();renderMobileOrderList();
@@ -1624,6 +1644,10 @@ function renderMitarbeiterZeilen(){
     zugewiesen.forEach((a,i)=>{
       const mc=document.createElement('div');mc.className='mab-card'+(i===0?' aktuell':'')+(a.istAufgabe?' mab-card-aufgabe':'');
       wireDraggable(mc,'assign',()=>a.id,()=>ma.id);
+      mc.addEventListener('click',e=>{
+        if(!istMobileAnsicht()||a.istAufgabe)return;
+        openMobileActionSheet(a.id);
+      });
 
       const moveBtn=document.createElement('button');moveBtn.className='mab-card-move btn-move';moveBtn.textContent='↔';moveBtn.title='Verschieben';
       moveBtn.addEventListener('click',e=>{e.stopPropagation();openMoveMenu(a.id);});
