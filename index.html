@@ -2415,6 +2415,7 @@ function openArbeitenModal(autoId){
     <div class="form-footer">
       <div id="arbSaved" style="font-size:12px;color:#4ade80;align-self:center;display:none">✓ Gespeichert</div>
       <button class="btn-secondary" onclick="closeModal()">Schließen</button>
+      <button class="btn-secondary" id="btnVxsVorschau">📤 VXS-Vorschau</button>
       <button class="btn-primary" id="btnRechnung">🧾 Rechnungskontrolle</button>
     </div>
   `);
@@ -2429,6 +2430,7 @@ function openArbeitenModal(autoId){
   document.getElementById('btnAddArbeit').addEventListener('click',()=>addArbeit(autoId));
   document.getElementById('btnAddMaterial').addEventListener('click',()=>addMaterial(autoId));
   document.getElementById('btnRechnung').addEventListener('click',()=>openRechnungskontrolle(autoId));
+  document.getElementById('btnVxsVorschau').addEventListener('click',()=>openVxsVorschau(autoId));
   document.getElementById('btnDiktierArbeit').addEventListener('click',()=>toggleDiktieren(autoId,'arbeit'));
   document.getElementById('btnDiktierMaterial').addEventListener('click',()=>toggleDiktieren(autoId,'material'));
 
@@ -2670,6 +2672,97 @@ function pruefeFehlendeTeile(autoId){
 }
 
 // ── RECHNUNGSKONTROLLE ──
+// ── VXS-EXPORT (für SFK) — nur Arbeiten + Material, keine Fahrzeug-/Kundendaten nötig ──
+function escapeXml(s){
+  return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+    .replace(/"/g,'&quot;').replace(/'/g,'&apos;');
+}
+function buildVXS(a){
+  const now=new Date().toISOString().replace('Z','+02:00');
+  const uuid='xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g,c=>{
+    const r=Math.random()*16|0;return (c==='x'?r:(r&0x3|0x8)).toString(16);
+  });
+  const arbeiten=(a.arbeiten||[]).filter(ar=>ar.beschreibung&&ar.beschreibung.trim());
+  const material=(a.material||[]).filter(m=>m.bezeichnung&&m.bezeichnung.trim());
+  const arbeitenXml=arbeiten.map((ar,i)=>`
+      <RepairPosition>
+        <RepairType>dis- and mounting</RepairType>
+        <Description>${escapeXml(ar.beschreibung)}</Description>
+        <IsManualDescription>true</IsManualDescription>
+        <PositionEntryType>manual</PositionEntryType>
+        <SortOrderNumber>${i+1}</SortOrderNumber>
+        <WorkIndication>1</WorkIndication>
+        <WorkTime>${parseFloat(ar.stunden)||0}</WorkTime>
+        <InspectionReview>false</InspectionReview>
+      </RepairPosition>`).join('');
+  const materialXml=material.map((m,i)=>`
+      <RepairPosition>
+        <RepairType>replace</RepairType>
+        <Description>${escapeXml(m.bezeichnung)}</Description>
+        <IsManualDescription>true</IsManualDescription>
+        <PositionEntryType>manual</PositionEntryType>
+        <SortOrderNumber>${arbeiten.length+i+1}</SortOrderNumber>
+        <SparePartNumberOrigin>MANUAL</SparePartNumberOrigin>
+        <SparePartPrice>${parseFloat(m.preis)||0}</SparePartPrice>
+        <SparePartUsed>false</SparePartUsed>
+        <WorkIndication>0</WorkIndication>
+        <InspectionReview>false</InspectionReview>
+      </RepairPosition>`).join('');
+  return `<?xml version="1.0" encoding="UTF-8"?>
+<Dossiers xmlns="http://www.dat.de/vxs" source="Werkstatt-App" type="VehicleRepairOnline">
+  <Dossier>
+    <Name>${escapeXml(a.kennzeichen)}</Name>
+    <Description>${escapeXml(a.kennzeichen)}</Description>
+    <UUID>${uuid}</UUID>
+    <DossierId>${Date.now()}</DossierId>
+    <Country>DE</Country>
+    <Language>de_DE</Language>
+    <DataVersion>1</DataVersion>
+    <Currency>EUR</Currency>
+    <DossierType>RepairInvoice</DossierType>
+    <CreateDate>${now}</CreateDate>
+    <ChangeDate>${now}</ChangeDate>
+    <RepairCalculation>
+      <RepairPositions>${arbeitenXml}${materialXml}
+      </RepairPositions>
+    </RepairCalculation>
+  </Dossier>
+</Dossiers>`;
+}
+function downloadVxsFile(autoId){
+  const a=autos.find(x=>x.id===autoId);if(!a)return;
+  const xml=buildVXS(a);
+  const blob=new Blob([xml],{type:'application/xml'});
+  const url=URL.createObjectURL(blob);
+  const lnk=document.createElement('a');lnk.href=url;lnk.download=`VXS_${(a.kennzeichen||'auftrag').replace(/\s+/g,'_')}.xml`;
+  document.body.appendChild(lnk);lnk.click();document.body.removeChild(lnk);
+  setTimeout(()=>URL.revokeObjectURL(url),2000);
+}
+function openVxsVorschau(autoId){
+  const a=autos.find(x=>x.id===autoId);if(!a)return;
+  const arbeiten=(a.arbeiten||[]).filter(ar=>ar.beschreibung&&ar.beschreibung.trim());
+  const material=(a.material||[]).filter(m=>m.bezeichnung&&m.bezeichnung.trim());
+  openModal(`
+    <div class="modal-header"><div class="modal-title">📤 VXS-Vorschau — ${escapeXml(a.kennzeichen||'')}</div>
+      <button class="modal-close" onclick="closeModal()">✕</button></div>
+    <div class="section-label">Durchgeführte Arbeiten (${arbeiten.length})</div>
+    ${arbeiten.length===0?'<div style="color:var(--text-muted);font-size:13px;margin-bottom:14px">Keine Arbeiten erfasst.</div>':
+      arbeiten.map(ar=>`<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border);font-size:13px">
+        <span>${escapeXml(ar.beschreibung)}</span><span style="color:var(--text-dim)">${parseFloat(ar.stunden)||0} Std.</span>
+      </div>`).join('')}
+    <div class="section-label" style="margin-top:16px">Verbrauchtes Material (${material.length})</div>
+    ${material.length===0?'<div style="color:var(--text-muted);font-size:13px;margin-bottom:14px">Kein Material erfasst.</div>':
+      material.map(m=>`<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border);font-size:13px">
+        <span>${escapeXml(m.bezeichnung)}</span><span style="color:var(--text-dim)">${parseFloat(m.preis)?parseFloat(m.preis).toFixed(2)+' €':'—'}</span>
+      </div>`).join('')}
+    <div style="font-size:12px;color:var(--text-muted);margin-top:14px">Fahrzeug- und Kundendaten werden bewusst nicht mit exportiert — die Datei enthält nur diese Positionen.</div>
+    <div class="form-footer">
+      <button class="btn-secondary" onclick="closeModal()">Abbrechen</button>
+      <button class="btn-primary" id="btnVxsDownload">⬇ Als .xml herunterladen</button>
+    </div>
+  `);
+  document.getElementById('btnVxsDownload').addEventListener('click',()=>downloadVxsFile(autoId));
+}
 function openRechnungskontrolle(autoId){
   const a=autos.find(x=>x.id===autoId);if(!a)return;
   const gesamtStd=(a.arbeiten||[]).reduce((s,ar)=>s+(parseFloat(ar.stunden)||0),0);
